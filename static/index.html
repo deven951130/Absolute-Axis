@@ -18,15 +18,15 @@
             --card-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         body.sparkle-mode {
-            --accent-color: #ff66a3; /* Pink for buttons and highlights */
-            --brand-color: #f85149; /* Red for brand text */
-            --success-color: #ff66a3; /* Pink instead of green */
+            --accent-color: #ff66a3;
+            --brand-color: #f85149;
+            --success-color: #ff66a3;
             --accent-soft: rgba(255, 102, 163, 0.1);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Tahoma", sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
         
-        .sidebar { width: var(--sidebar-width); background: var(--sidebar-color); border-right: 1px solid var(--border-color); padding: 2rem 0; display: flex; flex-direction: column; z-index: 1000; }
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-color); border-right: 1px solid var(--border-color); padding: 2rem 0; display: flex; flex-direction: column; z-index: 1000; flex-shrink: 0; }
         .brand { font-size: 1.25rem; font-weight: 800; color: var(--brand-color, var(--accent-color)); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 12px; padding: 0 1.8rem; letter-spacing: 0.5px; }
         .logo-box { width: 34px; height: 34px; background: var(--brand-color, var(--accent-color)); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #0d1117; font-size: 1.2rem; font-weight: 900; }
         .nav-menu { list-style: none; display: flex; flex-direction: column; }
@@ -35,14 +35,13 @@
         .nav-item.active { background: rgba(88, 166, 255, 0.08); color: var(--accent-color); border-left-color: var(--accent-color); }
         .nav-separator { height: 1px; background: var(--border-color); margin: 20px 25px; }
 
-        .main-content { flex: 1; padding: 2.5rem; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-color); position: relative; }
-        .view-section { display: none; flex: 1; }
+        .main-content { flex: 1; padding: 2.5rem; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-color); position: relative; min-width: 0; }
+        .view-section { display: none; flex: 1; min-width: 0; }
         .view-section.active { display: flex; flex-direction: column; animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
 
         .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; position: relative; z-index: 900; }
         
-        /* 核心 Popover 定位與樣式 */
         .user-popover { position: fixed; top: 85px; right: 2.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; width: 240px; box-shadow: 0 12px 40px rgba(0,0,0,0.6); padding: 1.5rem; display: none; flex-direction: column; z-index: 99999; }
         .user-popover.active { display: flex; }
 
@@ -50,21 +49,12 @@
         .stat-card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); padding: 1.8rem; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s; }
         .stat-card:hover { border-color: var(--accent-color); }
         
-        /* 半圓儀表樣式 */
         .gauge-container { position: relative; width: 140px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
         .gauge-svg { width: 100%; height: 100%; }
         .gauge-bg { fill: none; stroke: var(--border-color); stroke-width: 10; stroke-linecap: round; }
         .gauge-fill { fill: none; stroke: var(--accent-color); stroke-width: 10; stroke-linecap: round; stroke-dasharray: 125.66; stroke-dashoffset: 125.66; transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         .gauge-label { position: absolute; bottom: 0; font-size: 1.3rem; font-weight: 900; color: var(--text-main); }
         
-        body.light-mode .sidebar { background: var(--sidebar-color); }
-        body.light-mode .card, body.light-mode .stat-card, body.light-mode .file-card { background: var(--card-bg); }
-        body.light-mode .nav-item:hover { background: rgba(0,0,0,0.05); color: #000; }
-        body.light-mode .t-input { background: #fff; color: #000; border-color: var(--border-color); }
-        body.light-mode .user-popover { background: #fff; }
-        body.light-mode .settings-item, body.light-mode .file-list-item { background: #fff; }
-        body.light-mode #terminal-logs { color: #1a7f37 !important; }
-
         .progress-bar { width: 100%; height: 5px; background: var(--border-color); border-radius: 3px; overflow: hidden; margin-top: 15px; opacity: 0.5; }
         .progress-fill { height: 100%; background: var(--accent-color); transition: width 0.6s ease; }
 
@@ -84,35 +74,20 @@
         .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-danger { background: rgba(248, 81, 73, 0.1); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); }
 
-        .login-overlay { position: fixed; inset: 0; background: var(--bg-color); z-index: 200000; display: flex; justify-content: center; align-items: center; }
+        .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-color); z-index: 200000; display: flex; justify-content: center; align-items: center; }
         .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1.5rem; }
         .file-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
-        .file-card:hover { border-color: var(--accent-color); transform: translateY(-4px); }
-        
-        .file-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
         .file-list-item { display: flex; align-items: center; gap: 15px; padding: 12px 20px; background: #161b22; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: 0.2s; min-width: 0; }
-        .file-list-item:hover { border-color: var(--accent-color); background: #1c2128; }
-
-        .settings-list { display: flex; flex-direction: column; gap: 10px; }
-        .settings-item { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; background: #161b22; border: 1px solid var(--border-color); border-radius: 12px; cursor: pointer; transition: 0.2s; }
-        .settings-item:hover { border-color: var(--accent-color); transform: translateX(5px); }
-        .settings-item .title { font-weight: 700; font-size: 1.05rem; display: flex; align-items: center; gap: 15px; }
-        .settings-panel { display: none; }
-        .settings-panel.active { display: block; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+        
         .nas-nav.active { background: var(--accent-color); color: #0d1117; font-weight: 800; }
         .nas-view-container { display: flex; gap: 2rem; height: calc(100vh - 120px); overflow: hidden; }
         .nas-sidebar { width: 220px; display: flex; flex-direction: column; gap: 10px; padding-right: 1.5rem; border-right: 1px solid var(--border-color); flex-shrink: 0; }
         .nas-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; }
         .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.8rem; margin-top: 1rem; }
         .metric-chart-card { background: var(--sidebar-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; height: 380px; }
-        canvas { width: 100% !important; height: 100% !important; }
-
-        /* Context Menu */
-        .context-menu { position: fixed; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 500000; min-width: 180px; display: none; padding: 6px 0; overflow: hidden; animation: popIn 0.15s ease-out; }
+        .context-menu { position: fixed; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 500000; min-width: 180px; display: none; padding: 6px 0; overflow: hidden; }
         .context-menu-item { padding: 10px 15px; font-size: 0.85rem; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
         .context-menu-item:hover { background: var(--accent-soft); color: var(--accent-color); }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -143,9 +118,8 @@
             <li class="nav-item" id="nav-admin" onclick="switchView('admin')" style="display:none">👥 帳號管理</li>
             <li class="nav-item" id="nav-settings" onclick="switchView('settings')">⚙️ 系統設定</li>
         </ul>
-</aside>
+    </aside>
 
-    <!-- 主要內容區 -->
     <main class="main-content">
         <header class="top-header">
             <h1 id="page-title-text" style="font-size:1.8rem;font-weight:800;color:var(--text-main);">戰情總覽</h1>
@@ -153,7 +127,6 @@
                 <div style="font-size:0.75rem;background:var(--accent-soft);color:var(--success-color);padding:5px 18px;border-radius:20px;border:1px solid var(--success-color);font-weight:800;">● CONNECTED</div>
                 <div id="clock" style="font-family:monospace;letter-spacing:1px;font-size:1.15rem;color:var(--text-main);">00:00:00</div>
                 <button id="theme-toggle" class="btn" style="padding:0; border-radius:50%; width:38px; height:38px; border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; font-size:1.1rem; cursor:pointer; background:transparent; color:var(--text-main); transition:0.2s;" onclick="toggleTheme()">☀️</button>
-                <!-- 究極頭像按鈕：確保點擊 100% 成功 -->
                 <button id="avatar-btn" onclick="window.toggleAxisPopover(event)" style="background:none; border:none; padding:0; cursor:pointer; position:relative; width:44px; height:44px; z-index:10001; outline:none; display:flex;">
                     <img src="" id="top-avatar" style="width:100%; height:100%; border-radius:50%; border:2.5px solid var(--border-color); background:#30363d; object-fit:cover; pointer-events:none;">
                 </button>
@@ -165,54 +138,23 @@
             <div class="stat-grid">
                 <div class="stat-card" style="cursor:pointer;" onclick="switchView('metrics')">
                     <div style="font-size:0.75rem;color:var(--text-muted);font-weight:800;margin-bottom:12px;">CORE PROCESSOR</div>
-                    <div class="gauge-container" title="Click for real-time history">
-                        <svg class="gauge-svg" viewBox="0 0 100 55">
-                            <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50"></path>
-                            <path class="gauge-fill" id="cpu-gauge" d="M 10 50 A 40 40 0 0 1 90 50"></path>
-                        </svg>
-                        <div class="gauge-label" id="cpu-val">--%</div>
-                    </div>
+                    <div class="gauge-container"><svg class="gauge-svg" viewBox="0 0 100 55"><path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50"></path><path class="gauge-fill" id="cpu-gauge" d="M 10 50 A 40 40 0 0 1 90 50"></path></svg><div class="gauge-label" id="cpu-val">--%</div></div>
                 </div>
                 <div class="stat-card" style="cursor:pointer;" onclick="switchView('metrics')">
                     <div style="font-size:0.75rem;color:var(--text-muted);font-weight:800;margin-bottom:12px;">MEMORY POOL</div>
-                    <div class="gauge-container" title="Click for real-time history">
-                        <svg class="gauge-svg" viewBox="0 0 100 55">
-                            <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50"></path>
-                            <path class="gauge-fill" id="ram-gauge" d="M 10 50 A 40 40 0 0 1 90 50"></path>
-                        </svg>
-                        <div class="gauge-label" id="ram-val">--%</div>
-                    </div>
+                    <div class="gauge-container"><svg class="gauge-svg" viewBox="0 0 100 55"><path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50"></path><path class="gauge-fill" id="ram-gauge" d="M 10 50 A 40 40 0 0 1 90 50"></path></svg><div class="gauge-label" id="ram-val">--%</div></div>
                 </div>
                 <div class="stat-card" style="grid-column: span 2; cursor:pointer;" onclick="switchView('nas-mgnt')">
                     <div style="font-size:0.7rem;color:var(--text-muted);font-weight:800;margin-bottom:12px;width:100%;text-align:left;">STORAGE (SATA 0/1 Architecture)</div>
                     <div style="width:100%; display:flex; flex-direction:column; gap:22px;">
-                        <div>
-                            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
-                                <div style="font-size:0.8rem;font-weight:800;color:var(--text-main);">Absolute-Axis OS (SSD)</div>
-                                <div style="font-size:0.7rem;color:var(--accent-color);font-weight:800;" id="sys-label">--/--</div>
-                            </div>
-                            <div class="progress-bar"><div id="sys-bar" class="progress-fill" style="width:0%"></div></div>
-                        </div>
-                        <div>
-                            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;">
-                                <div style="font-size:0.8rem;font-weight:800;color:var(--text-main);">Storage Pool (HDD)</div>
-                                <div style="font-size:0.7rem;color:var(--success-color);font-weight:800;" id="nas-label">--/--</div>
-                            </div>
-                            <div class="progress-bar"><div id="nas-bar" class="progress-fill" style="width:0%;background:var(--success-color);"></div></div>
-                        </div>
+                        <div><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div style="font-size:0.8rem;font-weight:800;">Absolute-Axis OS (SSD)</div><div style="font-size:0.7rem;color:var(--accent-color);font-weight:800;" id="sys-label">--/--</div></div><div class="progress-bar"><div id="sys-bar" class="progress-fill" style="width:0%"></div></div></div>
+                        <div><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div style="font-size:0.8rem;font-weight:800;">Storage Pool (HDD)</div><div style="font-size:0.7rem;color:var(--success-color);font-weight:800;" id="nas-label">--/--</div></div><div class="progress-bar"><div id="nas-bar" class="progress-fill" style="width:0%;background:var(--success-color);"></div></div></div>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div style="font-size:0.7rem;color:var(--text-muted);font-weight:800;margin-bottom:12px;width:100%;text-align:left;">BANDWIDTH</div>
                     <div style="font-size:0.9rem;font-weight:900;color:var(--text-main);display:flex;flex-direction:column;gap:8px;width:100%;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span style="font-size:0.65rem;color:var(--text-muted);">↑ UPLOAD</span>
-                            <span id="bw-up" style="color:var(--accent-color);">-- MB/s</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span style="font-size:0.65rem;color:var(--text-muted);">↓ DOWNLOAD</span>
-                            <span id="bw-dn" style="color:var(--success-color);">-- MB/s</span>
-                        </div>
+                        <div style="display:flex;justify-content:space-between;"><span>↑ UP</span><span id="bw-up" style="color:var(--accent-color);">-- MB/s</span></div>
+                        <div style="display:flex;justify-content:space-between;"><span>↓ DN</span><span id="bw-dn" style="color:var(--success-color);">-- MB/s</span></div>
                     </div>
                 </div>
             </div>
@@ -227,162 +169,8 @@
                 </div>
                 <div style="display:flex;flex-direction:column;gap:1.8rem;">
                     <div class="card"><h2 class="card-title">🔌 Active Services</h2><div id="svc-list"></div></div>
-                    <div class="card"><h2 class="card-title">🌡️ Environment Sensors</h2><div style="display:flex;gap:2rem;justify-content:center;padding:15px 0;"><div style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:700;">TEMP</div><div style="font-size:1.6rem;font-weight:900;color:var(--text-main);" id="sensor-temp">--°C</div></div><div style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:700;">HUMID</div><div style="font-size:1.6rem;font-weight:900;color:var(--text-main);" id="sensor-humid">--%</div></div></div></div>
+                    <div class="card"><h2 class="card-title">🌡️ Environment Sensors</h2><div style="display:flex;gap:2rem;justify-content:center;padding:15px 0;"><div style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;">TEMP</div><div style="font-size:1.6rem;font-weight:900;" id="sensor-temp">--°C</div></div><div style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;">HUMID</div><div style="font-size:1.6rem;font-weight:900;" id="sensor-humid">--%</div></div></div></div>
                 </div>
-            </div>
-        </div>
-
-        <!-- View: Admin -->
-        <div id="view-admin" class="view-section">
-            <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:2.5rem;align-items:center;"><h2 class="card-title" style="margin:0;">👥 帳號管理中心</h2><button class="btn btn-primary" onclick="document.getElementById('modal-create-user').style.display='flex'">+ 新增帳號</button></div><table class="admin-table"><thead><tr><th>使用者</th><th>身分權限</th><th>目前頭像</th><th>操作</th></tr></thead><tbody id="user-table-body"></tbody></table></div>
-        </div>
-
-        <!-- View: Settings -->
-        <div id="view-settings" class="view-section">
-            <div id="settings-main">
-                <div class="settings-list">
-                    <div class="settings-item" onclick="openSettingPanel('panel-specs')">
-                        <div class="title">🛰️ 系統硬體組態</div>
-                        <div style="color:var(--text-muted);">▶</div>
-                    </div>
-                    <div class="settings-item" onclick="openSettingPanel('panel-profile')">
-                        <div class="title">👤 個人帳戶設定</div>
-                        <div style="color:var(--text-muted);">▶</div>
-                    </div>
-                    <div class="settings-item" onclick="openSettingPanel('panel-maintain')">
-                        <div class="title">🛡️ 系統維護與安全</div>
-                        <div style="color:var(--text-muted);">▶</div>
-                    </div>
-                    <div class="settings-item" onclick="openSettingPanel('panel-theme')">
-                        <div class="title">🎨 網站外觀主題設定</div>
-                        <div style="color:var(--text-muted);">▶</div>
-                    </div>
-                </div>
-            </div>
-            <div id="panel-specs" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">← 返回主選單</button>
-                <div class="card"><h2 class="card-title">系統硬體組態</h2><div id="sys-specs-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;"></div></div>
-            </div>
-            <div id="panel-profile" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">← 返回主選單</button>
-                <div class="card"><h2 class="card-title">個人身分修改</h2><div style="display:flex;flex-direction:column;gap:10px;"><button class="btn btn-outline" onclick="openProfileEdit()">修改顯示名稱 / 密碼</button><button class="btn btn-outline" onclick="openAvatarEdit()">更換頭像 URL</button></div></div>
-            </div>
-            <div id="panel-maintain" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">← 返回主選單</button>
-                <div class="card"><h2 class="card-title">環境維護與出口</h2><div style="display:flex;flex-direction:column;gap:15px;"><button class="btn btn-outline" style="width:100%;height:80px" onclick="authFetch('/api/action/clear_cache',{method:'POST'})">清除快取伺服器</button><button class="btn btn-danger" style="width:100%;height:50px" onclick="doLogout()">登出整個工作 Session</button></div></div>
-            </div>
-            <div id="panel-theme" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">← 返回主選單</button>
-                <div class="card">
-                    <h2 class="card-title">網站主題與色彩更改</h2>
-                    <div style="display:flex;flex-direction:column;gap:15px;">
-                        <button class="btn btn-outline" style="width:100%;height:60px;" onclick="setTheme('default')">預設主題 (Absolute Blue)</button>
-                        <button class="btn btn-outline" style="width:100%;height:60px; border-color:#ff66a3; color:#ff66a3;" onclick="setTheme('sparkle')">火花主題 (Sparkle 粉紅/紅)</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- View: Metrics -->
-        <div id="view-metrics" class="view-section">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
-                <h2 class="card-title" style="margin:0;">📈 實時數據分析 (Real-time Analytics)</h2>
-                <button class="btn btn-outline" onclick="switchView('dashboard')">← 返回戰情中心</button>
-            </div>
-            <div class="metrics-grid">
-                <div class="metric-chart-card">
-                    <div style="font-size:0.8rem; font-weight:800; color:var(--accent-color); margin-bottom:15px;">CPU 負載曲線 (%)</div>
-                    <canvas id="chart-cpu"></canvas>
-                </div>
-                <div class="metric-chart-card">
-                    <div style="font-size:0.8rem; font-weight:800; color:var(--success-color); margin-bottom:15px;">RAM 佔用曲線 (%)</div>
-                    <canvas id="chart-ram"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- View: Cloud -->
-        <div id="view-cloud" class="view-section">
-            <div class="nas-view-container">
-                <div class="nas-sidebar">
-                    <div id="nas-nav-drive" class="nav-item nas-nav active" onclick="nasNav('drive')">📁 我的雲端硬碟</div>
-                    <div id="nas-nav-shared" class="nav-item nas-nav" onclick="nasNav('shared')">👥 與我共用</div>
-                    <div id="nas-nav-starred" class="nav-item nas-nav" onclick="nasNav('starred')">⭐ 已加星號</div>
-                    <div id="nas-nav-recent" class="nav-item nas-nav" onclick="nasNav('recent')">🕒 近期存取</div>
-                    <div id="nas-nav-trash" class="nav-item nas-nav" onclick="nasNav('trash')" style="margin-top:auto; color:var(--danger-color); border-color:rgba(255,100,100,0.2);">🗑️ 垃圾桶</div>
-                </div>
-                <div class="nas-content">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div id="nas-breadcrumb" style="display:flex; align-items:center; gap:8px; font-size:1.1rem; font-weight:700;"></div>
-                        <div style="display:flex; align-items:center; gap:20px;">
-                            <div style="display:flex; background:var(--sidebar-color); border-radius:6px; padding:4px; border:1px solid var(--border-color);">
-                                <button class="btn btn-outline" id="btn-grid" style="padding:6px 12px; font-size:0.8rem; border:none; background:var(--accent-color); color:#fff;" onclick="toggleNASView('grid')">⬛</button>
-                                <button class="btn btn-outline" id="btn-list" style="padding:6px 12px; font-size:0.8rem; border:none; background:transparent; color:var(--text-main);" onclick="toggleNASView('list')">☰</button>
-                            </div>
-                            <div style="width:180px;">
-                                <div style="font-size:0.6rem; color:var(--text-muted); font-weight:800; margin-bottom:5px;">儲存配額 (1GB)</div>
-                                <div class="progress-bar" style="height:4px; margin:0;"><div id="quota-bar" class="progress-fill" style="width:0%;"></div></div>
-                                <div id="quota-label" style="font-size:0.6rem; color:var(--text-muted); margin-top:3px;">-- / 1024 MB</div>
-                            </div>
-                            <div style="position:relative;">
-                                <button class="btn btn-primary" onclick="toggleNewMenu()">+ 建立 / 上傳</button>
-                                <div id="new-menu" class="card" style="display:none; position:absolute; right:0; top:45px; padding:6px 0; z-index:100; min-width:160px;">
-                                    <div class="nav-item" style="padding:10px 15px; border-bottom:1px solid var(--border-color); border-left:none;" onclick="document.getElementById('nas-up').click(); toggleNewMenu()">📁 上傳檔案</div>
-                                    <div class="nav-item" style="padding:10px 15px; border-left:none;" onclick="promptMkdir(); toggleNewMenu()">📁 新增資料夾</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <input type="file" id="nas-up" style="display:none" onchange="nasUpload()">
-                    <div class="file-grid" id="nas-explorer"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Upload Monitor Footer -->
-        <div id="upload-monitor" style="display:none; position:fixed; bottom:20px; right:20px; width:320px; background:var(--card-bg); border:1px solid var(--border-color); border-radius:12px; padding:1.2rem; z-index:100000; box-shadow:0 12px 40px rgba(0,0,0,0.6);">
-            <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
-                <span style="font-size:0.85rem; font-weight:700; color:var(--text-main);" id="up-filename">Uploading...</span>
-                <span style="font-size:0.75rem; color:var(--accent-color);" id="up-speed">-- MB/s</span>
-            </div>
-            <div class="progress-bar" style="margin:0;"><div id="up-bar" class="progress-fill" style="width:0%"></div></div>
-        </div>
-
-        <!-- View: NAS Management -->
-        <div id="view-nas-mgnt" class="view-section">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem; margin-bottom: 2rem;">
-                <div class="card">
-                    <h2 class="card-title">📀 SATA 0: 系統固態硬碟 (System SSD)</h2>
-                    <div style="display:flex; gap:1.5rem; align-items:center;">
-                        <div style="font-size:3rem;">💾</div>
-                        <div style="flex:1;">
-                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span>掛載點: /</span><span style="color:var(--success-color);font-weight:800;">狀態: 良好</span></div>
-                            <div class="progress-bar"><div id="nas-sys-bar" class="progress-fill" style="width:0%"></div></div>
-                            <div style="margin-top:10px;font-size:0.8rem;color:var(--text-muted);">型號: Absolute-Axis.vdi (VirtualBox)</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <h2 class="card-title">💾 SATA 1: 大容量儲存碟 (Data HDD)</h2>
-                    <div style="display:flex; gap:1.5rem; align-items:center;">
-                        <div style="font-size:3rem;">💿</div>
-                        <div style="flex:1;">
-                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span>掛載點: /nas_storage</span><span style="color:var(--success-color);font-weight:800;">狀態: 運作中</span></div>
-                            <div class="progress-bar"><div id="nas-data-bar" class="progress-fill" style="width:0%;background:var(--success-color);"></div></div>
-                            <div style="margin-top:10px;font-size:0.8rem;color:var(--text-muted);">型號: Absolute-Axis_1.vhd (VirtualBox)</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <h2 class="card-title">🕒 備份管理與排程</h2>
-                <table class="admin-table">
-                    <thead><tr><th>日期</th><th>任務類型</th><th>來源</th><th>存檔點</th><th>狀態</th></tr></thead>
-                    <tbody>
-                        <tr><td>2026-03-27 12:00</td><td>系統快照</td><td>SATA 0</td><td>SATA 1</td><td><span class="role-badge role-member">成功</span></td></tr>
-                        <tr><td>2026-03-26 12:00</td><td>資料備份</td><td>SATA 1</td><td>External</td><td><span class="role-badge role-admin">失敗</span></td></tr>
-                    </tbody>
-                </table>
             </div>
         </div>
 
@@ -394,246 +182,105 @@
             <div class="card" style="margin-bottom:2rem; background:linear-gradient(135deg, rgba(88, 166, 255, 0.1), transparent); border-color:var(--accent-color);">
                 <h2 class="card-title" style="color:var(--accent-color);">⚡ 佈署新作業系統 (Deploy New OS)</h2>
                 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:1.2rem;">
-                    <!-- Windows OS -->
-                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">🪟</div>
-                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Windows 11</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">完整桌面端作業系統</div>
-                        <button class="btn btn-primary" style="width:100%; padding:8px;" onclick="promptDeployVM('win11', 'Windows 11')">部署實例</button>
-                    </div>
-                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">🖥️</div>
-                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Win Server 2022</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">企業級伺服器版本</div>
-                        <button class="btn btn-primary" style="width:100%; padding:8px;" onclick="promptDeployVM('win-server', 'Windows Server 2022')">部署實例</button>
-                    </div>
-                    <!-- Linux OS -->
-                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">🐧</div>
-                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Ubuntu Desktop</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">極速 KasmVNC 桌面</div>
-                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('ubuntu', 'Ubuntu 桌面版')">部署實例</button>
-                    </div>
-                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">🐉</div>
-                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Kali Linux</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">資安與滲透測試</div>
-                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('kali', 'Kali Linux')">部署實例</button>
-                    </div>
-                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">❄️</div>
-                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Arch Linux</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">高階輕量化發行版</div>
-                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('arch', 'Arch Linux')">部署實例</button>
-                    </div>
-                    <!-- Others -->
-                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">🍎</div>
-                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">macOS</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">蘋果黑蘋果封裝</div>
-                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('macos', 'macOS OSX')">部署實例</button>
-                    </div>
-                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">📱</div>
-                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Android-x86</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">Android 手機模擬器</div>
-                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('android', 'Android')">部署實例</button>
-                    </div>
+                    <div class="file-card" onclick="promptDeployVM('win11', 'Windows 11')">🪟 Windows 11</div>
+                    <div class="file-card" onclick="promptDeployVM('win-server', 'Windows Server 2022')">🖥️ Server 2022</div>
+                    <div class="file-card" onclick="promptDeployVM('ubuntu', 'Ubuntu')">🐧 Ubuntu</div>
+                    <div class="file-card" onclick="promptDeployVM('kali', 'Kali Linux')">🐉 Kali Linux</div>
+                    <div class="file-card" onclick="promptDeployVM('arch', 'Arch Linux')">❄️ Arch Linux</div>
+                    <div class="file-card" onclick="promptDeployVM('macos', 'macOS')">🍎 macOS</div>
+                    <div class="file-card" onclick="promptDeployVM('android', 'Android')">📱 Android</div>
                 </div>
             </div>
-
             <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <h2 class="card-title" style="margin:0;">🗄️ 運行中的虛擬機 (Active Instances)</h2>
-                    <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="loadDocker()">重新整理</button>
-                </div>
+                <h2 class="card-title">🗄️ 運行中的虛擬機 (Active Instances)</h2>
                 <div id="docker-list" style="display:flex; flex-direction:column; gap:12px;"></div>
             </div>
         </div>
+
+        <!-- View: Metrics -->
+        <div id="view-metrics" class="view-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                <h2 class="card-title">📈 實時數據分析 (Real-time Analytics)</h2>
+                <button class="btn btn-outline" onclick="switchView('dashboard')">返回戰情中心</button>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-chart-card"><canvas id="chart-cpu"></canvas></div>
+                <div class="metric-chart-card"><canvas id="chart-ram"></canvas></div>
+            </div>
+        </div>
+
+        <!-- View: Cloud -->
+        <div id="view-cloud" class="view-section">
+            <div class="nas-view-container">
+                <div class="nas-sidebar">
+                    <div id="nas-nav-drive" class="nav-item nas-nav active" onclick="nasNav('drive')">📁 我的檔案</div>
+                    <div id="nas-nav-shared" class="nav-item nas-nav" onclick="nasNav('shared')">👥 與我共用</div>
+                    <div id="nas-nav-starred" class="nav-item nas-nav" onclick="nasNav('starred')">⭐ 已加星號</div>
+                    <div id="nas-nav-trash" class="nav-item nas-nav" onclick="nasNav('trash')" style="margin-top:auto; color:var(--danger-color);">🗑️ 垃圾桶</div>
+                </div>
+                <div class="nas-content">
+                    <div id="nas-explorer" class="file-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: NAS Mgnt -->
+        <div id="view-nas-mgnt" class="view-section">
+            <div class="card"><h2 class="card-title">📀 實體硬碟陣列管理</h2><div id="nas-specs-grid"></div></div>
+        </div>
+
+        <!-- View: Admin -->
+        <div id="view-admin" class="view-section">
+            <div class="card"><h2 class="card-title">👥 帳號管理</h2><table class="admin-table"><thead><tr><th>使用者</th><th>權限</th><th>操作</th></tr></thead><tbody id="user-table-body"></tbody></table></div>
+        </div>
+
+        <!-- View: Settings -->
+        <div id="view-settings" class="view-section">
+            <div class="card"><h2 class="card-title">⚙️ 系統設定</h2><div style="display:flex;flex-direction:column;gap:15px;"><button class="btn btn-outline" onclick="setTheme('default')">預設主題</button><button class="btn btn-outline" onclick="setTheme('sparkle')">粉紅火花主題</button><button class="btn btn-danger" onclick="doLogout()">登出</button></div></div>
+        </div>
+
     </main>
 
-    <!-- 終極隔離 Popover -->
+    <!-- Modals -->
     <div id="user-popover" class="user-popover">
         <div style="border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:12px;">
             <span id="pop-name" style="font-weight:800; font-size:1.1rem; color:#fff; display:block;">--</span>
-            <span id="pop-role" style="font-size:0.75rem; color:var(--accent-color); font-weight:800; margin-top:5px; display:block;">--</span>
+            <span id="pop-role" style="font-size:0.75rem; color:var(--accent-color); font-weight:800; display:block;">--</span>
         </div>
-        <button class="btn btn-outline" style="width:100%; margin-bottom:8px; padding:8px;" onclick="switchView('settings');window.toggleAxisPopover()">系統設定</button>
-        <button class="btn btn-danger" style="width:100%; padding:8px;" onclick="doLogout()">登出系統</button>
+        <button class="btn btn-danger" style="width:100%;" onclick="doLogout()">登出系統</button>
     </div>
 
-    <!-- 修改名稱/密碼 Modal -->
-    <div id="modal-profile" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
-        <div class="card" style="width:400px;text-align:center;">
-            <h2 style="margin-bottom:1.5rem;">修改姓名與密碼</h2>
-            <input type="text" id="edit-name" class="t-input" placeholder="新用戶名稱 (不改留空)">
-            <input type="password" id="edit-pass" class="t-input" placeholder="新登錄密碼 (不改留空)">
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:1rem;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-profile').style.display='none'">取消</button>
-                <button class="btn btn-primary" onclick="saveProfile()">確認修改</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 更換頭像 Modal -->
-    <div id="modal-avatar" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
-        <div class="card" style="width:400px;text-align:center;">
-            <h2 style="margin-bottom:1.5rem;">更換個人頭像</h2>
-            <input type="text" id="edit-ava" class="t-input" placeholder="頭像圖片連結 https://...">
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:1rem;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-avatar').style.display='none'">取消</button>
-                <button class="btn btn-primary" onclick="saveAvatar()">確認更換</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 新增系統帳號 Modal -->
-    <div id="modal-create-user" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
-        <div class="card" style="width:400px;">
-            <h2 style="margin-bottom:1.5rem; text-align:center;">新增系統帳號</h2>
-            <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem; text-align:center; line-height:1.6;">
-                ⚠️ 建立新帳號將自動從 HDD (SATA 1) 預分配 <b style="color:var(--accent-color);">1GB</b> 存儲配額。
-            </div>
-            <input type="text" id="new-user-name" class="t-input" placeholder="使用者名稱">
-            <input type="password" id="new-user-pass" class="t-input" placeholder="登入密碼">
-            <select id="new-user-role" class="t-input">
-                <option value="Member">一般使用者 (Member)</option>
-                <option value="Administrator">管理員 (Administrator)</option>
-            </select>
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:1.5rem;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-create-user').style.display='none'">取消</button>
-                <button class="btn btn-primary" onclick="confirmCreateUser()">確認建立</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 管理員編輯 Modal -->
-    <div id="modal-admin-edit" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
-        <div class="card" style="width:400px;">
-            <h2 style="margin-bottom:1.5rem; text-align:center;">管理員編輯：<span id="target-user-name" style="color:var(--accent-color);"></span></h2>
-            <input type="password" id="admin-user-pass" class="t-input" placeholder="新密碼 (不改留空)">
-            <select id="admin-user-role" class="t-input">
-                <option value="Member">一般使用者 (Member)</option>
-                <option value="Administrator">管理員 (Administrator)</option>
-            </select>
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:1.5rem;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-admin-edit').style.display='none'">取消</button>
-                <button class="btn btn-primary" onclick="confirmAdminEdit()">確認變更</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 檔案分享 Modal -->
-    <div id="modal-share" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
-        <div class="card" style="width:420px; text-align:center; padding:30px;">
-            <div style="font-size:3rem; margin-bottom:1.5rem;">🔗</div>
-            <h2 style="margin-bottom:1rem;">共用此項目</h2>
-            <div id="share-target-name" style="color:var(--text-muted); margin-bottom:2rem; font-size:0.9rem; word-break:break-all;"></div>
-            <div style="text-align:left; margin-bottom:8px; font-size:0.8rem; color:var(--text-muted); font-weight:700;">選擇共用對象：</div>
-            <select id="share-user-select" class="t-input"></select>
-            <div style="display:flex; gap:12px; justify-content:center;">
-                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-share').style.display='none'">取消</button>
-                <button class="btn btn-primary" style="flex:1;" onclick="confirmShare()">確認共用</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 檔案預覽 Modal -->
-    <div id="modal-preview" style="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300000;display:none;flex-direction:column;justify-content:center;align-items:center;backdrop-filter:blur(15px);">
+    <div id="modal-preview" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:300000;display:none;flex-direction:column;justify-content:center;align-items:center;backdrop-filter:blur(15px);">
         <div style="position:absolute; top:20px; right:20px; color:#fff; cursor:pointer; font-size:2rem;" onclick="closePreview()">✕</div>
-        <div id="preview-content" style="width:90%; height:80%; display:flex; justify-content:center; align-items:center; overflow:hidden;"></div>
+        <div id="preview-content" style="width:90%; height:80%; display:flex; justify-content:center; align-items:center;"></div>
         <div id="preview-filename" style="margin-top:20px; color:#fff; font-size:1.1rem; font-weight:800;">檔案預覽</div>
     </div>
 
-    <!-- VM Deploy Modal -->
-    <div id="modal-deploy-vm" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
+    <div id="modal-deploy-vm" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
         <div class="card" style="width:450px;">
-            <h2 style="margin-bottom:0.5rem; text-align:center;" id="deploy-vm-title">部署虛擬機</h2>
-            <div style="text-align:center; color:var(--accent-color); font-weight:800; font-size:0.8rem; margin-bottom:1.5rem;" id="deploy-vm-os"></div>
-            
+            <h2 style="text-align:center;" id="deploy-vm-title">部署虛擬機</h2>
+            <div style="text-align:center; color:var(--accent-color); font-weight:800; margin-bottom:1rem;" id="deploy-vm-os"></div>
             <input type="hidden" id="vm-os-internal">
-            <div style="margin-bottom:10px;"><label style="font-size:0.85rem;font-weight:800;">虛擬機名稱 (不可有空白)</label><input type="text" id="vm-name" class="t-input" placeholder="例如: win11_dev"></div>
-            
-            <div style="display:flex; gap:15px;">
-                <div style="flex:1;"><label style="font-size:0.85rem;font-weight:800;">配置 CPU 核心數</label><input type="number" id="vm-cpu" class="t-input" value="4" min="1" max="64"></div>
-                <div style="flex:1;"><label style="font-size:0.85rem;font-weight:800;">配置記憶體 (GB)</label><input type="number" id="vm-ram" class="t-input" value="8" min="2" max="64"></div>
+            <input type="text" id="vm-name" class="t-input" placeholder="虛擬機名稱">
+            <div style="display:flex; gap:15px; margin-bottom:1rem;">
+                <div style="flex:1;"><label>CPU 核</label><input type="number" id="vm-cpu" class="t-input" value="4"></div>
+                <div style="flex:1;"><label>RAM (G)</label><input type="number" id="vm-ram" class="t-input" value="8"></div>
             </div>
-
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1.5rem; line-height:1.6; padding:10px; background:var(--sidebar-color); border:1px solid var(--border-color); border-radius:8px;">
-                ⚙️ 系統將自動抓取 ISO 並透過 KVM 硬體直通啟動。<br>
-                🔗 部署後，按綠色按鈕開啟瀏覽器 WebVNC 即時操作介面。
-            </div>
-
-            <div style="display:flex;gap:10px;justify-content:center;">
-                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-deploy-vm').style.display='none'">取消</button>
-                <button class="btn btn-primary" style="flex:1;" onclick="confirmDeployVM()">🚀 開始部署</button>
-            </div>
+            <div style="display:flex;gap:10px;"><button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-deploy-vm').style.display='none'">取消</button><button class="btn btn-primary" style="flex:1;" onclick="confirmDeployVM()">開始部署</button></div>
         </div>
     </div>
-        <div style="position:absolute; top:20px; right:20px; color:#fff; cursor:pointer; font-size:2rem;" onclick="closePreview()">✕</div>
-        <div id="preview-content" style="width:90%; height:80%; display:flex; justify-content:center; align-items:center; overflow:hidden;"></div>
-        <div id="preview-filename" style="margin-top:20px; color:#fff; font-size:1.1rem; font-weight:800;">檔案預覽</div>
-    </div>
 
-    <!-- 右鍵選單 -->
     <div id="nas-context-menu" class="context-menu">
-        <div class="context-menu-item" id="cm-open" onclick="cmAction('open')">📂 開啟</div>
-        <div class="context-menu-item" id="cm-dl" onclick="cmAction('dl')">⬇️ 下載</div>
-        <div class="context-menu-item" id="cm-share" onclick="cmAction('share')">🔗 共用</div>
-        <div class="context-menu-item" id="cm-star" onclick="cmAction('star')">⭐ 收藏 / 取消</div>
-        <div style="height:1px; background:var(--border-color); margin:5px 0;"></div>
-        <div class="context-menu-item" id="cm-restore" style="display:none" onclick="cmAction('restore')">🔄 還原</div>
-        <div class="context-menu-item" id="cm-trash" style="color:var(--danger-color)" onclick="cmAction('trash')">🗑️ 移至回收站</div>
-        <div class="context-menu-item" id="cm-del" style="color:var(--danger-color); display:none" onclick="cmAction('delete')">❌ 永久刪除</div>
+        <div class="context-menu-item" onclick="cmAction('open')">📂 開啟 / 預覽</div>
+        <div class="context-menu-item" onclick="cmAction('dl')">⬇️ 下載</div>
     </div>
 
     <script>
         let authToken = localStorage.getItem('axis_token');
         let myRole = localStorage.getItem('axis_role');
         let currentNASPath = "";
-        let nasViewMode = 'grid';
         let currentNASMode = 'drive';
         let cpuChart, ramChart;
-
-        // 主題初始化
-        if(localStorage.getItem('axis_theme') === 'light') {
-            document.body.classList.add('light-mode');
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            const theme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
-            localStorage.setItem('axis_theme', theme);
-            updateThemeIcon();
-        }
-        function updateThemeIcon() {
-            const btn = document.getElementById('theme-toggle');
-            if(!btn) return;
-            btn.innerText = document.body.classList.contains('light-mode') ? '🌙' : '☀️';
-        }
-        updateThemeIcon();
-
-        function toggleNASView(mode) {
-            nasViewMode = mode;
-            const isLight = document.body.classList.contains('light-mode');
-            const activeColor = isLight ? '#fff' : '#0d1117';
-            
-            document.getElementById('btn-grid').style.background = (mode==='grid'?'var(--accent-color)':'transparent');
-            document.getElementById('btn-grid').style.color = (mode==='grid'?activeColor:'var(--text-main)');
-            document.getElementById('btn-list').style.background = (mode==='list'?'var(--accent-color)':'transparent');
-            document.getElementById('btn-list').style.color = (mode==='list'?activeColor:'var(--text-main)');
-            loadNASFiles(currentNASPath);
-        }
-
-        function openSettingPanel(id) {
-            document.getElementById('settings-main').style.display = 'none';
-            document.querySelectorAll('.settings-panel').forEach(p=>p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-        function closeSettingPanel() {
-            document.getElementById('settings-main').style.display = 'block';
-            document.querySelectorAll('.settings-panel').forEach(p=>p.classList.remove('active'));
-        }
 
         async function doLogin() {
             const u=document.getElementById('login-user').value; const p=document.getElementById('login-pass').value;
@@ -641,453 +288,21 @@
             if(res.ok){
                 const d=await res.json(); localStorage.setItem('axis_token',d.token); localStorage.setItem('axis_role',d.role);
                 localStorage.setItem('axis_user',d.username); localStorage.setItem('axis_avatar',d.avatar); location.reload();
-            } else alert('Unauthorized');
+            } else alert('登入失敗');
         }
 
         async function authFetch(url,opts={}){if(!opts.headers)opts.headers={};opts.headers['Authorization']=`Bearer ${authToken}`;const r=await fetch(url,opts);if(r.status===401){localStorage.clear();location.reload();}return r;}
 
-        window.toggleAxisPopover = function(e){
-            if(e) e.stopPropagation();
-            const p = document.getElementById('user-popover');
-            if(p) p.classList.toggle('active');
-        }
-
-        window.addEventListener('click', (e) => {
-            const btn = document.getElementById('avatar-btn');
-            const popover = document.getElementById('user-popover');
-            if (btn && popover && !btn.contains(e.target) && !popover.contains(e.target)) {
-                popover.classList.remove('active');
-            }
-        });
-
-        function toggleNewMenu() {
-            const m = document.getElementById('new-menu');
-            m.style.display = (m.style.display === 'none' ? 'block' : 'none');
-        }
-
-        async function promptMkdir() {
-            const name = prompt("請輸入資料夾名稱:");
-            if(name) {
-                const res = await authFetch('/api/nas/mkdir', {
-                    method:'POST', headers:{'Content-Type':'application/json'}, 
-                    body:JSON.stringify({path: currentNASPath, name: name})
-                });
-                if(res.ok) loadNASFiles(currentNASPath);
-            }
-        }
+        window.toggleAxisPopover = (e)=>{ if(e) e.stopPropagation(); const p=document.getElementById('user-popover'); p.style.display=(p.style.display==='flex'?'none':'flex'); }
 
         function switchView(v){
-            if(['smart','ai'].includes(v)){
-                const ts={'smart':'智慧宅控','ai':'核心 AI 助手'}; const is={'smart':'🏡','ai':'🤖'};
-                document.getElementById('ph-title').innerText=ts[v]+" 系統尚未開放";
-                document.getElementById('ph-icon').innerText=is[v];
-                v='placeholder';
-            }
             document.querySelectorAll('.view-section').forEach(e=>e.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
-            document.getElementById('view-'+v).classList.add('active');
-            let nId='nav-'+v; if(v==='placeholder') nId=(document.getElementById('ph-icon').innerText==='🏡'?'nav-smart':'nav-ai');
-            const n=document.getElementById(nId); if(n) n.classList.add('active');
-            
-            const titles = {'dashboard':'戰情總覽','vritual':'虛擬化中心','cloud':'私有雲儲存','nas-mgnt':'NAS 管理中樞','admin':'帳號管理','settings':'系統設定','metrics':'實時數據分析'};
-            document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').innerText.replace(' 系統尚未開放','');
-
+            const target = document.getElementById('view-'+v); if(target) target.classList.add('active');
+            const nav = document.getElementById('nav-'+v); if(nav) nav.classList.add('active');
             if(v==='cloud') loadNASFiles('');
-            if(v==='admin') loadUsers();
-            if(v==='settings') { closeSettingPanel(); loadSpecs(); }
             if(v==='vritual') loadDocker();
             if(v==='metrics') initCharts();
-        }
-
-        function initCharts() {
-            if(cpuChart) return;
-            const config = (label, color) => ({
-                type: 'line',
-                data: { labels: Array(30).fill(''), datasets: [{ label: label, data: Array(30).fill(0), borderColor: color, tension: 0.3, fill: true, backgroundColor: color+'11', pointRadius: 0, borderWidth: 2 }] },
-                options: { responsive: true, maintainAspectRatio: false, animation: { duration: 0 }, scales: { y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { display: false } }, plugins: { legend: { display: false } } }
-            });
-            cpuChart = new Chart(document.getElementById('chart-cpu').getContext('2d'), config('CPU %', '#00d2ff'));
-            ramChart = new Chart(document.getElementById('chart-ram').getContext('2d'), config('RAM %', '#00ff88'));
-        }
-
-        function nasNav(m) {
-            currentNASMode = m; currentNASPath = '';
-            document.querySelectorAll('.nas-nav').forEach(e => e.classList.remove('active'));
-            const navEl = document.getElementById('nas-nav-'+m);
-            if(navEl) navEl.classList.add('active');
-            loadNASFiles('');
-        }
-
-        async function toggleStar(p){ await authFetch('/api/nas/toggle_star',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})}); loadNASFiles(currentNASPath); }
-        async function nasToTrash(p){ await authFetch('/api/nas/trash',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})}); loadNASFiles(currentNASPath); }
-        
-        async function openShare(p){
-            const res = await authFetch('/api/nas/users');
-            if(!res.ok) return alert("無法獲取使用者列表");
-            const users = await res.json();
-            const sel = document.getElementById('share-user-select');
-            sel.innerHTML = users.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
-            document.getElementById('share-target-name').innerText = p.split('/').pop();
-            document.getElementById('modal-share').setAttribute('data-path', p);
-            document.getElementById('modal-share').style.display = 'flex';
-        }
-
-        async function confirmShare(){
-            const p = document.getElementById('modal-share').getAttribute('data-path');
-            const target = document.getElementById('share-user-select').value;
-            if(!target) return alert('請選擇對象');
-            await authFetch('/api/nas/share', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p, target_user:target})});
-            document.getElementById('modal-share').style.display = 'none';
-        }
-
-        let cmData = {path: '', isDir: false, ext: '', owner: ''};
-        function showCM(e, path, isDir, ext, owner = '') {
-            e.preventDefault(); e.stopPropagation();
-            cmData = {path, isDir, ext, owner};
-            const cm = document.getElementById('nas-context-menu');
-            cm.style.display = 'block'; cm.style.left = e.clientX + 'px'; cm.style.top = e.clientY + 'px';
-            
-            // 根據模式調整選單項
-            document.getElementById('cm-share').style.display = (currentNASMode==='drive' && !isDir)?'flex':'none';
-            document.getElementById('cm-star').style.display = (currentNASMode==='drive')?'flex':'none';
-            document.getElementById('cm-restore').style.display = (currentNASMode==='trash')?'flex':'none';
-            document.getElementById('cm-trash').style.display = (currentNASMode==='drive')?'flex':'none';
-            document.getElementById('cm-del').style.display = (currentNASMode==='trash')?'flex':'none';
-            document.getElementById('cm-dl').style.display = (isDir)?'none':'flex';
-            document.getElementById('cm-open').innerText = isDir?'📂 開啟資料夾':'🔍 預覽檔案';
-        }
-
-        window.addEventListener('click', () => document.getElementById('nas-context-menu').style.display = 'none');
-        window.addEventListener('contextmenu', (e) => { if(!e.target.closest('.file-card') && !e.target.closest('.file-list-item')) document.getElementById('nas-context-menu').style.display = 'none'; });
-
-        async function cmAction(act) {
-            const p = cmData.path; const o = cmData.owner;
-            document.getElementById('nas-context-menu').style.display = 'none';
-            if(act==='open') { if(cmData.isDir) loadNASFiles(p); else previewFile(p, cmData.ext, o); }
-            if(act==='dl') nasDL(p, o);
-            if(act==='share') openShare(p);
-            if(act==='star') toggleStar(p);
-            if(act==='trash') nasToTrash(p);
-            if(act==='restore') { await authFetch('/api/nas/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})}); loadNASFiles(''); }
-            if(act==='delete') { if(confirm('永久刪除？不可恢復！')) { await authFetch('/api/nas/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})}); loadNASFiles(''); } }
-        }
-
-        async function loadNASFiles(path) {
-            // 如果從星號或近期點擊資料夾，自動切換至 drive 模式以支援深度導航
-            if(path && (currentNASMode === 'starred' || currentNASMode === 'recent')) {
-                currentNASMode = 'drive';
-                document.querySelectorAll('.nas-nav').forEach(e => e.classList.remove('active'));
-                const driveNav = document.getElementById('nas-nav-drive');
-                if(driveNav) driveNav.classList.add('active');
-            }
-            
-            currentNASPath = path;
-            const res = await authFetch(`/api/nas/list?path=${encodeURIComponent(path)}&mode=${currentNASMode}`);
-            if(!res.ok) return;
-            const data = await res.json();
-            
-            // 麵包屑
-            const bc = document.getElementById('nas-breadcrumb');
-            const modeNames = {'drive':'我的雲端硬碟','shared':'與我共用','starred':'已加星號','recent':'近期存取','trash':'回收站'};
-            bc.innerHTML = `<span style="color:var(--text-muted); cursor:pointer;" onclick="nasNav('${currentNASMode}')">${modeNames[currentNASMode]}</span>`;
-            if(currentNASMode === 'drive') {
-                const parts = path.split('/').filter(p=>p);
-                let cum = '';
-                parts.forEach((p, i) => {
-                    cum += (i===0?'':'/') + p;
-                    bc.innerHTML += ` <span style="color:var(--text-muted);">/</span> <span style="cursor:pointer;" onclick="loadNASFiles('${cum}')">${p}</span>`;
-                });
-            }
-
-            // 檔案列表
-            const exp = document.getElementById('nas-explorer');
-            exp.className = (nasViewMode==='grid'?'file-grid':'file-list');
-            exp.innerHTML = data.files.length ? '' : '<div style="color:var(--text-muted); padding:2rem; width:100%; text-align:center;">此目錄為空</div>';
-            
-            data.files.forEach(f => {
-                const icon = f.is_dir ? '📁' : (['.jpg','.png','.jpeg','.gif'].includes(f.ext)?'🖼️':(f.ext==='.pdf'?'📄':'📄'));
-                const fullPath = (currentNASMode==='shared'?f.path:((currentNASPath?currentNASPath+'/':'')+f.name));
-                const owner = f.owner || '';
-
-                if(nasViewMode === 'grid') {
-                    const card = document.createElement('div');
-                    card.className = 'card file-card';
-                    card.style.position = 'relative';
-                    const starIcon = f.starred ? '⭐' : '☆';
-                    card.onclick = f.is_dir ? () => loadNASFiles(fullPath) : () => previewFile(fullPath, f.ext, owner);
-                    card.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
-                    card.innerHTML = `
-                        <div style="position:absolute; top:12px; left:12px; cursor:pointer; font-size:1.1rem;" onclick="event.stopPropagation(); toggleStar('${fullPath}')">${currentNASMode==='drive'?starIcon:''}</div>
-                        <div style="font-size:2rem; margin-bottom:12px;">${icon}</div>
-                        <div style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center; color:var(--text-main); min-width:0;">${f.name}</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">${f.is_dir?'資料夾':(f.size/1024/1024).toFixed(1)+' MB'}</div>
-                        ${f.owner?`<div style="font-size:0.65rem; color:var(--accent-color); margin-top:4px;">來自: ${f.owner}</div>`:''}
-                    `;
-                    exp.appendChild(card);
-                } else {
-                    const item = document.createElement('div');
-                    item.className = 'file-list-item';
-                    item.style = "display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:12px; margin-bottom:10px; cursor:pointer; width:100%; min-width:0; transition:all 0.2s;";
-                    item.onclick = f.is_dir ? () => loadNASFiles(fullPath) : () => previewFile(fullPath, f.ext, owner);
-                    item.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
-                    const starIcon = f.starred ? '⭐' : '☆';
-                    item.innerHTML = `
-                        <div style="display:flex; align-items:center; gap:18px; flex:1; min-width:0;">
-                            <span style="cursor:pointer; font-size:1.1rem; flex-shrink:0;" onclick="event.stopPropagation(); toggleStar('${fullPath}')">${currentNASMode==='drive'?starIcon:''}</span>
-                            <div style="font-size:1.5rem; flex-shrink:0;">${icon}</div>
-                            <div style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; color:var(--text-main); min-width:0;">
-                                ${f.name} ${f.owner?`<span style="font-size:0.7rem; color:var(--accent-color); margin-left:8px;">(來自: ${f.owner})</span>`:''}
-                            </div>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:25px; flex-shrink:0; margin-left:15px;">
-                            <div style="font-size:0.8rem; color:var(--text-muted); min-width:80px; text-align:right;">${f.is_dir?'資料夾':(f.size/1024/1024).toFixed(1)+' MB'}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted); width:130px; text-align:right;">${f.modified}</div>
-                        </div>
-                    `;
-                    exp.appendChild(item);
-                }
-            });
-
-            // 更新實時圖表
-            if(cpuChart) {
-                cpuChart.data.datasets[0].data.push(data.cpu_percent);
-                if(cpuChart.data.datasets[0].data.length > 30) cpuChart.data.datasets[0].data.shift();
-                cpuChart.update();
-            }
-            if(ramChart) {
-                ramChart.data.datasets[0].data.push(data.ram_percent);
-                if(ramChart.data.datasets[0].data.length > 30) ramChart.data.datasets[0].data.shift();
-                ramChart.update();
-            }
-
-            // 更新配額條
-            const qP = (data.quota_used / data.quota_total * 100);
-            document.getElementById('quota-bar').style.width = qP + '%';
-            document.getElementById('quota-label').innerText = `${(data.quota_used/1024/1024).toFixed(0)} MB / ${(data.quota_total/1024/1024).toFixed(0)} MB`;
-        }
-
-        async function nasDL(p, owner = ''){
-            const url = `/api/nas/download?path=${encodeURIComponent(p)}${owner?'&owner='+encodeURIComponent(owner):''}`;
-            const r = await authFetch(url); 
-            if(r.ok){
-                const b=await r.blob(); 
-                const u=URL.createObjectURL(b); 
-                const a=document.createElement('a'); 
-                a.href=u; 
-                a.download=p.split('/').pop(); 
-                a.click();
-            }
-        }
-        async function nasDel(p){if(confirm('確定刪除？')){await authFetch('/api/nas/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})});loadNASFiles(currentNASPath);}}
-
-        async function nasUpload() {
-            const input = document.getElementById('nas-up');
-            if(!input.files.length) return;
-            const file = input.files[0];
-            const mon = document.getElementById('upload-monitor');
-            const bar = document.getElementById('up-bar');
-            const speed = document.getElementById('up-speed');
-            const name = document.getElementById('up-filename');
-
-            mon.style.display = 'block';
-            name.innerText = file.name;
-            bar.style.width = '0%'; speed.innerText = '-- MB/s';
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('path', currentNASPath);
-
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/nas/upload', true);
-            xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
-            
-            const startT = Date.now();
-            xhr.upload.onprogress = (e) => {
-                if(e.lengthComputable) {
-                    const pct = (e.loaded / e.total * 100).toFixed(1);
-                    bar.style.width = pct + '%';
-                    const dur = (Date.now() - startT) / 1000;
-                    if(dur > 0) speed.innerText = (e.loaded / 1024 / 1024 / dur).toFixed(1) + ' MB/s';
-                }
-            };
-            xhr.onload = () => { setTimeout(() => { mon.style.display = 'none'; loadNASFiles(currentNASPath); }, 1000); };
-            xhr.onerror = () => { alert('Upload failed!'); mon.style.display = 'none'; };
-            xhr.send(formData);
-        }
-
-        function promptDeployVM(internalName, displayName) {
-            document.getElementById('vm-os-internal').value = internalName;
-            document.getElementById('deploy-vm-os').innerText = displayName;
-            document.getElementById('vm-name').value = internalName + "_01";
-            document.getElementById('modal-deploy-vm').style.display = 'flex';
-        }
-
-        async function confirmDeployVM() {
-            const os = document.getElementById('vm-os-internal').value;
-            const name = document.getElementById('vm-name').value;
-            const cpu = parseInt(document.getElementById('vm-cpu').value);
-            const ram = parseInt(document.getElementById('vm-ram').value);
-            
-            if(!name || name.includes(" ")) return alert("名稱不得有空白");
-
-            document.getElementById('modal-deploy-vm').style.display = 'none';
-            const btn = event.target;
-            
-            try {
-                const res = await authFetch('/api/docker/deploy', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({os_internal_name: os, container_name: name, cpu_cores: cpu, ram_gb: ram})
-                });
-                const d = await res.json();
-                if(res.ok) {
-                    alert(d.message);
-                    setTimeout(loadDocker, 2000);
-                } else alert(d.message || "Failed to deploy");
-            } catch(e) {
-                alert("Request error");
-            }
-        }
-
-        async function controlDocker(id, act){
-            await authFetch('/api/docker/control', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({container_id:id,action:act})});
-            setTimeout(loadDocker, 1000);
-        }
-
-        function openVNC(ip, port) {
-            // Because window is host, but user calls this, we map to current hostname + the dynamic port
-            const url = `http://${window.location.hostname}:${port}`;
-            window.open(url, '_blank');
-        }
-
-        async function loadDocker(){
-            const r = await authFetch('/api/docker/containers');
-            if(!r.ok) return;
-            const list = await r.json();
-            const el = document.getElementById('docker-list');
-            el.innerHTML = '';
-            
-            if(list.length === 0) {
-                el.innerHTML = '<div style="color:var(--text-muted); padding:2rem; width:100%; text-align:center;">無運作中的虛擬機。</div>';
-                return;
-            }
-
-            list.forEach(c => {
-                const up = c.State.toLowerCase() === 'running';
-                const statusClr = up ? 'var(--success-color)' : 'var(--text-muted)';
-                const item = document.createElement('div');
-                item.className = 'file-list-item';
-                item.style = `display:flex; align-items:center; justify-content:space-between; padding:15px 25px; border-left:4px solid ${statusClr};`;
-                
-                const names = c.Names;
-                const isHeavyOS = c.Image.includes("dockurr") || c.Image.includes("linuxserver") || c.Image.includes("sickcodes") || c.Image.includes("android");
-                
-                let vncHtml = "";
-                if(up && isHeavyOS && c.vnc_port) {
-                    vncHtml = `<button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem; background:var(--success-color); color:#0d1117;" onclick="openVNC('${window.location.hostname}', '${c.vnc_port}')">🖥️ 打開 WebVNC 桌面</button>`;
-                } else if(up && isHeavyOS) {
-                    vncHtml = `<span style="font-size:0.75rem; color:var(--text-muted);">啟動中 (待 WebVNC 就緒)...</span>`;
-                }
-
-                item.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:18px;">
-                        <div style="font-size:2rem;">${isHeavyOS ? '📦' : '🐳'}</div>
-                        <div>
-                            <div style="font-weight:800; font-size:1.1rem; color:var(--text-main);">${names}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:5px; font-family:monospace;">${c.Image} • ID: ${c.ID}</div>
-                        </div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        ${vncHtml}
-                        ${up ? `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--danger-color); border-color:var(--border-color);" onclick="controlDocker('${c.ID}','stop')">■ 停止</button>` 
-                             : `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--accent-color); border-color:var(--accent-color);" onclick="controlDocker('${c.ID}','start')">▶ 啟動</button>`}
-                        <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="controlDocker('${c.ID}','restart')">↻ 重啟</button>
-                        <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem;" onclick="controlDocker('${c.ID}','rm -f')">🗑️ 移除</button>
-                    </div>
-                `;
-                el.appendChild(item);
-            });
-        }
-
-        function openProfileEdit(){document.getElementById('modal-profile').style.display='flex';}
-        function openAvatarEdit(){document.getElementById('modal-avatar').style.display='flex';}
-
-        async function previewFile(path, ext, owner = '') {
-            console.log("Previewing:", path, ext, "Owner:", owner);
-            const url = `/api/nas/download?path=${encodeURIComponent(path)}${owner?'&owner='+encodeURIComponent(owner):''}`;
-            const c = document.getElementById('preview-content');
-            const n = document.getElementById('preview-filename');
-            if(!c || !n) return;
-            n.innerText = path.split('/').pop();
-            c.innerHTML = '<div style="color:#fff; font-size:1.2rem;">🖼️ Loading Preview...</div>';
-            document.getElementById('modal-preview').style.display = 'flex';
-
-            try {
-                const headers = {'Authorization': 'Bearer ' + authToken};
-                const res = await fetch(url, {headers});
-                if(!res.ok) throw new Error("Load failed");
-                const blob = await res.blob();
-                const blobUrl = URL.createObjectURL(blob);
-                const eTypes = (ext || "").toLowerCase();
-
-                if(['.jpg', '.png', '.gif', '.webp', '.jpeg'].includes(eTypes)) {
-                    c.innerHTML = `<img src="${blobUrl}" style="max-width:100%; max-height:100%; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.5);">`;
-                } else if(['.pdf'].includes(eTypes)) {
-                    c.innerHTML = `<iframe src="${blobUrl}" style="width:100%; height:100%; border:none; border-radius:12px;"></iframe>`;
-                } else if(['.mp4', '.webm', '.ogg'].includes(eTypes)) {
-                    c.innerHTML = `<video controls autoplay src="${blobUrl}" style="max-width:100%; max-height:100%; border-radius:12px;"></video>`;
-                } else {
-                    const text = await blob.text();
-                    c.innerHTML = `<pre style="color:#fff; background:rgba(0,0,0,0.5); padding:30px; border-radius:12px; border:1px solid var(--border-color); width:100%; height:100%; overflow:auto; text-align:left; font-size:0.9rem; line-height:1.6;">${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;
-                }
-            } catch(e) {
-                console.error(e);
-                c.innerHTML = '<div style="color:var(--danger-color);">此檔案格式不支援預覽或載入失敗</div>';
-            }
-        }
-        function closePreview() {
-            document.getElementById('modal-preview').style.display = 'none';
-            document.getElementById('preview-content').innerHTML = '';
-        }
-
-        async function saveProfile(){
-            const name=document.getElementById('edit-name').value; const pass=document.getElementById('edit-pass').value;
-            const res = await authFetch('/api/user/update_profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({new_name:name,new_pass:pass})});
-            if(res.ok) {
-                const data = await res.json();
-                if(data.new_username) {
-                    localStorage.setItem('axis_user', data.new_username);
-                    localStorage.setItem('axis_token', data.new_username); // Simple token in current dummy system is the username
-                }
-                location.reload();
-            } else { alert("修改失敗，可能名稱已存在"); }
-        }
-
-        async function saveAvatar(){
-            const ava=document.getElementById('edit-ava').value;
-            await authFetch('/api/user/update_profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({avatar:ava})});
-            if(ava) localStorage.setItem('axis_avatar',ava); location.reload();
-        }
-
-        let editingUser = "";
-        function editUser(u, r) {
-            editingUser = u;
-            document.getElementById('target-user-name').innerText = u;
-            document.getElementById('admin-user-role').value = r;
-            document.getElementById('modal-admin-edit').style.display = 'flex';
-        }
-
-        async function confirmAdminEdit() {
-            const p = document.getElementById('admin-user-pass').value;
-            const r = document.getElementById('admin-user-role').value;
-            const res = await authFetch('/api/admin/update_user', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({target_user:editingUser, new_pass:p, new_role:r})
-            });
-            if(res.ok) {
-                alert("變更成功！");
-                document.getElementById('modal-admin-edit').style.display='none';
-                loadUsers();
-            }
         }
 
         async function startPolling(){
@@ -1095,111 +310,63 @@
                 const s=await authFetch('/api/system_status'); if(s.ok){
                     const d=await s.json();
                     document.getElementById('cpu-val').innerText=d.cpu_percent.toFixed(1)+'%';
-                    const cpuOffset = 125.66 - (d.cpu_percent / 100 * 125.66);
-                    document.getElementById('cpu-gauge').style.strokeDashoffset = cpuOffset;
-
+                    document.getElementById('cpu-gauge').style.strokeDashoffset = 125.66 - (d.cpu_percent/100 * 125.66);
                     document.getElementById('ram-val').innerText=d.ram_percent.toFixed(1)+'%';
-                    const ramOffset = 125.66 - (d.ram_percent / 100 * 125.66);
-                    document.getElementById('ram-gauge').style.strokeDashoffset = ramOffset;
-                    
-                    const sU=(d.sys_disk.used/(1024**3)).toFixed(1); const sT=(d.sys_disk.total/(1024**3)).toFixed(0);
-                    document.getElementById('sys-label').innerText=`${sU}G / ${sT}G`;
+                    document.getElementById('ram-gauge').style.strokeDashoffset = 125.66 - (d.ram_percent/100 * 125.66);
                     document.getElementById('sys-bar').style.width=d.sys_disk.percent+'%';
-                    if(document.getElementById('nas-sys-bar')) document.getElementById('nas-sys-bar').style.width=d.sys_disk.percent+'%';
-                    
-                    const nU=(d.nas_disk.used/(1024**3)).toFixed(1); const nT=(d.nas_disk.total/(1024**3)).toFixed(0);
-                    document.getElementById('nas-label').innerText=`${nU}G / ${nT}G`;
                     document.getElementById('nas-bar').style.width=d.nas_disk.percent+'%';
-                    if(document.getElementById('nas-data-bar')) document.getElementById('nas-data-bar').style.width=d.nas_disk.percent+'%';
-                    
                     document.getElementById('bw-up').innerText = d.bandwidth.up;
                     document.getElementById('bw-dn').innerText = d.bandwidth.down;
-
                     document.getElementById('sensor-temp').innerText=d.sensors.temp+'°C';
                     document.getElementById('sensor-humid').innerText=d.sensors.humid+'%';
-
-                    if(cpuChart) {
-                        cpuChart.data.datasets[0].data.push(d.cpu_percent);
-                        if(cpuChart.data.datasets[0].data.length > 30) cpuChart.data.datasets[0].data.shift();
-                        cpuChart.update();
-                    }
-                    if(ramChart) {
-                        ramChart.data.datasets[0].data.push(d.ram_percent);
-                        if(ramChart.data.datasets[0].data.length > 30) ramChart.data.datasets[0].data.shift();
-                        ramChart.update();
-                    }
+                    if(cpuChart){ cpuChart.data.datasets[0].data.push(d.cpu_percent); cpuChart.data.datasets[0].data.shift(); cpuChart.update(); }
+                    if(ramChart){ ramChart.data.datasets[0].data.push(d.ram_percent); ramChart.data.datasets[0].data.shift(); ramChart.update(); }
                 }
-                const l=await authFetch('/api/system/logs'); if(l.ok){
-                    const d=await l.json(); const b=document.getElementById('terminal-logs');
-                    b.innerHTML=d.map(x=>`<div>${x}</div>`).join(''); b.scrollTop=b.scrollHeight;
-                }
-                const sv=await authFetch('/api/services_status'); if(sv.ok){
-                    const d=await sv.json();
-                    document.getElementById('svc-list').innerHTML=d.map(x=>`
-                        <div style="display:flex;justify-content:space-between;padding:12px;background:var(--bg-color);border-radius:8px;margin-bottom:8px;border:1px solid var(--border-color);font-size:0.85rem;"><span>${x.name}</span><span style="color:${x.online?'var(--success-color)':'var(--danger-color)'};font-weight:700;">● ${x.online?'Running':'Offline'}</span></div>
-                    `).join('');
-                }
-            }catch(e){}
-            setTimeout(startPolling,3000);
+            } catch(e){}
+            setTimeout(startPolling, 3000);
         }
 
-        async function confirmCreateUser() {
-            const u = document.getElementById('new-user-name').value;
-            const p = document.getElementById('new-user-pass').value;
-            const r = document.getElementById('new-user-role').value;
-            if(!u || !p) return alert("請填寫完整資訊");
-            const res = await authFetch('/api/admin/create_user', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({username:u, password:p, role:r})
-            });
-            if(res.ok) {
-                alert("帳號建立成功！");
-                document.getElementById('modal-create-user').style.display='none';
-                loadUsers();
-            } else {
-                const err = await res.json();
-                alert("建立失敗: " + (err.detail || "空間不足以分配配額"));
-            }
-        }
-
-        async function loadUsers(){
-            const res=await authFetch('/api/admin/users'); if(!res.ok)return; const users=await res.json();
-            document.getElementById('user-table-body').innerHTML=users.map(u=>`
-                <tr style="border-bottom:1px solid var(--border-color);"><td style="padding:15px;"><b>${u.username}</b></td><td style="padding:15px;"><span class="role-badge ${u.role==='Administrator'?'role-admin':'role-member'}">${u.role}</span></td><td style="padding:15px;"><img src="${u.avatar||'https://api.dicebear.com/7.x/avataaars/svg?seed='+u.username}" style="width:28px;height:28px;border-radius:50%;"></td><td style="padding:15px;"><button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;" onclick="editUser('${u.username}','${u.role}')">編輯</button></td></tr>
-            `).join('');
-        }
-        async function loadSpecs(){
-            const res=await authFetch('/api/sys_config'); if(!res.ok)return; const s=await res.json();
-            const ks=[['OS','os'],['PYTHON','python'],['CPU','cpu_cores'],['RAM','ram_total'],['HOST','hostname'],['UP','boot_time'],['GPU','gpu']];
-            document.getElementById('sys-specs-grid').innerHTML=ks.map(([l,k])=>`<div style="background:var(--bg-color);padding:15px;border-radius:8px;border:1px solid var(--border-color);"><div style="font-size:0.6rem;color:var(--text-muted);font-weight:800;margin-bottom:5px;">${l}</div><div style="font-size:0.85rem;font-weight:600;color:var(--text-main);">${s[k]}</div></div>`).join('');
-        }
         async function loadDocker(){
-            const res=await authFetch('/api/docker/containers'); if(!res.ok)return; const cs=await res.json();
-            document.getElementById('docker-list').innerHTML=cs.map(c=>`<div class="file-card"><div style="font-size:0.8rem;font-weight:800;margin-bottom:8px;">${c.Names}</div><div style="font-size:0.7rem;color:${c.Status.includes('Up')?'var(--success-color)':'var(--text-muted)'};">${c.Status}</div><div style="margin-top:15px;display:flex;gap:10px;justify-content:center;"><button onclick="dkCtl('${c.ID}','start')">▶️</button><button onclick="dkCtl('${c.ID}','stop')">⏹️</button></div></div>`).join('');
+            const r=await authFetch('/api/docker/containers'); if(!r.ok)return;
+            const list=await r.json(); const el=document.getElementById('docker-list');
+            el.innerHTML=list.length?'':'<div style="text-align:center;padding:20px;">無部署實例</div>';
+            list.forEach(c=>{
+                const up=c.State.toLowerCase()==='running';
+                const isOS = c.Image.includes("dockurr")||c.Image.includes("linuxserver")||c.Image.includes("sickcodes");
+                const item=document.createElement('div'); item.className='file-list-item';
+                item.innerHTML=`
+                    <div style="display:flex;gap:1.5rem;align-items:center;">
+                        <div style="font-size:1.5rem;">${isOS?'📦':'🐳'}</div>
+                        <div><div style="font-weight:800;">${c.Names}</div><div style="font-size:0.7rem;color:var(--text-muted);">${c.Image}</div></div>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        ${(up && isOS && c.vnc_port)?`<button class="btn btn-primary" onclick="window.open('http://'+location.hostname+':${c.vnc_port}','_blank')">打開桌面</button>`:''}
+                        <button class="btn btn-outline" onclick="controlDocker('${c.ID}','${up?'stop':'start'}')">${up?'停止':'啟動'}</button>
+                        <button class="btn btn-danger" onclick="controlDocker('${c.ID}','rm -f')">移除</button>
+                    </div>
+                `;
+                el.appendChild(item);
+            });
         }
-        async function dkCtl(id,act){await authFetch('/api/docker/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({container_id:id,action:act})});loadDocker();}
-        async function broadCast(){const m=document.getElementById('msg-input').value; if(m) await authFetch('/api/system/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})}); document.getElementById('msg-input').value='';}
-        function doLogout(){localStorage.clear();location.reload();}
-        
+        async function controlDocker(id,act){ await authFetch('/api/docker/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({container_id:id,action:act})}); setTimeout(loadDocker,1000); }
+        function promptDeployVM(os, name){ document.getElementById('vm-os-internal').value=os; document.getElementById('deploy-vm-os').innerText=name; document.getElementById('vm-name').value=os+"_vm"; document.getElementById('modal-deploy-vm').style.display='flex'; }
+        async function confirmDeployVM(){
+            const os=document.getElementById('vm-os-internal').value; const name=document.getElementById('vm-name').value;
+            const cpu=document.getElementById('vm-cpu').value; const ram=document.getElementById('vm-ram').value;
+            const res=await authFetch('/api/docker/deploy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({os_internal_name:os,container_name:name,cpu_cores:parseInt(cpu),ram_gb:parseInt(ram)})});
+            if(res.ok){ alert("部署命令已發送"); document.getElementById('modal-deploy-vm').style.display='none'; setTimeout(loadDocker,2000); }
+        }
+
+        function initCharts(){
+            if(cpuChart)return;
+            const cfg=(l,c)=>({type:'line',data:{labels:Array(30).fill(''),datasets:[{label:l,data:Array(30).fill(0),borderColor:c,fill:true,backgroundColor:c+'11',pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,max:100},x:{display:false}},plugins:{legend:{display:false}}}});
+            cpuChart=new Chart(document.getElementById('chart-cpu').getContext('2d'),cfg('CPU','#58a6ff'));
+            ramChart=new Chart(document.getElementById('chart-ram').getContext('2d'),cfg('RAM','#3fb950'));
+        }
+
+        function toggleTheme(){ document.body.classList.toggle('light-mode'); }
         setInterval(()=>{document.getElementById('clock').innerText=new Date().toLocaleTimeString('en-GB');},1000);
-        
-        const savedTheme = localStorage.getItem('axis-theme');
-        if(savedTheme && savedTheme === 'sparkle') document.body.classList.add('sparkle-mode');
-
-        function setTheme(theme) {
-            document.body.classList.remove('sparkle-mode');
-            if (theme === 'sparkle') document.body.classList.add('sparkle-mode');
-            localStorage.setItem('axis-theme', theme);
-        }
-
-        if(authToken){
-            document.getElementById('login-overlay').style.display='none';
-            document.getElementById('top-avatar').src = localStorage.getItem('axis_avatar')||"https://api.dicebear.com/7.x/avataaars/svg?seed="+authToken;
-            document.getElementById('pop-name').innerText = localStorage.getItem('axis_user')||"User";
-            document.getElementById('pop-role').innerText = localStorage.getItem('axis_role')||"Member";
-            if(myRole==='Administrator') document.getElementById('nav-admin').style.display='flex';
-            startPolling();
-        }
+        if(authToken){ startPolling(); document.getElementById('login-overlay').style.display='none'; document.getElementById('top-avatar').src=localStorage.getItem('axis_avatar')||""; }
     </script>
 </body>
 </html>
