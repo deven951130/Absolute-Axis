@@ -808,7 +808,8 @@
                     card.className = 'card file-card';
                     card.style.position = 'relative';
                     const starIcon = f.starred ? '⭐' : '☆';
-                    card.onclick = f.is_dir ? () => loadNASFiles(fullPath) : () => previewFile(fullPath, f.ext, owner);
+                    card\.onclick = f\.is_dir \? \(\) => loadNASFiles\(fullPath\) : \(\) => previewFile\(fullPath, f\.ext, owner\);
+                    card.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
                     card.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
                     card.innerHTML = `
                         <div style="position:absolute; top:12px; left:12px; cursor:pointer; font-size:1.1rem;" onclick="event.stopPropagation(); toggleStar('${fullPath}')">${currentNASMode==='drive'?starIcon:''}</div>
@@ -822,7 +823,8 @@
                     const item = document.createElement('div');
                     item.className = 'file-list-item';
                     item.style = "display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:12px; margin-bottom:10px; cursor:pointer; width:100%; min-width:0; transition:all 0.2s;";
-                    item.onclick = f.is_dir ? () => loadNASFiles(fullPath) : () => previewFile(fullPath, f.ext, owner);
+                    item\.onclick = f\.is_dir \? \(\) => loadNASFiles\(fullPath\) : \(\) => previewFile\(fullPath, f\.ext, owner\);
+                    item.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
                     item.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
                     const starIcon = f.starred ? '⭐' : '☆';
                     item.innerHTML = `
