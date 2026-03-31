@@ -586,6 +586,7 @@
     </div>
 
     <script>
+<script>
         let authToken = localStorage.getItem('axis_token');
         let myRole = localStorage.getItem('axis_role');
         let currentNASPath = "";
@@ -1190,7 +1191,15 @@
             localStorage.setItem('axis-theme', theme);
         }
 
-        if(authToken){ document.getElementById('login-overlay').style.display='none'; startPolling(); }
+        if(authToken){ document.getElementById('login-overlay').style.display='none'; startPolling(); 
+            document.getElementById('login-overlay').style.display='none';
+            document.getElementById('top-avatar').src = localStorage.getItem('axis_avatar')||"https://api.dicebear.com/7.x/avataaars/svg?seed="+authToken;
+            document.getElementById('pop-name').innerText = localStorage.getItem('axis_user')||"User";
+            document.getElementById('pop-role').innerText = localStorage.getItem('axis_role')||"Member";
+            if(myRole==='Administrator') document.getElementById('nav-admin').style.display='flex';
+            startPolling();
+        }
     
+</script>
 </body>
 </html>
