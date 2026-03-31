@@ -593,7 +593,8 @@
         let currentNASMode = 'drive';
         let cpuChart, ramChart;
 
-        // 銝駁?????        if(localStorage.getItem('axis_theme') === 'light') {
+        // 主題初始化
+        if(localStorage.getItem('axis_theme') === 'light') {
             document.body.classList.add('light-mode');
         }
 
@@ -606,7 +607,7 @@
         function updateThemeIcon() {
             const btn = document.getElementById('theme-toggle');
             if(!btn) return;
-            btn.innerText = document.body.classList.contains('light-mode') ? '??' : '?儭?;
+            btn.innerText = document.body.classList.contains('light-mode') ? '🌙' : '☀️';
         }
         updateThemeIcon();
 
@@ -663,7 +664,7 @@
         }
 
         async function promptMkdir() {
-            const name = prompt("隢撓?亥??冗?迂:");
+            const name = prompt("請輸入資料夾名稱:");
             if(name) {
                 const res = await authFetch('/api/nas/mkdir', {
                     method:'POST', headers:{'Content-Type':'application/json'}, 
@@ -675,19 +676,19 @@
 
         function switchView(v){
             if(['smart','ai'].includes(v)){
-                const ts={'smart':'?箸摰','ai':'?詨? AI ?拇?'}; const is={'smart':'?','ai':'??'};
-                document.getElementById('ph-title').innerText=ts[v]+" 蝟餌絞撠?";
+                const ts={'smart':'智慧宅控','ai':'核心 AI 助手'}; const is={'smart':'🏡','ai':'🤖'};
+                document.getElementById('ph-title').innerText=ts[v]+" 系統尚未開放";
                 document.getElementById('ph-icon').innerText=is[v];
                 v='placeholder';
             }
             document.querySelectorAll('.view-section').forEach(e=>e.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
             document.getElementById('view-'+v).classList.add('active');
-            let nId='nav-'+v; if(v==='placeholder') nId=(document.getElementById('ph-icon').innerText==='?'?'nav-smart':'nav-ai');
+            let nId='nav-'+v; if(v==='placeholder') nId=(document.getElementById('ph-icon').innerText==='🏡'?'nav-smart':'nav-ai');
             const n=document.getElementById(nId); if(n) n.classList.add('active');
             
-            const titles = {'dashboard':'?唳?蝮質汗','vritual':'??葉敹?,'cloud':'蝘??脣摮?,'nas-mgnt':'NAS 蝞∠?銝剜?','admin':'撣唾?蝞∠?','settings':'蝟餌絞閮剖?','metrics':'撖行??豢???'};
-            document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').innerText.replace(' 蝟餌絞撠?','');
+            const titles = {'dashboard':'戰情總覽','vritual':'虛擬化中心','cloud':'私有雲儲存','nas-mgnt':'NAS 管理中樞','admin':'帳號管理','settings':'系統設定','metrics':'實時數據分析'};
+            document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').innerText.replace(' 系統尚未開放','');
 
             if(v==='cloud') loadNASFiles('');
             if(v==='admin') loadUsers();
@@ -720,7 +721,7 @@
         
         async function openShare(p){
             const res = await authFetch('/api/nas/users');
-            if(!res.ok) return alert("?⊥??脣?雿輻??銵?);
+            if(!res.ok) return alert("無法獲取使用者列表");
             const users = await res.json();
             const sel = document.getElementById('share-user-select');
             sel.innerHTML = users.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
@@ -732,7 +733,7 @@
         async function confirmShare(){
             const p = document.getElementById('modal-share').getAttribute('data-path');
             const target = document.getElementById('share-user-select').value;
-            if(!target) return alert('隢??鞊?);
+            if(!target) return alert('請選擇對象');
             await authFetch('/api/nas/share', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p, target_user:target})});
             document.getElementById('modal-share').style.display = 'none';
         }
@@ -744,13 +745,14 @@
             const cm = document.getElementById('nas-context-menu');
             cm.style.display = 'block'; cm.style.left = e.clientX + 'px'; cm.style.top = e.clientY + 'px';
             
-            // ?寞?璅∪?隤踵?詨??            document.getElementById('cm-share').style.display = (currentNASMode==='drive' && !isDir)?'flex':'none';
+            // 根據模式調整選單項
+            document.getElementById('cm-share').style.display = (currentNASMode==='drive' && !isDir)?'flex':'none';
             document.getElementById('cm-star').style.display = (currentNASMode==='drive')?'flex':'none';
             document.getElementById('cm-restore').style.display = (currentNASMode==='trash')?'flex':'none';
             document.getElementById('cm-trash').style.display = (currentNASMode==='drive')?'flex':'none';
             document.getElementById('cm-del').style.display = (currentNASMode==='trash')?'flex':'none';
             document.getElementById('cm-dl').style.display = (isDir)?'none':'flex';
-            document.getElementById('cm-open').innerText = isDir?'?? ??鞈?憭?:'?? ?汗瑼?';
+            document.getElementById('cm-open').innerText = isDir?'📂 開啟資料夾':'🔍 預覽檔案';
         }
 
         window.addEventListener('click', () => document.getElementById('nas-context-menu').style.display = 'none');
@@ -765,11 +767,12 @@
             if(act==='star') toggleStar(p);
             if(act==='trash') nasToTrash(p);
             if(act==='restore') { await authFetch('/api/nas/restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})}); loadNASFiles(''); }
-            if(act==='delete') { if(confirm('瘞訾??芷嚗??舀敺抬?')) { await authFetch('/api/nas/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})}); loadNASFiles(''); } }
+            if(act==='delete') { if(confirm('永久刪除？不可恢復！')) { await authFetch('/api/nas/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})}); loadNASFiles(''); } }
         }
 
         async function loadNASFiles(path) {
-            // 憒?敺???餈?暺?鞈?憭橘??芸?????drive 璅∪?隞交?湔楛摨血???            if(path && (currentNASMode === 'starred' || currentNASMode === 'recent')) {
+            // 如果從星號或近期點擊資料夾，自動切換至 drive 模式以支援深度導航
+            if(path && (currentNASMode === 'starred' || currentNASMode === 'recent')) {
                 currentNASMode = 'drive';
                 document.querySelectorAll('.nas-nav').forEach(e => e.classList.remove('active'));
                 const driveNav = document.getElementById('nas-nav-drive');
@@ -781,8 +784,9 @@
             if(!res.ok) return;
             const data = await res.json();
             
-            // 暻萄?撅?            const bc = document.getElementById('nas-breadcrumb');
-            const modeNames = {'drive':'???脩垢蝖祉?','shared':'???梁','starred':'撌脣???','recent':'餈?摮?','trash':'?蝡?};
+            // 麵包屑
+            const bc = document.getElementById('nas-breadcrumb');
+            const modeNames = {'drive':'我的雲端硬碟','shared':'與我共用','starred':'已加星號','recent':'近期存取','trash':'回收站'};
             bc.innerHTML = `<span style="color:var(--text-muted); cursor:pointer;" onclick="nasNav('${currentNASMode}')">${modeNames[currentNASMode]}</span>`;
             if(currentNASMode === 'drive') {
                 const parts = path.split('/').filter(p=>p);
@@ -793,13 +797,13 @@
                 });
             }
 
-            // 瑼??”
+            // 檔案列表
             const exp = document.getElementById('nas-explorer');
             exp.className = (nasViewMode==='grid'?'file-grid':'file-list');
-            exp.innerHTML = data.files.length ? '' : '<div style="color:var(--text-muted); padding:2rem; width:100%; text-align:center;">甇斤?蝛?/div>';
+            exp.innerHTML = data.files.length ? '' : '<div style="color:var(--text-muted); padding:2rem; width:100%; text-align:center;">此目錄為空</div>';
             
             data.files.forEach(f => {
-                const icon = f.is_dir ? '??' : (['.jpg','.png','.jpeg','.gif'].includes(f.ext)?'?儭?:(f.ext==='.pdf'?'??':'??'));
+                const icon = f.is_dir ? '📁' : (['.jpg','.png','.jpeg','.gif'].includes(f.ext)?'🖼️':(f.ext==='.pdf'?'📄':'📄'));
                 const fullPath = (currentNASMode==='shared'?f.path:((currentNASPath?currentNASPath+'/':'')+f.name));
                 const owner = f.owner || '';
 
@@ -807,15 +811,15 @@
                     const card = document.createElement('div');
                     card.className = 'card file-card';
                     card.style.position = 'relative';
-                    const starIcon = f.starred ? '潃? : '??;
+                    const starIcon = f.starred ? '⭐' : '☆';
                     card.onclick = f.is_dir ? () => loadNASFiles(fullPath) : () => previewFile(fullPath, f.ext, owner);
                     card.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
                     card.innerHTML = `
                         <div style="position:absolute; top:12px; left:12px; cursor:pointer; font-size:1.1rem;" onclick="event.stopPropagation(); toggleStar('${fullPath}')">${currentNASMode==='drive'?starIcon:''}</div>
                         <div style="font-size:2rem; margin-bottom:12px;">${icon}</div>
                         <div style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center; color:var(--text-main); min-width:0;">${f.name}</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">${f.is_dir?'鞈?憭?:(f.size/1024/1024).toFixed(1)+' MB'}</div>
-                        ${f.owner?`<div style="font-size:0.65rem; color:var(--accent-color); margin-top:4px;">靘: ${f.owner}</div>`:''}
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">${f.is_dir?'資料夾':(f.size/1024/1024).toFixed(1)+' MB'}</div>
+                        ${f.owner?`<div style="font-size:0.65rem; color:var(--accent-color); margin-top:4px;">來自: ${f.owner}</div>`:''}
                     `;
                     exp.appendChild(card);
                 } else {
@@ -824,17 +828,17 @@
                     item.style = "display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:12px; margin-bottom:10px; cursor:pointer; width:100%; min-width:0; transition:all 0.2s;";
                     item.onclick = f.is_dir ? () => loadNASFiles(fullPath) : () => previewFile(fullPath, f.ext, owner);
                     item.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
-                    const starIcon = f.starred ? '潃? : '??;
+                    const starIcon = f.starred ? '⭐' : '☆';
                     item.innerHTML = `
                         <div style="display:flex; align-items:center; gap:18px; flex:1; min-width:0;">
                             <span style="cursor:pointer; font-size:1.1rem; flex-shrink:0;" onclick="event.stopPropagation(); toggleStar('${fullPath}')">${currentNASMode==='drive'?starIcon:''}</span>
                             <div style="font-size:1.5rem; flex-shrink:0;">${icon}</div>
                             <div style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; color:var(--text-main); min-width:0;">
-                                ${f.name} ${f.owner?`<span style="font-size:0.7rem; color:var(--accent-color); margin-left:8px;">(靘: ${f.owner})</span>`:''}
+                                ${f.name} ${f.owner?`<span style="font-size:0.7rem; color:var(--accent-color); margin-left:8px;">(來自: ${f.owner})</span>`:''}
                             </div>
                         </div>
                         <div style="display:flex; align-items:center; gap:25px; flex-shrink:0; margin-left:15px;">
-                            <div style="font-size:0.8rem; color:var(--text-muted); min-width:80px; text-align:right;">${f.is_dir?'鞈?憭?:(f.size/1024/1024).toFixed(1)+' MB'}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted); min-width:80px; text-align:right;">${f.is_dir?'資料夾':(f.size/1024/1024).toFixed(1)+' MB'}</div>
                             <div style="font-size:0.75rem; color:var(--text-muted); width:130px; text-align:right;">${f.modified}</div>
                         </div>
                     `;
@@ -842,7 +846,7 @@
                 }
             });
 
-            // ?湔撖行??”
+            // 更新實時圖表
             if(cpuChart) {
                 cpuChart.data.datasets[0].data.push(data.cpu_percent);
                 if(cpuChart.data.datasets[0].data.length > 30) cpuChart.data.datasets[0].data.shift();
@@ -854,7 +858,8 @@
                 ramChart.update();
             }
 
-            // ?湔??璇?            const qP = (data.quota_used / data.quota_total * 100);
+            // 更新配額條
+            const qP = (data.quota_used / data.quota_total * 100);
             document.getElementById('quota-bar').style.width = qP + '%';
             document.getElementById('quota-label').innerText = `${(data.quota_used/1024/1024).toFixed(0)} MB / ${(data.quota_total/1024/1024).toFixed(0)} MB`;
         }
@@ -871,7 +876,7 @@
                 a.click();
             }
         }
-        async function nasDel(p){if(confirm('蝣箏??芷嚗?)){await authFetch('/api/nas/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})});loadNASFiles(currentNASPath);}}
+        async function nasDel(p){if(confirm('確定刪除？')){await authFetch('/api/nas/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:p})});loadNASFiles(currentNASPath);}}
 
         async function nasUpload() {
             const input = document.getElementById('nas-up');
@@ -921,7 +926,7 @@
             const cpu = parseInt(document.getElementById('vm-cpu').value);
             const ram = parseInt(document.getElementById('vm-ram').value);
             
-            if(!name || name.includes(" ")) return alert("?迂銝??征??);
+            if(!name || name.includes(" ")) return alert("名稱不得有空白");
 
             document.getElementById('modal-deploy-vm').style.display = 'none';
             const btn = event.target;
@@ -960,7 +965,7 @@
             el.innerHTML = '';
             
             if(list.length === 0) {
-                el.innerHTML = '<div style="color:var(--text-muted); padding:2rem; width:100%; text-align:center;">?⊿?雿葉???祆???/div>';
+                el.innerHTML = '<div style="color:var(--text-muted); padding:2rem; width:100%; text-align:center;">無運作中的虛擬機。</div>';
                 return;
             }
 
@@ -976,25 +981,25 @@
                 
                 let vncHtml = "";
                 if(up && isHeavyOS && c.vnc_port) {
-                    vncHtml = `<button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem; background:var(--success-color); color:#0d1117;" onclick="openVNC('${window.location.hostname}', '${c.vnc_port}')">?儭??? WebVNC 獢</button>`;
+                    vncHtml = `<button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem; background:var(--success-color); color:#0d1117;" onclick="openVNC('${window.location.hostname}', '${c.vnc_port}')">🖥️ 打開 WebVNC 桌面</button>`;
                 } else if(up && isHeavyOS) {
-                    vncHtml = `<span style="font-size:0.75rem; color:var(--text-muted);">??銝?(敺?WebVNC 撠梁?)...</span>`;
+                    vncHtml = `<span style="font-size:0.75rem; color:var(--text-muted);">啟動中 (待 WebVNC 就緒)...</span>`;
                 }
 
                 item.innerHTML = `
                     <div style="display:flex; align-items:center; gap:18px;">
-                        <div style="font-size:2rem;">${isHeavyOS ? '?' : '?'}</div>
+                        <div style="font-size:2rem;">${isHeavyOS ? '📦' : '🐳'}</div>
                         <div>
                             <div style="font-weight:800; font-size:1.1rem; color:var(--text-main);">${names}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:5px; font-family:monospace;">${c.Image} ??ID: ${c.ID}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:5px; font-family:monospace;">${c.Image} • ID: ${c.ID}</div>
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:12px;">
                         ${vncHtml}
-                        ${up ? `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--danger-color); border-color:var(--border-color);" onclick="controlDocker('${c.ID}','stop')">???迫</button>` 
-                             : `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--accent-color); border-color:var(--accent-color);" onclick="controlDocker('${c.ID}','start')">????</button>`}
-                        <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="controlDocker('${c.ID}','restart')">????</button>
-                        <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem;" onclick="controlDocker('${c.ID}','rm -f')">??儭?蝘駁</button>
+                        ${up ? `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--danger-color); border-color:var(--border-color);" onclick="controlDocker('${c.ID}','stop')">■ 停止</button>` 
+                             : `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--accent-color); border-color:var(--accent-color);" onclick="controlDocker('${c.ID}','start')">▶ 啟動</button>`}
+                        <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="controlDocker('${c.ID}','restart')">↻ 重啟</button>
+                        <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem;" onclick="controlDocker('${c.ID}','rm -f')">🗑️ 移除</button>
                     </div>
                 `;
                 el.appendChild(item);
@@ -1011,7 +1016,7 @@
             const n = document.getElementById('preview-filename');
             if(!c || !n) return;
             n.innerText = path.split('/').pop();
-            c.innerHTML = '<div style="color:#fff; font-size:1.2rem;">?儭?Loading Preview...</div>';
+            c.innerHTML = '<div style="color:#fff; font-size:1.2rem;">🖼️ Loading Preview...</div>';
             document.getElementById('modal-preview').style.display = 'flex';
 
             try {
@@ -1034,7 +1039,7 @@
                 }
             } catch(e) {
                 console.error(e);
-                c.innerHTML = '<div style="color:var(--danger-color);">甇斗?獢撘??舀?汗???亙仃??/div>';
+                c.innerHTML = '<div style="color:var(--danger-color);">此檔案格式不支援預覽或載入失敗</div>';
             }
         }
         function closePreview() {
@@ -1052,7 +1057,7 @@
                     localStorage.setItem('axis_token', data.new_username); // Simple token in current dummy system is the username
                 }
                 location.reload();
-            } else { alert("靽格憭望?嚗?賢?蝔勗歇摮"); }
+            } else { alert("修改失敗，可能名稱已存在"); }
         }
 
         async function saveAvatar(){
@@ -1077,7 +1082,7 @@
                 body:JSON.stringify({target_user:editingUser, new_pass:p, new_role:r})
             });
             if(res.ok) {
-                alert("霈??嚗?);
+                alert("變更成功！");
                 document.getElementById('modal-admin-edit').style.display='none';
                 loadUsers();
             }
@@ -1108,7 +1113,7 @@
                     document.getElementById('bw-up').innerText = d.bandwidth.up;
                     document.getElementById('bw-dn').innerText = d.bandwidth.down;
 
-                    document.getElementById('sensor-temp').innerText=d.sensors.temp+'簞C';
+                    document.getElementById('sensor-temp').innerText=d.sensors.temp+'°C';
                     document.getElementById('sensor-humid').innerText=d.sensors.humid+'%';
 
                     if(cpuChart) {
@@ -1129,7 +1134,7 @@
                 const sv=await authFetch('/api/services_status'); if(sv.ok){
                     const d=await sv.json();
                     document.getElementById('svc-list').innerHTML=d.map(x=>`
-                        <div style="display:flex;justify-content:space-between;padding:12px;background:var(--bg-color);border-radius:8px;margin-bottom:8px;border:1px solid var(--border-color);font-size:0.85rem;"><span>${x.name}</span><span style="color:${x.online?'var(--success-color)':'var(--danger-color)'};font-weight:700;">??${x.online?'Running':'Offline'}</span></div>
+                        <div style="display:flex;justify-content:space-between;padding:12px;background:var(--bg-color);border-radius:8px;margin-bottom:8px;border:1px solid var(--border-color);font-size:0.85rem;"><span>${x.name}</span><span style="color:${x.online?'var(--success-color)':'var(--danger-color)'};font-weight:700;">● ${x.online?'Running':'Offline'}</span></div>
                     `).join('');
                 }
             }catch(e){}
@@ -1140,25 +1145,25 @@
             const u = document.getElementById('new-user-name').value;
             const p = document.getElementById('new-user-pass').value;
             const r = document.getElementById('new-user-role').value;
-            if(!u || !p) return alert("隢‵撖怠??渲?閮?);
+            if(!u || !p) return alert("請填寫完整資訊");
             const res = await authFetch('/api/admin/create_user', {
                 method:'POST', headers:{'Content-Type':'application/json'},
                 body:JSON.stringify({username:u, password:p, role:r})
             });
             if(res.ok) {
-                alert("撣唾?撱箇???嚗?);
+                alert("帳號建立成功！");
                 document.getElementById('modal-create-user').style.display='none';
                 loadUsers();
             } else {
                 const err = await res.json();
-                alert("撱箇?憭望?: " + (err.detail || "蝛粹?銝雲隞亙???憿?));
+                alert("建立失敗: " + (err.detail || "空間不足以分配配額"));
             }
         }
 
         async function loadUsers(){
             const res=await authFetch('/api/admin/users'); if(!res.ok)return; const users=await res.json();
             document.getElementById('user-table-body').innerHTML=users.map(u=>`
-                <tr style="border-bottom:1px solid var(--border-color);"><td style="padding:15px;"><b>${u.username}</b></td><td style="padding:15px;"><span class="role-badge ${u.role==='Administrator'?'role-admin':'role-member'}">${u.role}</span></td><td style="padding:15px;"><img src="${u.avatar||'https://api.dicebear.com/7.x/avataaars/svg?seed='+u.username}" style="width:28px;height:28px;border-radius:50%;"></td><td style="padding:15px;"><button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;" onclick="editUser('${u.username}','${u.role}')">蝺刻摩</button></td></tr>
+                <tr style="border-bottom:1px solid var(--border-color);"><td style="padding:15px;"><b>${u.username}</b></td><td style="padding:15px;"><span class="role-badge ${u.role==='Administrator'?'role-admin':'role-member'}">${u.role}</span></td><td style="padding:15px;"><img src="${u.avatar||'https://api.dicebear.com/7.x/avataaars/svg?seed='+u.username}" style="width:28px;height:28px;border-radius:50%;"></td><td style="padding:15px;"><button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;" onclick="editUser('${u.username}','${u.role}')">編輯</button></td></tr>
             `).join('');
         }
         async function loadSpecs(){
@@ -1168,7 +1173,7 @@
         }
         async function loadDocker(){
             const res=await authFetch('/api/docker/containers'); if(!res.ok)return; const cs=await res.json();
-            document.getElementById('docker-list').innerHTML=cs.map(c=>`<div class="file-card"><div style="font-size:0.8rem;font-weight:800;margin-bottom:8px;">${c.Names}</div><div style="font-size:0.7rem;color:${c.Status.includes('Up')?'var(--success-color)':'var(--text-muted)'};">${c.Status}</div><div style="margin-top:15px;display:flex;gap:10px;justify-content:center;"><button onclick="dkCtl('${c.ID}','start')">?塚?</button><button onclick="dkCtl('${c.ID}','stop')">?對?</button></div></div>`).join('');
+            document.getElementById('docker-list').innerHTML=cs.map(c=>`<div class="file-card"><div style="font-size:0.8rem;font-weight:800;margin-bottom:8px;">${c.Names}</div><div style="font-size:0.7rem;color:${c.Status.includes('Up')?'var(--success-color)':'var(--text-muted)'};">${c.Status}</div><div style="margin-top:15px;display:flex;gap:10px;justify-content:center;"><button onclick="dkCtl('${c.ID}','start')">▶️</button><button onclick="dkCtl('${c.ID}','stop')">⏹️</button></div></div>`).join('');
         }
         async function dkCtl(id,act){await authFetch('/api/docker/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({container_id:id,action:act})});loadDocker();}
         async function broadCast(){const m=document.getElementById('msg-input').value; if(m) await authFetch('/api/system/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})}); document.getElementById('msg-input').value='';}
@@ -1193,6 +1198,6 @@
             if(myRole==='Administrator') document.getElementById('nav-admin').style.display='flex';
             startPolling();
         }
-    </script>
+    
 </body>
 </html>
