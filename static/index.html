@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absolute Axis 蝯?頠詨?</title>
+    <title>Absolute Axis 絕對軸心</title>
     <style>
         :root {
             --bg-color: #0d1117; --sidebar-color: #161b22; --card-bg: #21262d; 
@@ -42,7 +42,7 @@
 
         .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; position: relative; z-index: 900; }
         
-        /* ?詨? Popover 摰??見撘?*/
+        /* 核心 Popover 定位與樣式 */
         .user-popover { position: fixed; top: 85px; right: 2.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; width: 240px; box-shadow: 0 12px 40px rgba(0,0,0,0.6); padding: 1.5rem; display: none; flex-direction: column; z-index: 99999; }
         .user-popover.active { display: flex; }
 
@@ -50,7 +50,7 @@
         .stat-card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); padding: 1.8rem; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s; }
         .stat-card:hover { border-color: var(--accent-color); }
         
-        /* ???銵冽見撘?*/
+        /* 半圓儀表樣式 */
         .gauge-container { position: relative; width: 140px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
         .gauge-svg { width: 100%; height: 100%; }
         .gauge-bg { fill: none; stroke: var(--border-color); stroke-width: 10; stroke-linecap: round; }
@@ -84,7 +84,7 @@
         .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-danger { background: rgba(248, 81, 73, 0.1); color: #f85149; border: 1px solid rgba(248, 81, 73, 0.4); }
 
-        .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-color); z-index: 200000; display: flex; justify-content: center; align-items: center; }
+        .login-overlay { position: fixed; top:0;left:0;right:0;bottom:0; background: var(--bg-color); z-index: 200000; display: flex; justify-content: center; align-items: center; }
         .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1.5rem; }
         .file-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
         .file-card:hover { border-color: var(--accent-color); transform: translateY(-4px); }
@@ -118,7 +118,7 @@
 </head>
 <body>
 
-    <!-- ?餃?瑼?-->
+    <!-- 登入門檻 -->
     <div id="login-overlay" class="login-overlay">
         <div style="background:#161b22;width:380px;padding:3.5rem;border-radius:18px;border:1px solid #30363d;text-align:center;">
             <h1 style="margin-bottom:2.5rem;font-size:2rem;color:var(--accent-color);font-weight:900;">LOGIN</h1>
@@ -128,32 +128,32 @@
         </div>
     </div>
 
-    <!-- 撌血撠汗??-->
+    <!-- 左側導覽列 -->
     <aside class="sidebar">
         <div class="brand"><div class="logo-box" style="background:transparent; overflow:hidden;"><img src="/logo.jpg" style="width:100%; height:100%; object-fit:cover;"></div>ABSOLUTE AXIS</div>
         <ul class="nav-menu">
-            <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">??儭??唳?蝮質汗</li>
-            <li class="nav-item" id="nav-vritual" onclick="switchView('vritual')">?儭???葉敹?/li>
-            <li class="nav-item" id="nav-smart" onclick="switchView('smart')">? ?箸摰</li>
-            <li class="nav-item" id="nav-cloud" onclick="switchView('cloud')">?? 蝘??脣摮?/li>
-            <li class="nav-item" id="nav-nas-mgnt" onclick="switchView('nas-mgnt')">??儭?NAS 蝞∠?</li>
-            <li class="nav-item" id="nav-metrics" onclick="switchView('metrics')">?? 撖行??豢???</li>
-            <li class="nav-item" id="nav-ai" onclick="switchView('ai')">?? ?詨??拇?</li>
+            <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">🏘️ 戰情總覽</li>
+            <li class="nav-item" id="nav-vritual" onclick="switchView('vritual')">🖥️ 虛擬化中心</li>
+            <li class="nav-item" id="nav-smart" onclick="switchView('smart')">🏡 智慧宅控</li>
+            <li class="nav-item" id="nav-cloud" onclick="switchView('cloud')">☁️ 私有雲儲存</li>
+            <li class="nav-item" id="nav-nas-mgnt" onclick="switchView('nas-mgnt')">🗄️ NAS 管理</li>
+            <li class="nav-item" id="nav-metrics" onclick="switchView('metrics')">📊 實時數據分析</li>
+            <li class="nav-item" id="nav-ai" onclick="switchView('ai')">🤖 核心助手</li>
             <div class="nav-separator"></div>
-            <li class="nav-item" id="nav-admin" onclick="switchView('admin')" style="display:none">? 撣唾?蝞∠?</li>
-            <li class="nav-item" id="nav-settings" onclick="switchView('settings')">?? 蝟餌絞閮剖?</li>
+            <li class="nav-item" id="nav-admin" onclick="switchView('admin')" style="display:none">👥 帳號管理</li>
+            <li class="nav-item" id="nav-settings" onclick="switchView('settings')">⚙️ 系統設定</li>
         </ul>
 </aside>
 
-    <!-- 銝餉??批捆? -->
+    <!-- 主要內容區 -->
     <main class="main-content">
         <header class="top-header">
-            <h1 id="page-title-text" style="font-size:1.8rem;font-weight:800;color:var(--text-main);">?唳?蝮質汗</h1>
+            <h1 id="page-title-text" style="font-size:1.8rem;font-weight:800;color:var(--text-main);">戰情總覽</h1>
             <div style="display:flex;align-items:center;gap:1.5rem;">
-                <div style="font-size:0.75rem;background:var(--accent-soft);color:var(--success-color);padding:5px 18px;border-radius:20px;border:1px solid var(--success-color);font-weight:800;">??CONNECTED</div>
+                <div style="font-size:0.75rem;background:var(--accent-soft);color:var(--success-color);padding:5px 18px;border-radius:20px;border:1px solid var(--success-color);font-weight:800;">● CONNECTED</div>
                 <div id="clock" style="font-family:monospace;letter-spacing:1px;font-size:1.15rem;color:var(--text-main);">00:00:00</div>
-                <button id="theme-toggle" class="btn" style="padding:0; border-radius:50%; width:38px; height:38px; border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; font-size:1.1rem; cursor:pointer; background:transparent; color:var(--text-main); transition:0.2s;" onclick="toggleTheme()">?儭?/button>
-                <!-- 蝛嗆扔?剖???嚗Ⅱ靽???100% ?? -->
+                <button id="theme-toggle" class="btn" style="padding:0; border-radius:50%; width:38px; height:38px; border:1px solid var(--border-color); display:flex; align-items:center; justify-content:center; font-size:1.1rem; cursor:pointer; background:transparent; color:var(--text-main); transition:0.2s;" onclick="toggleTheme()">☀️</button>
+                <!-- 究極頭像按鈕：確保點擊 100% 成功 -->
                 <button id="avatar-btn" onclick="window.toggleAxisPopover(event)" style="background:none; border:none; padding:0; cursor:pointer; position:relative; width:44px; height:44px; z-index:10001; outline:none; display:flex;">
                     <img src="" id="top-avatar" style="width:100%; height:100%; border-radius:50%; border:2.5px solid var(--border-color); background:#30363d; object-fit:cover; pointer-events:none;">
                 </button>
@@ -206,11 +206,11 @@
                     <div style="font-size:0.7rem;color:var(--text-muted);font-weight:800;margin-bottom:12px;width:100%;text-align:left;">BANDWIDTH</div>
                     <div style="font-size:0.9rem;font-weight:900;color:var(--text-main);display:flex;flex-direction:column;gap:8px;width:100%;">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span style="font-size:0.65rem;color:var(--text-muted);">??UPLOAD</span>
+                            <span style="font-size:0.65rem;color:var(--text-muted);">↑ UPLOAD</span>
                             <span id="bw-up" style="color:var(--accent-color);">-- MB/s</span>
                         </div>
                         <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span style="font-size:0.65rem;color:var(--text-muted);">??DOWNLOAD</span>
+                            <span style="font-size:0.65rem;color:var(--text-muted);">↓ DOWNLOAD</span>
                             <span id="bw-dn" style="color:var(--success-color);">-- MB/s</span>
                         </div>
                     </div>
@@ -218,7 +218,7 @@
             </div>
             <div style="display:grid;grid-template-columns: 2.2fr 1fr; gap:1.8rem;">
                 <div class="card" style="padding:0;overflow:hidden;border-color:var(--border-color);">
-                    <div style="background:var(--sidebar-color);padding:15px 20px;border-bottom:1px solid var(--border-color);font-size:0.9rem;font-weight:800;">?? 蝟餌絞蟡??亥? (Active Log Stream)</div>
+                    <div style="background:var(--sidebar-color);padding:15px 20px;border-bottom:1px solid var(--border-color);font-size:0.9rem;font-weight:800;">🧠 系統神經日誌 (Active Log Stream)</div>
                     <div id="terminal-logs" style="height:320px;overflow-y:auto;padding:20px;background:var(--bg-color);font-family:monospace;color:var(--success-color);font-size:0.85rem;line-height:1.7;">Standby for identity verification...</div>
                     <div style="display:flex;padding:15px;background:var(--sidebar-color);border-top:1px solid var(--border-color);gap:12px;">
                         <input type="text" id="msg-input" class="t-input" placeholder="Type broadcast message..." style="margin:0;">
@@ -226,15 +226,15 @@
                     </div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:1.8rem;">
-                    <div class="card"><h2 class="card-title">?? Active Services</h2><div id="svc-list"></div></div>
-                    <div class="card"><h2 class="card-title">?儭?Environment Sensors</h2><div style="display:flex;gap:2rem;justify-content:center;padding:15px 0;"><div style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:700;">TEMP</div><div style="font-size:1.6rem;font-weight:900;color:var(--text-main);" id="sensor-temp">--簞C</div></div><div style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:700;">HUMID</div><div style="font-size:1.6rem;font-weight:900;color:var(--text-main);" id="sensor-humid">--%</div></div></div></div>
+                    <div class="card"><h2 class="card-title">🔌 Active Services</h2><div id="svc-list"></div></div>
+                    <div class="card"><h2 class="card-title">🌡️ Environment Sensors</h2><div style="display:flex;gap:2rem;justify-content:center;padding:15px 0;"><div style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:700;">TEMP</div><div style="font-size:1.6rem;font-weight:900;color:var(--text-main);" id="sensor-temp">--°C</div></div><div style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:700;">HUMID</div><div style="font-size:1.6rem;font-weight:900;color:var(--text-main);" id="sensor-humid">--%</div></div></div></div>
                 </div>
             </div>
         </div>
 
         <!-- View: Admin -->
         <div id="view-admin" class="view-section">
-            <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:2.5rem;align-items:center;"><h2 class="card-title" style="margin:0;">? 撣唾?蝞∠?銝剖?</h2><button class="btn btn-primary" onclick="document.getElementById('modal-create-user').style.display='flex'">+ ?啣?撣唾?</button></div><table class="admin-table"><thead><tr><th>雿輻??/th><th>頨怠?甈?</th><th>?桀??剖?</th><th>??</th></tr></thead><tbody id="user-table-body"></tbody></table></div>
+            <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:2.5rem;align-items:center;"><h2 class="card-title" style="margin:0;">👥 帳號管理中心</h2><button class="btn btn-primary" onclick="document.getElementById('modal-create-user').style.display='flex'">+ 新增帳號</button></div><table class="admin-table"><thead><tr><th>使用者</th><th>身分權限</th><th>目前頭像</th><th>操作</th></tr></thead><tbody id="user-table-body"></tbody></table></div>
         </div>
 
         <!-- View: Settings -->
@@ -242,42 +242,42 @@
             <div id="settings-main">
                 <div class="settings-list">
                     <div class="settings-item" onclick="openSettingPanel('panel-specs')">
-                        <div class="title">?儭?蝟餌絞蝖祇?蝯?</div>
-                        <div style="color:var(--text-muted);">??/div>
+                        <div class="title">🛰️ 系統硬體組態</div>
+                        <div style="color:var(--text-muted);">▶</div>
                     </div>
                     <div class="settings-item" onclick="openSettingPanel('panel-profile')">
-                        <div class="title">? ?犖撣單閮剖?</div>
-                        <div style="color:var(--text-muted);">??/div>
+                        <div class="title">👤 個人帳戶設定</div>
+                        <div style="color:var(--text-muted);">▶</div>
                     </div>
                     <div class="settings-item" onclick="openSettingPanel('panel-maintain')">
-                        <div class="title">?儭?蝟餌絞蝬剛風????/div>
-                        <div style="color:var(--text-muted);">??/div>
+                        <div class="title">🛡️ 系統維護與安全</div>
+                        <div style="color:var(--text-muted);">▶</div>
                     </div>
                     <div class="settings-item" onclick="openSettingPanel('panel-theme')">
-                        <div class="title">? 蝬脩?憭?銝駁?閮剖?</div>
-                        <div style="color:var(--text-muted);">??/div>
+                        <div class="title">🎨 網站外觀主題設定</div>
+                        <div style="color:var(--text-muted);">▶</div>
                     </div>
                 </div>
             </div>
             <div id="panel-specs" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">??餈?銝駁??/button>
-                <div class="card"><h2 class="card-title">蝟餌絞蝖祇?蝯?</h2><div id="sys-specs-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;"></div></div>
+                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">← 返回主選單</button>
+                <div class="card"><h2 class="card-title">系統硬體組態</h2><div id="sys-specs-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;"></div></div>
             </div>
             <div id="panel-profile" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">??餈?銝駁??/button>
-                <div class="card"><h2 class="card-title">?犖頨怠?靽格</h2><div style="display:flex;flex-direction:column;gap:10px;"><button class="btn btn-outline" onclick="openProfileEdit()">靽格憿舐內?迂 / 撖Ⅳ</button><button class="btn btn-outline" onclick="openAvatarEdit()">?湔??剖? URL</button></div></div>
+                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">← 返回主選單</button>
+                <div class="card"><h2 class="card-title">個人身分修改</h2><div style="display:flex;flex-direction:column;gap:10px;"><button class="btn btn-outline" onclick="openProfileEdit()">修改顯示名稱 / 密碼</button><button class="btn btn-outline" onclick="openAvatarEdit()">更換頭像 URL</button></div></div>
             </div>
             <div id="panel-maintain" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">??餈?銝駁??/button>
-                <div class="card"><h2 class="card-title">?啣?蝬剛風???/h2><div style="display:flex;flex-direction:column;gap:15px;"><button class="btn btn-outline" style="width:100%;height:80px" onclick="authFetch('/api/action/clear_cache',{method:'POST'})">皜敹怠?隡箸???/button><button class="btn btn-danger" style="width:100%;height:50px" onclick="doLogout()">?餃?游極雿?Session</button></div></div>
+                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">← 返回主選單</button>
+                <div class="card"><h2 class="card-title">環境維護與出口</h2><div style="display:flex;flex-direction:column;gap:15px;"><button class="btn btn-outline" style="width:100%;height:80px" onclick="authFetch('/api/action/clear_cache',{method:'POST'})">清除快取伺服器</button><button class="btn btn-danger" style="width:100%;height:50px" onclick="doLogout()">登出整個工作 Session</button></div></div>
             </div>
             <div id="panel-theme" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">??餈?銝駁??/button>
+                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">← 返回主選單</button>
                 <div class="card">
-                    <h2 class="card-title">蝬脩?銝駁??敶拇??/h2>
+                    <h2 class="card-title">網站主題與色彩更改</h2>
                     <div style="display:flex;flex-direction:column;gap:15px;">
-                        <button class="btn btn-outline" style="width:100%;height:60px;" onclick="setTheme('default')">?身銝駁? (Absolute Blue)</button>
-                        <button class="btn btn-outline" style="width:100%;height:60px; border-color:#ff66a3; color:#ff66a3;" onclick="setTheme('sparkle')">?怨銝駁? (Sparkle 蝎?/蝝?</button>
+                        <button class="btn btn-outline" style="width:100%;height:60px;" onclick="setTheme('default')">預設主題 (Absolute Blue)</button>
+                        <button class="btn btn-outline" style="width:100%;height:60px; border-color:#ff66a3; color:#ff66a3;" onclick="setTheme('sparkle')">火花主題 (Sparkle 粉紅/紅)</button>
                     </div>
                 </div>
             </div>
@@ -286,16 +286,16 @@
         <!-- View: Metrics -->
         <div id="view-metrics" class="view-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
-                <h2 class="card-title" style="margin:0;">?? 撖行??豢??? (Real-time Analytics)</h2>
-                <button class="btn btn-outline" onclick="switchView('dashboard')">??餈??唳?銝剖?</button>
+                <h2 class="card-title" style="margin:0;">📈 實時數據分析 (Real-time Analytics)</h2>
+                <button class="btn btn-outline" onclick="switchView('dashboard')">← 返回戰情中心</button>
             </div>
             <div class="metrics-grid">
                 <div class="metric-chart-card">
-                    <div style="font-size:0.8rem; font-weight:800; color:var(--accent-color); margin-bottom:15px;">CPU 鞎??脩? (%)</div>
+                    <div style="font-size:0.8rem; font-weight:800; color:var(--accent-color); margin-bottom:15px;">CPU 負載曲線 (%)</div>
                     <canvas id="chart-cpu"></canvas>
                 </div>
                 <div class="metric-chart-card">
-                    <div style="font-size:0.8rem; font-weight:800; color:var(--success-color); margin-bottom:15px;">RAM 雿?脩? (%)</div>
+                    <div style="font-size:0.8rem; font-weight:800; color:var(--success-color); margin-bottom:15px;">RAM 佔用曲線 (%)</div>
                     <canvas id="chart-ram"></canvas>
                 </div>
             </div>
@@ -305,30 +305,30 @@
         <div id="view-cloud" class="view-section">
             <div class="nas-view-container">
                 <div class="nas-sidebar">
-                    <div id="nas-nav-drive" class="nav-item nas-nav active" onclick="nasNav('drive')">?? ???脩垢蝖祉?</div>
-                    <div id="nas-nav-shared" class="nav-item nas-nav" onclick="nasNav('shared')">? ???梁</div>
-                    <div id="nas-nav-starred" class="nav-item nas-nav" onclick="nasNav('starred')">潃?撌脣???</div>
-                    <div id="nas-nav-recent" class="nav-item nas-nav" onclick="nasNav('recent')">?? 餈?摮?</div>
-                    <div id="nas-nav-trash" class="nav-item nas-nav" onclick="nasNav('trash')" style="margin-top:auto; color:var(--danger-color); border-color:rgba(255,100,100,0.2);">??儭??獢?/div>
+                    <div id="nas-nav-drive" class="nav-item nas-nav active" onclick="nasNav('drive')">📁 我的雲端硬碟</div>
+                    <div id="nas-nav-shared" class="nav-item nas-nav" onclick="nasNav('shared')">👥 與我共用</div>
+                    <div id="nas-nav-starred" class="nav-item nas-nav" onclick="nasNav('starred')">⭐ 已加星號</div>
+                    <div id="nas-nav-recent" class="nav-item nas-nav" onclick="nasNav('recent')">🕒 近期存取</div>
+                    <div id="nas-nav-trash" class="nav-item nas-nav" onclick="nasNav('trash')" style="margin-top:auto; color:var(--danger-color); border-color:rgba(255,100,100,0.2);">🗑️ 垃圾桶</div>
                 </div>
                 <div class="nas-content">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div id="nas-breadcrumb" style="display:flex; align-items:center; gap:8px; font-size:1.1rem; font-weight:700;"></div>
                         <div style="display:flex; align-items:center; gap:20px;">
                             <div style="display:flex; background:var(--sidebar-color); border-radius:6px; padding:4px; border:1px solid var(--border-color);">
-                                <button class="btn btn-outline" id="btn-grid" style="padding:6px 12px; font-size:0.8rem; border:none; background:var(--accent-color); color:#fff;" onclick="toggleNASView('grid')">漎?/button>
-                                <button class="btn btn-outline" id="btn-list" style="padding:6px 12px; font-size:0.8rem; border:none; background:transparent; color:var(--text-main);" onclick="toggleNASView('list')">??/button>
+                                <button class="btn btn-outline" id="btn-grid" style="padding:6px 12px; font-size:0.8rem; border:none; background:var(--accent-color); color:#fff;" onclick="toggleNASView('grid')">⬛</button>
+                                <button class="btn btn-outline" id="btn-list" style="padding:6px 12px; font-size:0.8rem; border:none; background:transparent; color:var(--text-main);" onclick="toggleNASView('list')">☰</button>
                             </div>
                             <div style="width:180px;">
-                                <div style="font-size:0.6rem; color:var(--text-muted); font-weight:800; margin-bottom:5px;">?脣??? (1GB)</div>
+                                <div style="font-size:0.6rem; color:var(--text-muted); font-weight:800; margin-bottom:5px;">儲存配額 (1GB)</div>
                                 <div class="progress-bar" style="height:4px; margin:0;"><div id="quota-bar" class="progress-fill" style="width:0%;"></div></div>
                                 <div id="quota-label" style="font-size:0.6rem; color:var(--text-muted); margin-top:3px;">-- / 1024 MB</div>
                             </div>
                             <div style="position:relative;">
-                                <button class="btn btn-primary" onclick="toggleNewMenu()">+ 撱箇? / 銝</button>
+                                <button class="btn btn-primary" onclick="toggleNewMenu()">+ 建立 / 上傳</button>
                                 <div id="new-menu" class="card" style="display:none; position:absolute; right:0; top:45px; padding:6px 0; z-index:100; min-width:160px;">
-                                    <div class="nav-item" style="padding:10px 15px; border-bottom:1px solid var(--border-color); border-left:none;" onclick="document.getElementById('nas-up').click(); toggleNewMenu()">?? 銝瑼?</div>
-                                    <div class="nav-item" style="padding:10px 15px; border-left:none;" onclick="promptMkdir(); toggleNewMenu()">?? ?啣?鞈?憭?/div>
+                                    <div class="nav-item" style="padding:10px 15px; border-bottom:1px solid var(--border-color); border-left:none;" onclick="document.getElementById('nas-up').click(); toggleNewMenu()">📁 上傳檔案</div>
+                                    <div class="nav-item" style="padding:10px 15px; border-left:none;" onclick="promptMkdir(); toggleNewMenu()">📁 新增資料夾</div>
                                 </div>
                             </div>
                         </div>
@@ -352,35 +352,35 @@
         <div id="view-nas-mgnt" class="view-section">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem; margin-bottom: 2rem;">
                 <div class="card">
-                    <h2 class="card-title">?? SATA 0: 蝟餌絞?箸?蝖祉? (System SSD)</h2>
+                    <h2 class="card-title">📀 SATA 0: 系統固態硬碟 (System SSD)</h2>
                     <div style="display:flex; gap:1.5rem; align-items:center;">
-                        <div style="font-size:3rem;">?</div>
+                        <div style="font-size:3rem;">💾</div>
                         <div style="flex:1;">
-                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span>??暺? /</span><span style="color:var(--success-color);font-weight:800;">??? ?臬末</span></div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span>掛載點: /</span><span style="color:var(--success-color);font-weight:800;">狀態: 良好</span></div>
                             <div class="progress-bar"><div id="nas-sys-bar" class="progress-fill" style="width:0%"></div></div>
-                            <div style="margin-top:10px;font-size:0.8rem;color:var(--text-muted);">??: Absolute-Axis.vdi (VirtualBox)</div>
+                            <div style="margin-top:10px;font-size:0.8rem;color:var(--text-muted);">型號: Absolute-Axis.vdi (VirtualBox)</div>
                         </div>
                     </div>
                 </div>
                 <div class="card">
-                    <h2 class="card-title">? SATA 1: 憭批捆?摮? (Data HDD)</h2>
+                    <h2 class="card-title">💾 SATA 1: 大容量儲存碟 (Data HDD)</h2>
                     <div style="display:flex; gap:1.5rem; align-items:center;">
-                        <div style="font-size:3rem;">?</div>
+                        <div style="font-size:3rem;">💿</div>
                         <div style="flex:1;">
-                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span>??暺? /nas_storage</span><span style="color:var(--success-color);font-weight:800;">??? ??銝?/span></div>
+                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span>掛載點: /nas_storage</span><span style="color:var(--success-color);font-weight:800;">狀態: 運作中</span></div>
                             <div class="progress-bar"><div id="nas-data-bar" class="progress-fill" style="width:0%;background:var(--success-color);"></div></div>
-                            <div style="margin-top:10px;font-size:0.8rem;color:var(--text-muted);">??: Absolute-Axis_1.vhd (VirtualBox)</div>
+                            <div style="margin-top:10px;font-size:0.8rem;color:var(--text-muted);">型號: Absolute-Axis_1.vhd (VirtualBox)</div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="card">
-                <h2 class="card-title">?? ?遢蝞∠???蝔?/h2>
+                <h2 class="card-title">🕒 備份管理與排程</h2>
                 <table class="admin-table">
-                    <thead><tr><th>?交?</th><th>隞餃?憿?</th><th>靘?</th><th>摮?暺?/th><th>???/th></tr></thead>
+                    <thead><tr><th>日期</th><th>任務類型</th><th>來源</th><th>存檔點</th><th>狀態</th></tr></thead>
                     <tbody>
-                        <tr><td>2026-03-27 12:00</td><td>蝟餌絞敹怎</td><td>SATA 0</td><td>SATA 1</td><td><span class="role-badge role-member">??</span></td></tr>
-                        <tr><td>2026-03-26 12:00</td><td>鞈??遢</td><td>SATA 1</td><td>External</td><td><span class="role-badge role-admin">憭望?</span></td></tr>
+                        <tr><td>2026-03-27 12:00</td><td>系統快照</td><td>SATA 0</td><td>SATA 1</td><td><span class="role-badge role-member">成功</span></td></tr>
+                        <tr><td>2026-03-26 12:00</td><td>資料備份</td><td>SATA 1</td><td>External</td><td><span class="role-badge role-admin">失敗</span></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -389,204 +389,205 @@
         <!-- View: Virtual -->
         <div id="view-vritual" class="view-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h1 style="font-size:2rem; font-weight:900; color:var(--text-main); margin:0;">????葉敹?(Hypervisor)</h1>
+                <h1 style="font-size:2rem; font-weight:900; color:var(--text-main); margin:0;">重型虛擬化中心 (Hypervisor)</h1>
             </div>
             <div class="card" style="margin-bottom:2rem; background:linear-gradient(135deg, rgba(88, 166, 255, 0.1), transparent); border-color:var(--accent-color);">
-                <h2 class="card-title" style="color:var(--accent-color);">??雿蔡?唬?璆剔頂蝯?(Deploy New OS)</h2>
+                <h2 class="card-title" style="color:var(--accent-color);">⚡ 佈署新作業系統 (Deploy New OS)</h2>
                 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:1.2rem;">
                     <!-- Windows OS -->
                     <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">??</div>
+                        <div style="font-size:2.5rem; margin-bottom:10px;">🪟</div>
                         <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Windows 11</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">摰獢蝡臭?璆剔頂蝯?/div>
-                        <button class="btn btn-primary" style="width:100%; padding:8px;" onclick="promptDeployVM('win11', 'Windows 11')">?函蔡撖虫?</button>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">完整桌面端作業系統</div>
+                        <button class="btn btn-primary" style="width:100%; padding:8px;" onclick="promptDeployVM('win11', 'Windows 11')">部署實例</button>
                     </div>
                     <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">?儭?/div>
+                        <div style="font-size:2.5rem; margin-bottom:10px;">🖥️</div>
                         <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Win Server 2022</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">隡平蝝撩??</div>
-                        <button class="btn btn-primary" style="width:100%; padding:8px;" onclick="promptDeployVM('win-server', 'Windows Server 2022')">?函蔡撖虫?</button>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">企業級伺服器版本</div>
+                        <button class="btn btn-primary" style="width:100%; padding:8px;" onclick="promptDeployVM('win-server', 'Windows Server 2022')">部署實例</button>
                     </div>
                     <!-- Linux OS -->
                     <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">?</div>
+                        <div style="font-size:2.5rem; margin-bottom:10px;">🐧</div>
                         <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Ubuntu Desktop</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">璆菟?KasmVNC 獢</div>
-                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('ubuntu', 'Ubuntu 獢??)">?函蔡撖虫?</button>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">極速 KasmVNC 桌面</div>
+                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('ubuntu', 'Ubuntu 桌面版')">部署實例</button>
                     </div>
                     <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">??</div>
+                        <div style="font-size:2.5rem; margin-bottom:10px;">🐉</div>
                         <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Kali Linux</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">鞈??輔?葫閰?/div>
-                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('kali', 'Kali Linux')">?函蔡撖虫?</button>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">資安與滲透測試</div>
+                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('kali', 'Kali Linux')">部署實例</button>
                     </div>
                     <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">??</div>
+                        <div style="font-size:2.5rem; margin-bottom:10px;">❄️</div>
                         <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Arch Linux</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">擃?頛??銵?</div>
-                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('arch', 'Arch Linux')">?函蔡撖虫?</button>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">高階輕量化發行版</div>
+                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('arch', 'Arch Linux')">部署實例</button>
                     </div>
                     <!-- Others -->
                     <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">??</div>
+                        <div style="font-size:2.5rem; margin-bottom:10px;">🍎</div>
                         <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">macOS</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">??暺???鋆?/div>
-                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('macos', 'macOS OSX')">?函蔡撖虫?</button>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">蘋果黑蘋果封裝</div>
+                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('macos', 'macOS OSX')">部署實例</button>
                     </div>
                     <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
-                        <div style="font-size:2.5rem; margin-bottom:10px;">?</div>
+                        <div style="font-size:2.5rem; margin-bottom:10px;">📱</div>
                         <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Android-x86</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">Android ??璅⊥??/div>
-                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('android', 'Android')">?函蔡撖虫?</button>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">Android 手機模擬器</div>
+                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('android', 'Android')">部署實例</button>
                     </div>
                 </div>
             </div>
 
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <h2 class="card-title" style="margin:0;">??儭???銝剔??璈?(Active Instances)</h2>
-                    <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="loadDocker()">??渡?</button>
+                    <h2 class="card-title" style="margin:0;">🗄️ 運行中的虛擬機 (Active Instances)</h2>
+                    <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="loadDocker()">重新整理</button>
                 </div>
                 <div id="docker-list" style="display:flex; flex-direction:column; gap:12px;"></div>
             </div>
         </div>
     </main>
 
-    <!-- 蝯扔? Popover -->
+    <!-- 終極隔離 Popover -->
     <div id="user-popover" class="user-popover">
         <div style="border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:12px;">
             <span id="pop-name" style="font-weight:800; font-size:1.1rem; color:#fff; display:block;">--</span>
             <span id="pop-role" style="font-size:0.75rem; color:var(--accent-color); font-weight:800; margin-top:5px; display:block;">--</span>
         </div>
-        <button class="btn btn-outline" style="width:100%; margin-bottom:8px; padding:8px;" onclick="switchView('settings');window.toggleAxisPopover()">蝟餌絞閮剖?</button>
-        <button class="btn btn-danger" style="width:100%; padding:8px;" onclick="doLogout()">?餃蝟餌絞</button>
+        <button class="btn btn-outline" style="width:100%; margin-bottom:8px; padding:8px;" onclick="switchView('settings');window.toggleAxisPopover()">系統設定</button>
+        <button class="btn btn-danger" style="width:100%; padding:8px;" onclick="doLogout()">登出系統</button>
     </div>
 
-    <!-- 靽格?迂/撖Ⅳ Modal -->
+    <!-- 修改名稱/密碼 Modal -->
     <div id="modal-profile" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
         <div class="card" style="width:400px;text-align:center;">
-            <h2 style="margin-bottom:1.5rem;">靽格憪???蝣?/h2>
-            <input type="text" id="edit-name" class="t-input" placeholder="?啁?嗅?蝔?(銝?征)">
-            <input type="password" id="edit-pass" class="t-input" placeholder="?啁??蝣?(銝?征)">
+            <h2 style="margin-bottom:1.5rem;">修改姓名與密碼</h2>
+            <input type="text" id="edit-name" class="t-input" placeholder="新用戶名稱 (不改留空)">
+            <input type="password" id="edit-pass" class="t-input" placeholder="新登錄密碼 (不改留空)">
             <div style="display:flex;gap:10px;justify-content:center;margin-top:1rem;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-profile').style.display='none'">??</button>
-                <button class="btn btn-primary" onclick="saveProfile()">蝣箄?靽格</button>
+                <button class="btn btn-outline" onclick="document.getElementById('modal-profile').style.display='none'">取消</button>
+                <button class="btn btn-primary" onclick="saveProfile()">確認修改</button>
             </div>
         </div>
     </div>
 
-    <!-- ?湔??剖? Modal -->
+    <!-- 更換頭像 Modal -->
     <div id="modal-avatar" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
         <div class="card" style="width:400px;text-align:center;">
-            <h2 style="margin-bottom:1.5rem;">?湔??犖?剖?</h2>
-            <input type="text" id="edit-ava" class="t-input" placeholder="?剖?????? https://...">
+            <h2 style="margin-bottom:1.5rem;">更換個人頭像</h2>
+            <input type="text" id="edit-ava" class="t-input" placeholder="頭像圖片連結 https://...">
             <div style="display:flex;gap:10px;justify-content:center;margin-top:1rem;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-avatar').style.display='none'">??</button>
-                <button class="btn btn-primary" onclick="saveAvatar()">蝣箄??湔?</button>
+                <button class="btn btn-outline" onclick="document.getElementById('modal-avatar').style.display='none'">取消</button>
+                <button class="btn btn-primary" onclick="saveAvatar()">確認更換</button>
             </div>
         </div>
     </div>
 
-    <!-- ?啣?蝟餌絞撣唾? Modal -->
+    <!-- 新增系統帳號 Modal -->
     <div id="modal-create-user" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
         <div class="card" style="width:400px;">
-            <h2 style="margin-bottom:1.5rem; text-align:center;">?啣?蝟餌絞撣唾?</h2>
+            <h2 style="margin-bottom:1.5rem; text-align:center;">新增系統帳號</h2>
             <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem; text-align:center; line-height:1.6;">
-                ?? 撱箇??啣董???芸?敺?HDD (SATA 1) ????<b style="color:var(--accent-color);">1GB</b> 摮????            </div>
-            <input type="text" id="new-user-name" class="t-input" placeholder="雿輻??蝔?>
-            <input type="password" id="new-user-pass" class="t-input" placeholder="?餃撖Ⅳ">
+                ⚠️ 建立新帳號將自動從 HDD (SATA 1) 預分配 <b style="color:var(--accent-color);">1GB</b> 存儲配額。
+            </div>
+            <input type="text" id="new-user-name" class="t-input" placeholder="使用者名稱">
+            <input type="password" id="new-user-pass" class="t-input" placeholder="登入密碼">
             <select id="new-user-role" class="t-input">
-                <option value="Member">銝?砌蝙?刻?(Member)</option>
-                <option value="Administrator">蝞∠???(Administrator)</option>
+                <option value="Member">一般使用者 (Member)</option>
+                <option value="Administrator">管理員 (Administrator)</option>
             </select>
             <div style="display:flex;gap:10px;justify-content:center;margin-top:1.5rem;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-create-user').style.display='none'">??</button>
-                <button class="btn btn-primary" onclick="confirmCreateUser()">蝣箄?撱箇?</button>
+                <button class="btn btn-outline" onclick="document.getElementById('modal-create-user').style.display='none'">取消</button>
+                <button class="btn btn-primary" onclick="confirmCreateUser()">確認建立</button>
             </div>
         </div>
     </div>
     
-    <!-- 蝞∠??∠楊頛?Modal -->
+    <!-- 管理員編輯 Modal -->
     <div id="modal-admin-edit" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
         <div class="card" style="width:400px;">
-            <h2 style="margin-bottom:1.5rem; text-align:center;">蝞∠??∠楊頛荔?<span id="target-user-name" style="color:var(--accent-color);"></span></h2>
-            <input type="password" id="admin-user-pass" class="t-input" placeholder="?啣?蝣?(銝?征)">
+            <h2 style="margin-bottom:1.5rem; text-align:center;">管理員編輯：<span id="target-user-name" style="color:var(--accent-color);"></span></h2>
+            <input type="password" id="admin-user-pass" class="t-input" placeholder="新密碼 (不改留空)">
             <select id="admin-user-role" class="t-input">
-                <option value="Member">銝?砌蝙?刻?(Member)</option>
-                <option value="Administrator">蝞∠???(Administrator)</option>
+                <option value="Member">一般使用者 (Member)</option>
+                <option value="Administrator">管理員 (Administrator)</option>
             </select>
             <div style="display:flex;gap:10px;justify-content:center;margin-top:1.5rem;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-admin-edit').style.display='none'">??</button>
-                <button class="btn btn-primary" onclick="confirmAdminEdit()">蝣箄?霈</button>
+                <button class="btn btn-outline" onclick="document.getElementById('modal-admin-edit').style.display='none'">取消</button>
+                <button class="btn btn-primary" onclick="confirmAdminEdit()">確認變更</button>
             </div>
         </div>
     </div>
 
-    <!-- 瑼??澈 Modal -->
+    <!-- 檔案分享 Modal -->
     <div id="modal-share" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
         <div class="card" style="width:420px; text-align:center; padding:30px;">
-            <div style="font-size:3rem; margin-bottom:1.5rem;">??</div>
-            <h2 style="margin-bottom:1rem;">?梁甇日???/h2>
+            <div style="font-size:3rem; margin-bottom:1.5rem;">🔗</div>
+            <h2 style="margin-bottom:1rem;">共用此項目</h2>
             <div id="share-target-name" style="color:var(--text-muted); margin-bottom:2rem; font-size:0.9rem; word-break:break-all;"></div>
-            <div style="text-align:left; margin-bottom:8px; font-size:0.8rem; color:var(--text-muted); font-weight:700;">?豢??梁撠情嚗?/div>
+            <div style="text-align:left; margin-bottom:8px; font-size:0.8rem; color:var(--text-muted); font-weight:700;">選擇共用對象：</div>
             <select id="share-user-select" class="t-input"></select>
             <div style="display:flex; gap:12px; justify-content:center;">
-                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-share').style.display='none'">??</button>
-                <button class="btn btn-primary" style="flex:1;" onclick="confirmShare()">蝣箄??梁</button>
+                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-share').style.display='none'">取消</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="confirmShare()">確認共用</button>
             </div>
         </div>
     </div>
 
-    <!-- 瑼??汗 Modal -->
+    <!-- 檔案預覽 Modal -->
     <div id="modal-preview" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:300000;display:none;flex-direction:column;justify-content:center;align-items:center;backdrop-filter:blur(15px);">
-        <div style="position:absolute; top:20px; right:20px; color:#fff; cursor:pointer; font-size:2rem;" onclick="closePreview()">??/div>
+        <div style="position:absolute; top:20px; right:20px; color:#fff; cursor:pointer; font-size:2rem;" onclick="closePreview()">✕</div>
         <div id="preview-content" style="width:90%; height:80%; display:flex; justify-content:center; align-items:center; overflow:hidden;"></div>
-        <div id="preview-filename" style="margin-top:20px; color:#fff; font-size:1.1rem; font-weight:800;">瑼??汗</div>
+        <div id="preview-filename" style="margin-top:20px; color:#fff; font-size:1.1rem; font-weight:800;">檔案預覽</div>
     </div>
 
     <!-- VM Deploy Modal -->
     <div id="modal-deploy-vm" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
         <div class="card" style="width:450px;">
-            <h2 style="margin-bottom:0.5rem; text-align:center;" id="deploy-vm-title">?函蔡?璈?/h2>
+            <h2 style="margin-bottom:0.5rem; text-align:center;" id="deploy-vm-title">部署虛擬機</h2>
             <div style="text-align:center; color:var(--accent-color); font-weight:800; font-size:0.8rem; margin-bottom:1.5rem;" id="deploy-vm-os"></div>
             
             <input type="hidden" id="vm-os-internal">
-            <div style="margin-bottom:10px;"><label style="font-size:0.85rem;font-weight:800;">?璈?蝔?(銝?征??</label><input type="text" id="vm-name" class="t-input" placeholder="靘?: win11_dev"></div>
+            <div style="margin-bottom:10px;"><label style="font-size:0.85rem;font-weight:800;">虛擬機名稱 (不可有空白)</label><input type="text" id="vm-name" class="t-input" placeholder="例如: win11_dev"></div>
             
             <div style="display:flex; gap:15px;">
-                <div style="flex:1;"><label style="font-size:0.85rem;font-weight:800;">?蔭 CPU ?詨???/label><input type="number" id="vm-cpu" class="t-input" value="4" min="1" max="64"></div>
-                <div style="flex:1;"><label style="font-size:0.85rem;font-weight:800;">?蔭閮擃?(GB)</label><input type="number" id="vm-ram" class="t-input" value="8" min="2" max="64"></div>
+                <div style="flex:1;"><label style="font-size:0.85rem;font-weight:800;">配置 CPU 核心數</label><input type="number" id="vm-cpu" class="t-input" value="4" min="1" max="64"></div>
+                <div style="flex:1;"><label style="font-size:0.85rem;font-weight:800;">配置記憶體 (GB)</label><input type="number" id="vm-ram" class="t-input" value="8" min="2" max="64"></div>
             </div>
 
             <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1.5rem; line-height:1.6; padding:10px; background:var(--sidebar-color); border:1px solid var(--border-color); border-radius:8px;">
-                ?? 蝟餌絞撠????ISO 銝阡? KVM 蝖祇??湧???br>
-                ?? ?函蔡敺????脫????汗??WebVNC ?單???隞??            </div>
+                ⚙️ 系統將自動抓取 ISO 並透過 KVM 硬體直通啟動。<br>
+                🔗 部署後，按綠色按鈕開啟瀏覽器 WebVNC 即時操作介面。
+            </div>
 
             <div style="display:flex;gap:10px;justify-content:center;">
-                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-deploy-vm').style.display='none'">??</button>
-                <button class="btn btn-primary" style="flex:1;" onclick="confirmDeployVM()">?? ???函蔡</button>
+                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-deploy-vm').style.display='none'">取消</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="confirmDeployVM()">🚀 開始部署</button>
             </div>
         </div>
     </div>
-        <div style="position:absolute; top:20px; right:20px; color:#fff; cursor:pointer; font-size:2rem;" onclick="closePreview()">??/div>
+        <div style="position:absolute; top:20px; right:20px; color:#fff; cursor:pointer; font-size:2rem;" onclick="closePreview()">✕</div>
         <div id="preview-content" style="width:90%; height:80%; display:flex; justify-content:center; align-items:center; overflow:hidden;"></div>
-        <div id="preview-filename" style="margin-top:20px; color:#fff; font-size:1.1rem; font-weight:800;">瑼??汗</div>
+        <div id="preview-filename" style="margin-top:20px; color:#fff; font-size:1.1rem; font-weight:800;">檔案預覽</div>
     </div>
 
-    <!-- ?喲?詨 -->
+    <!-- 右鍵選單 -->
     <div id="nas-context-menu" class="context-menu">
-        <div class="context-menu-item" id="cm-open" onclick="cmAction('open')">?? ??</div>
-        <div class="context-menu-item" id="cm-dl" onclick="cmAction('dl')">漎? 銝?</div>
-        <div class="context-menu-item" id="cm-share" onclick="cmAction('share')">?? ?梁</div>
-        <div class="context-menu-item" id="cm-star" onclick="cmAction('star')">潃??嗉? / ??</div>
+        <div class="context-menu-item" id="cm-open" onclick="cmAction('open')">📂 開啟</div>
+        <div class="context-menu-item" id="cm-dl" onclick="cmAction('dl')">⬇️ 下載</div>
+        <div class="context-menu-item" id="cm-share" onclick="cmAction('share')">🔗 共用</div>
+        <div class="context-menu-item" id="cm-star" onclick="cmAction('star')">⭐ 收藏 / 取消</div>
         <div style="height:1px; background:var(--border-color); margin:5px 0;"></div>
-        <div class="context-menu-item" id="cm-restore" style="display:none" onclick="cmAction('restore')">?? ??</div>
-        <div class="context-menu-item" id="cm-trash" style="color:var(--danger-color)" onclick="cmAction('trash')">??儭?蝘餉?蝡?/div>
-        <div class="context-menu-item" id="cm-del" style="color:var(--danger-color); display:none" onclick="cmAction('delete')">??瘞訾??芷</div>
+        <div class="context-menu-item" id="cm-restore" style="display:none" onclick="cmAction('restore')">🔄 還原</div>
+        <div class="context-menu-item" id="cm-trash" style="color:var(--danger-color)" onclick="cmAction('trash')">🗑️ 移至回收站</div>
+        <div class="context-menu-item" id="cm-del" style="color:var(--danger-color); display:none" onclick="cmAction('delete')">❌ 永久刪除</div>
     </div>
 
     <script>
-<script>
         let authToken = localStorage.getItem('axis_token');
         let myRole = localStorage.getItem('axis_role');
         let currentNASPath = "";
@@ -1199,7 +1200,6 @@
             if(myRole==='Administrator') document.getElementById('nav-admin').style.display='flex';
             startPolling();
         }
-    
-</script>
+    </script>
 </body>
 </html>
