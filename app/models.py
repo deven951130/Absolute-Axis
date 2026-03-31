@@ -40,3 +40,9 @@ class ShareRequest(BaseModel):
 
 class ToggleRequest(BaseModel):
     path: str
+
+class DeployVMRequest(BaseModel):
+    os_internal_name: str
+    container_name: str
+    cpu_cores: int = 2
+    ram_gb: int = 4

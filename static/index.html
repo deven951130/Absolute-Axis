@@ -387,7 +387,69 @@
         </div>
 
         <!-- View: Virtual -->
-        <div id="view-vritual" class="view-section"><div class="card"><h2 class="card-title">🖥️ 虛擬化中心</h2><div class="file-grid" id="docker-list"></div></div></div>
+        <div id="view-vritual" class="view-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h1 style="font-size:2rem; font-weight:900; color:var(--text-main); margin:0;">重型虛擬化中心 (Hypervisor)</h1>
+            </div>
+            <div class="card" style="margin-bottom:2rem; background:linear-gradient(135deg, rgba(88, 166, 255, 0.1), transparent); border-color:var(--accent-color);">
+                <h2 class="card-title" style="color:var(--accent-color);">⚡ 佈署新作業系統 (Deploy New OS)</h2>
+                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:1.2rem;">
+                    <!-- Windows OS -->
+                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
+                        <div style="font-size:2.5rem; margin-bottom:10px;">🪟</div>
+                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Windows 11</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">完整桌面端作業系統</div>
+                        <button class="btn btn-primary" style="width:100%; padding:8px;" onclick="promptDeployVM('win11', 'Windows 11')">部署實例</button>
+                    </div>
+                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
+                        <div style="font-size:2.5rem; margin-bottom:10px;">🖥️</div>
+                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Win Server 2022</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">企業級伺服器版本</div>
+                        <button class="btn btn-primary" style="width:100%; padding:8px;" onclick="promptDeployVM('win-server', 'Windows Server 2022')">部署實例</button>
+                    </div>
+                    <!-- Linux OS -->
+                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
+                        <div style="font-size:2.5rem; margin-bottom:10px;">🐧</div>
+                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Ubuntu Desktop</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">極速 KasmVNC 桌面</div>
+                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('ubuntu', 'Ubuntu 桌面版')">部署實例</button>
+                    </div>
+                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
+                        <div style="font-size:2.5rem; margin-bottom:10px;">🐉</div>
+                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Kali Linux</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">資安與滲透測試</div>
+                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('kali', 'Kali Linux')">部署實例</button>
+                    </div>
+                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
+                        <div style="font-size:2.5rem; margin-bottom:10px;">❄️</div>
+                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Arch Linux</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">高階輕量化發行版</div>
+                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('arch', 'Arch Linux')">部署實例</button>
+                    </div>
+                    <!-- Others -->
+                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
+                        <div style="font-size:2.5rem; margin-bottom:10px;">🍎</div>
+                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">macOS</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">蘋果黑蘋果封裝</div>
+                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('macos', 'macOS OSX')">部署實例</button>
+                    </div>
+                    <div class="file-card" style="display:flex; flex-direction:column; align-items:center; cursor:default;">
+                        <div style="font-size:2.5rem; margin-bottom:10px;">📱</div>
+                        <div style="font-weight:800; font-size:1.1rem; margin-bottom:5px;">Android-x86</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px; text-align:center;">Android 手機模擬器</div>
+                        <button class="btn btn-outline" style="width:100%; padding:8px;" onclick="promptDeployVM('android', 'Android')">部署實例</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h2 class="card-title" style="margin:0;">🗄️ 運行中的虛擬機 (Active Instances)</h2>
+                    <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="loadDocker()">重新整理</button>
+                </div>
+                <div id="docker-list" style="display:flex; flex-direction:column; gap:12px;"></div>
+            </div>
+        </div>
     </main>
 
     <!-- 終極隔離 Popover -->
@@ -478,6 +540,36 @@
 
     <!-- 檔案預覽 Modal -->
     <div id="modal-preview" style="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:300000;display:none;flex-direction:column;justify-content:center;align-items:center;backdrop-filter:blur(15px);">
+        <div style="position:absolute; top:20px; right:20px; color:#fff; cursor:pointer; font-size:2rem;" onclick="closePreview()">✕</div>
+        <div id="preview-content" style="width:90%; height:80%; display:flex; justify-content:center; align-items:center; overflow:hidden;"></div>
+        <div id="preview-filename" style="margin-top:20px; color:#fff; font-size:1.1rem; font-weight:800;">檔案預覽</div>
+    </div>
+
+    <!-- VM Deploy Modal -->
+    <div id="modal-deploy-vm" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
+        <div class="card" style="width:450px;">
+            <h2 style="margin-bottom:0.5rem; text-align:center;" id="deploy-vm-title">部署虛擬機</h2>
+            <div style="text-align:center; color:var(--accent-color); font-weight:800; font-size:0.8rem; margin-bottom:1.5rem;" id="deploy-vm-os"></div>
+            
+            <input type="hidden" id="vm-os-internal">
+            <div style="margin-bottom:10px;"><label style="font-size:0.85rem;font-weight:800;">虛擬機名稱 (不可有空白)</label><input type="text" id="vm-name" class="t-input" placeholder="例如: win11_dev"></div>
+            
+            <div style="display:flex; gap:15px;">
+                <div style="flex:1;"><label style="font-size:0.85rem;font-weight:800;">配置 CPU 核心數</label><input type="number" id="vm-cpu" class="t-input" value="4" min="1" max="64"></div>
+                <div style="flex:1;"><label style="font-size:0.85rem;font-weight:800;">配置記憶體 (GB)</label><input type="number" id="vm-ram" class="t-input" value="8" min="2" max="64"></div>
+            </div>
+
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1.5rem; line-height:1.6; padding:10px; background:var(--sidebar-color); border:1px solid var(--border-color); border-radius:8px;">
+                ⚙️ 系統將自動抓取 ISO 並透過 KVM 硬體直通啟動。<br>
+                🔗 部署後，按綠色按鈕開啟瀏覽器 WebVNC 即時操作介面。
+            </div>
+
+            <div style="display:flex;gap:10px;justify-content:center;">
+                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-deploy-vm').style.display='none'">取消</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="confirmDeployVM()">🚀 開始部署</button>
+            </div>
+        </div>
+    </div>
         <div style="position:absolute; top:20px; right:20px; color:#fff; cursor:pointer; font-size:2rem;" onclick="closePreview()">✕</div>
         <div id="preview-content" style="width:90%; height:80%; display:flex; justify-content:center; align-items:center; overflow:hidden;"></div>
         <div id="preview-filename" style="margin-top:20px; color:#fff; font-size:1.1rem; font-weight:800;">檔案預覽</div>
@@ -799,37 +891,121 @@
 
             mon.style.display = 'block';
             name.innerText = file.name;
+            bar.style.width = '0%'; speed.innerText = '-- MB/s';
 
-            const fd = new FormData();
-            fd.append('file', file);
-            fd.append('path', currentNASPath);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('path', currentNASPath);
 
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/nas/upload');
-            xhr.setRequestHeader('Authorization', 'Bearer ' + authToken);
-
-            let startTime = Date.now();
+            xhr.open('POST', '/api/nas/upload', true);
+            xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+            
+            const startT = Date.now();
             xhr.upload.onprogress = (e) => {
                 if(e.lengthComputable) {
-                    const pct = (e.loaded / e.total * 100);
+                    const pct = (e.loaded / e.total * 100).toFixed(1);
                     bar.style.width = pct + '%';
-                    const elapsed = (Date.now() - startTime) / 1000;
-                    if(elapsed > 0) {
-                        const bps = e.loaded / elapsed;
-                        speed.innerText = (bps / 1024 / 1024).toFixed(1) + ' MB/s';
-                    }
+                    const dur = (Date.now() - startT) / 1000;
+                    if(dur > 0) speed.innerText = (e.loaded / 1024 / 1024 / dur).toFixed(1) + ' MB/s';
                 }
             };
-            xhr.onload = () => {
-                mon.style.display = 'none';
-                loadNASFiles(currentNASPath);
-                input.value = '';
-            };
-            xhr.onerror = () => {
-                alert("上傳失敗，可能超過 1GB 配額！");
-                mon.style.display = 'none';
-            };
-            xhr.send(fd);
+            xhr.onload = () => { setTimeout(() => { mon.style.display = 'none'; loadNASFiles(currentNASPath); }, 1000); };
+            xhr.onerror = () => { alert('Upload failed!'); mon.style.display = 'none'; };
+            xhr.send(formData);
+        }
+
+        function promptDeployVM(internalName, displayName) {
+            document.getElementById('vm-os-internal').value = internalName;
+            document.getElementById('deploy-vm-os').innerText = displayName;
+            document.getElementById('vm-name').value = internalName + "_01";
+            document.getElementById('modal-deploy-vm').style.display = 'flex';
+        }
+
+        async function confirmDeployVM() {
+            const os = document.getElementById('vm-os-internal').value;
+            const name = document.getElementById('vm-name').value;
+            const cpu = parseInt(document.getElementById('vm-cpu').value);
+            const ram = parseInt(document.getElementById('vm-ram').value);
+            
+            if(!name || name.includes(" ")) return alert("名稱不得有空白");
+
+            document.getElementById('modal-deploy-vm').style.display = 'none';
+            const btn = event.target;
+            
+            try {
+                const res = await authFetch('/api/docker/deploy', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({os_internal_name: os, container_name: name, cpu_cores: cpu, ram_gb: ram})
+                });
+                const d = await res.json();
+                if(res.ok) {
+                    alert(d.message);
+                    setTimeout(loadDocker, 2000);
+                } else alert(d.message || "Failed to deploy");
+            } catch(e) {
+                alert("Request error");
+            }
+        }
+
+        async function controlDocker(id, act){
+            await authFetch('/api/docker/control', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({container_id:id,action:act})});
+            setTimeout(loadDocker, 1000);
+        }
+
+        function openVNC(ip, port) {
+            // Because window is host, but user calls this, we map to current hostname + the dynamic port
+            const url = `http://${window.location.hostname}:${port}`;
+            window.open(url, '_blank');
+        }
+
+        async function loadDocker(){
+            const r = await authFetch('/api/docker/containers');
+            if(!r.ok) return;
+            const list = await r.json();
+            const el = document.getElementById('docker-list');
+            el.innerHTML = '';
+            
+            if(list.length === 0) {
+                el.innerHTML = '<div style="color:var(--text-muted); padding:2rem; width:100%; text-align:center;">無運作中的虛擬機。</div>';
+                return;
+            }
+
+            list.forEach(c => {
+                const up = c.State.toLowerCase() === 'running';
+                const statusClr = up ? 'var(--success-color)' : 'var(--text-muted)';
+                const item = document.createElement('div');
+                item.className = 'file-list-item';
+                item.style = `display:flex; align-items:center; justify-content:space-between; padding:15px 25px; border-left:4px solid ${statusClr};`;
+                
+                const names = c.Names;
+                const isHeavyOS = c.Image.includes("dockurr") || c.Image.includes("linuxserver") || c.Image.includes("sickcodes") || c.Image.includes("android");
+                
+                let vncHtml = "";
+                if(up && isHeavyOS && c.vnc_port) {
+                    vncHtml = `<button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem; background:var(--success-color); color:#0d1117;" onclick="openVNC('${window.location.hostname}', '${c.vnc_port}')">🖥️ 打開 WebVNC 桌面</button>`;
+                } else if(up && isHeavyOS) {
+                    vncHtml = `<span style="font-size:0.75rem; color:var(--text-muted);">啟動中 (待 WebVNC 就緒)...</span>`;
+                }
+
+                item.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:18px;">
+                        <div style="font-size:2rem;">${isHeavyOS ? '📦' : '🐳'}</div>
+                        <div>
+                            <div style="font-weight:800; font-size:1.1rem; color:var(--text-main);">${names}</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:5px; font-family:monospace;">${c.Image} • ID: ${c.ID}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        ${vncHtml}
+                        ${up ? `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--danger-color); border-color:var(--border-color);" onclick="controlDocker('${c.ID}','stop')">■ 停止</button>` 
+                             : `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--accent-color); border-color:var(--accent-color);" onclick="controlDocker('${c.ID}','start')">▶ 啟動</button>`}
+                        <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="controlDocker('${c.ID}','restart')">↻ 重啟</button>
+                        <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem;" onclick="controlDocker('${c.ID}','rm -f')">🗑️ 移除</button>
+                    </div>
+                `;
+                el.appendChild(item);
+            });
         }
 
         function openProfileEdit(){document.getElementById('modal-profile').style.display='flex';}
