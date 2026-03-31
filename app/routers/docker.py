@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/docker", tags=["docker"])
 @router.get("/containers")
 def list_containers(user: dict = Depends(get_current_user_obj)):
     try:
-        out = subprocess.check_output("docker ps -a --format '{{json .}}'", shell=True).decode()
+        out = subprocess.check_output(["docker", "ps", "-a", "--format", "{{json .}}"]).decode()
         containers = [json.loads(l) for l in out.strip().split('\n') if l]
         # Attach our custom VNC port parsing for the UI
         for c in containers:
@@ -97,7 +97,7 @@ def deploy_vm(req: DeployVMRequest, user: dict = Depends(get_current_user_obj)):
             cfg["image"]
         ])
 
-    subprocess.Popen(" ".join(cmd), shell=True) # async start as it might take time
+    subprocess.Popen(cmd) # async start as it might take time
     log_event(user["username"], f"Deployed robust OS Instance: {req.container_name} ({req.os_internal_name.upper()}) on port {vps_port}")
     
     return {"status": "ok", "message": "Deployment initiated! It may take some time to download and boot the OS image."}

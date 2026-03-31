@@ -5,7 +5,7 @@ import secrets
 from datetime import datetime
 from fastapi import HTTPException, Header
 
-from app.config import USER_DB_PATH, ACTIVE_SESSIONS, SYSTEM_LOGS, NAS_ROOT
+from app.config import USER_DB_PATH, ACTIVE_SESSIONS, SYSTEM_LOGS, NAS_ROOT, LOG_DB_PATH
 
 def get_dir_size(start_path='.'):
     total_size = 0
@@ -16,12 +16,27 @@ def get_dir_size(start_path='.'):
                 total_size += os.path.getsize(fp)
     return total_size
 
+# Load logs from disk on startup
+if os.path.exists(LOG_DB_PATH):
+    try:
+        with open(LOG_DB_PATH, "r") as f:
+            saved_logs = json.load(f)
+            if isinstance(saved_logs, list):
+                SYSTEM_LOGS.extend(saved_logs)
+    except Exception:
+        pass
+
 def log_event(user: str, action: str):
     timestamp = datetime.now().strftime("%H:%M:%S")
     entry = f"[{timestamp}] [{user}] {action}"
     SYSTEM_LOGS.append(entry)
     if len(SYSTEM_LOGS) > 50: 
         SYSTEM_LOGS.pop(0)
+    try:
+        with open(LOG_DB_PATH, "w") as f:
+            json.dump(SYSTEM_LOGS, f)
+    except Exception:
+        pass
 
 def hash_password(password: str, salt: str) -> str:
     return hashlib.sha256((password + salt).encode()).hexdigest()

@@ -11,6 +11,7 @@ else:
     SYS_ROOT = "C:\\" if os.name == 'nt' else "/"
 
 USER_DB_PATH = os.path.join(BASE_PATH, "users.json")
+LOG_DB_PATH = os.path.join(BASE_PATH, "logs.json")
 
 # NAS_ROOT: 優先偵測專用掛載目錄，若無則使用專案內的 nas 目錄
 NAS_ALT = os.path.join(BASE_PATH, "nas_storage")

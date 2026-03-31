@@ -133,7 +133,7 @@
         <div class="brand"><div class="logo-box" style="background:transparent; overflow:hidden;"><img src="/logo.jpg" style="width:100%; height:100%; object-fit:cover;"></div>ABSOLUTE AXIS</div>
         <ul class="nav-menu">
             <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">🏘️ 戰情總覽</li>
-            <li class="nav-item" id="nav-vritual" onclick="switchView('vritual')">🖥️ 虛擬化中心</li>
+            <li class="nav-item" id="nav-virtual" onclick="switchView('virtual')">🖥️ 虛擬化中心</li>
             <li class="nav-item" id="nav-smart" onclick="switchView('smart')">🏡 智慧宅控</li>
             <li class="nav-item" id="nav-cloud" onclick="switchView('cloud')">☁️ 私有雲儲存</li>
             <li class="nav-item" id="nav-nas-mgnt" onclick="switchView('nas-mgnt')">🗄️ NAS 管理</li>
@@ -230,6 +230,13 @@
                     <div class="card"><h2 class="card-title">🌡️ Environment Sensors</h2><div style="display:flex;gap:2rem;justify-content:center;padding:15px 0;"><div style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:700;">TEMP</div><div style="font-size:1.6rem;font-weight:900;color:var(--text-main);" id="sensor-temp">--°C</div></div><div style="text-align:center;"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;font-weight:700;">HUMID</div><div style="font-size:1.6rem;font-weight:900;color:var(--text-main);" id="sensor-humid">--%</div></div></div></div>
                 </div>
             </div>
+        </div>
+
+        <!-- View: Admin -->
+        <div id="view-placeholder" class="view-section" style="align-items:center;justify-content:center;">
+            <div id="ph-icon" style="font-size:5rem;margin-bottom:20px;"></div>
+            <h2 id="ph-title" style="color:var(--text-main);font-size:1.5rem;"></h2>
+            <div style="color:var(--text-muted);margin-top:10px;">請持續關注未來的系統升級公告</div>
         </div>
 
         <!-- View: Admin -->
@@ -387,7 +394,7 @@
         </div>
 
         <!-- View: Virtual -->
-        <div id="view-vritual" class="view-section">
+        <div id="view-virtual" class="view-section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                 <h1 style="font-size:2rem; font-weight:900; color:var(--text-main); margin:0;">重型虛擬化中心 (Hypervisor)</h1>
             </div>
@@ -683,13 +690,13 @@
             let nId='nav-'+v; if(v==='placeholder') nId=(document.getElementById('ph-icon').innerText==='🏡'?'nav-smart':'nav-ai');
             const n=document.getElementById(nId); if(n) n.classList.add('active');
             
-            const titles = {'dashboard':'戰情總覽','vritual':'虛擬化中心','cloud':'私有雲儲存','nas-mgnt':'NAS 管理中樞','admin':'帳號管理','settings':'系統設定','metrics':'實時數據分析'};
+            const titles = {'dashboard':'戰情總覽','virtual':'虛擬化中心','cloud':'私有雲儲存','nas-mgnt':'NAS 管理中樞','admin':'帳號管理','settings':'系統設定','metrics':'實時數據分析'};
             document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').innerText.replace(' 系統尚未開放','');
 
             if(v==='cloud') loadNASFiles('');
             if(v==='admin') loadUsers();
             if(v==='settings') { closeSettingPanel(); loadSpecs(); }
-            if(v==='vritual') loadDocker();
+            if(v==='virtual') loadDocker();
             if(v==='metrics') initCharts();
         }
 
@@ -751,7 +758,10 @@
             document.getElementById('cm-open').innerText = isDir?'📂 開啟資料夾':'🔍 預覽檔案';
         }
 
-        window.addEventListener('click', () => document.getElementById('nas-context-menu').style.display = 'none');
+        window.addEventListener('click', (e) => {
+            const cm = document.getElementById('nas-context-menu');
+            if(cm && !cm.contains(e.target)) cm.style.display = 'none';
+        });
         window.addEventListener('contextmenu', (e) => { if(!e.target.closest('.file-card') && !e.target.closest('.file-list-item')) document.getElementById('nas-context-menu').style.display = 'none'; });
 
         async function cmAction(act) {
@@ -808,8 +818,7 @@
                     card.className = 'card file-card';
                     card.style.position = 'relative';
                     const starIcon = f.starred ? '⭐' : '☆';
-                    card\.onclick = f\.is_dir \? \(\) => loadNASFiles\(fullPath\) : \(\) => previewFile\(fullPath, f\.ext, owner\);
-                    card.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
+                    card.onclick = f.is_dir ? () => loadNASFiles(fullPath) : () => previewFile(fullPath, f.ext, owner);
                     card.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
                     card.innerHTML = `
                         <div style="position:absolute; top:12px; left:12px; cursor:pointer; font-size:1.1rem;" onclick="event.stopPropagation(); toggleStar('${fullPath}')">${currentNASMode==='drive'?starIcon:''}</div>
@@ -823,8 +832,7 @@
                     const item = document.createElement('div');
                     item.className = 'file-list-item';
                     item.style = "display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:12px; margin-bottom:10px; cursor:pointer; width:100%; min-width:0; transition:all 0.2s;";
-                    item\.onclick = f\.is_dir \? \(\) => loadNASFiles\(fullPath\) : \(\) => previewFile\(fullPath, f\.ext, owner\);
-                    item.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
+                    item.onclick = f.is_dir ? () => loadNASFiles(fullPath) : () => previewFile(fullPath, f.ext, owner);
                     item.oncontextmenu = (e) => showCM(e, fullPath, f.is_dir, f.ext, owner);
                     const starIcon = f.starred ? '⭐' : '☆';
                     item.innerHTML = `
@@ -1169,11 +1177,6 @@
             const ks=[['OS','os'],['PYTHON','python'],['CPU','cpu_cores'],['RAM','ram_total'],['HOST','hostname'],['UP','boot_time'],['GPU','gpu']];
             document.getElementById('sys-specs-grid').innerHTML=ks.map(([l,k])=>`<div style="background:var(--bg-color);padding:15px;border-radius:8px;border:1px solid var(--border-color);"><div style="font-size:0.6rem;color:var(--text-muted);font-weight:800;margin-bottom:5px;">${l}</div><div style="font-size:0.85rem;font-weight:600;color:var(--text-main);">${s[k]}</div></div>`).join('');
         }
-        async function loadDocker(){
-            const res=await authFetch('/api/docker/containers'); if(!res.ok)return; const cs=await res.json();
-            document.getElementById('docker-list').innerHTML=cs.map(c=>`<div class="file-card"><div style="font-size:0.8rem;font-weight:800;margin-bottom:8px;">${c.Names}</div><div style="font-size:0.7rem;color:${c.Status.includes('Up')?'var(--success-color)':'var(--text-muted)'};">${c.Status}</div><div style="margin-top:15px;display:flex;gap:10px;justify-content:center;"><button onclick="dkCtl('${c.ID}','start')">▶️</button><button onclick="dkCtl('${c.ID}','stop')">⏹️</button></div></div>`).join('');
-        }
-        async function dkCtl(id,act){await authFetch('/api/docker/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({container_id:id,action:act})});loadDocker();}
         async function broadCast(){const m=document.getElementById('msg-input').value; if(m) await authFetch('/api/system/message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})}); document.getElementById('msg-input').value='';}
         function doLogout(){localStorage.clear();location.reload();}
         
