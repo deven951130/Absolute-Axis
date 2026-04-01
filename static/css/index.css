@@ -28,7 +28,17 @@ body { background-color: var(--bg-color); color: var(--text-main); min-height: 1
 .nav-item.active { background: rgba(88, 166, 255, 0.08); color: var(--accent-color); border-left-color: var(--accent-color); }
 .nav-separator { height: 1px; background: var(--border-color); margin: 20px 25px; }
 
-.main-content { flex: 1; padding: 2.5rem; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-color); position: relative; min-width: 0; }
+.main-content { 
+    flex: 1; 
+    padding: 2.5rem; 
+    padding-bottom: 8rem; /* 增加底部緩衝，確保下方內容可完全捲出 */
+    overflow-y: auto; 
+    display: flex; 
+    flex-direction: column; 
+    background: var(--bg-color); 
+    position: relative; 
+    min-width: 0; 
+}
 .view-section { display: none; flex: 1; min-width: 0; }
 .view-section.active { display: flex; flex-direction: column; animation: fadeIn 0.3s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
