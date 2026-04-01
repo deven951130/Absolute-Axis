@@ -28,8 +28,13 @@ def list_containers(user: dict = Depends(get_current_user_obj)):
 
 @router.post("/control")
 def control_docker(req: DockerControlRequest, user: dict = Depends(get_current_user_obj)):
-    subprocess.run(["docker", req.action, req.container_id])
-    log_event(user["username"], f"Virtual Center: {req.action.upper()} container {req.container_id[:8]}")
+    # 如果動作是 'rm' (移除)，加入 -f 強行刪除
+    final_cmd = ["docker", req.action, req.container_id]
+    if req.action == "rm":
+        final_cmd = ["docker", "rm", "-f", req.container_id]
+        
+    subprocess.run(final_cmd)
+    log_event(user["username"], f"Virtual Center: {req.action.upper()} (Force: {req.action=='rm'}) container {req.container_id[:8]}")
     return {"status": "ok"}
 
 def get_free_port():
