@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Absolute Axis 絕對軸心</title>
-    <link rel="stylesheet" href="/static/css/index.css?v=7">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="/static/css/index.css?v=10">
+    <!-- Third-party scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
-    <!-- 登入門檻 -->
+    <!-- 登入驗證層 (核心組件) -->
     <div id="login-overlay" class="login-overlay">
         <div style="background:#161b22;width:380px;padding:3.5rem;border-radius:18px;border:1px solid #30363d;text-align:center;">
             <h1 style="margin-bottom:2.5rem;font-size:2rem;color:var(--accent-color);font-weight:900;">LOGIN</h1>
@@ -19,9 +21,14 @@
         </div>
     </div>
 
-    <!-- 左側導覽列 -->
+    <!-- 左側導覽列 (靜態骨架) -->
     <aside class="sidebar">
-        <div class="brand"><div class="logo-box" style="background:transparent; overflow:hidden;"><img src="/logo.jpg" style="width:100%; height:100%; object-fit:cover;"></div>ABSOLUTE AXIS</div>
+        <div class="brand">
+            <div class="logo-box" style="overflow:hidden;">
+                <img src="/logo.jpg" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+            ABSOLUTE AXIS
+        </div>
         <ul class="nav-menu">
             <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">🏘️ 戰情總覽</li>
             <li class="nav-item" id="nav-virtual" onclick="switchView('virtual')">🖥️ 虛擬化中心</li>
@@ -36,12 +43,14 @@
         </ul>
     </aside>
 
-    <!-- 主要內容區 -->
+    <!-- 主要內容區 (動態注入容器) -->
     <main class="main-content">
         <header class="top-header">
             <div>
                 <h2 id="page-title-text" style="font-size:1.5rem; font-weight:900; letter-spacing:0.5px;">戰情總覽</h2>
-                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-top:5px; text-transform:uppercase;">Network Control Center / <span id="clock" style="color:var(--accent-color);">--:--:--</span></div>
+                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-top:5px; text-transform:uppercase;">
+                    Network Control Center / <span id="clock" style="color:var(--accent-color);">--:--:--</span>
+                </div>
             </div>
             <div style="display:flex; gap:18px; align-items:center;">
                 <button id="theme-toggle" class="btn btn-outline" style="width:45px; height:45px; padding:0; border-radius:50%;" onclick="toggleTheme()">☀️</button>
@@ -51,495 +60,18 @@
             </div>
         </header>
 
-        <!-- 戰情總覽 Dashboard -->
-        <div id="view-dashboard" class="view-section active">
-            <div class="stat-grid">
-                <div class="stat-card" style="cursor:pointer;" onclick="switchView('metrics')" title="點擊查看詳細負載曲線">
-                    <div class="gauge-container">
-                        <svg class="gauge-svg" viewBox="0 0 100 50">
-                            <path class="gauge-bg" d="M10 45 A 35 35 0 0 1 90 45" />
-                            <path id="cpu-gauge" class="gauge-fill" d="M10 45 A 35 35 0 0 1 90 45" />
-                        </svg>
-                        <span class="gauge-label" id="cpu-val">--%</span>
-                    </div>
-                    <div style="font-size:0.65rem;font-weight:800;color:var(--text-muted);margin-top:10px;">CPU 總體負載 (Metrics Link)</div>
-                </div>
-                <div class="stat-card" style="cursor:pointer;" onclick="switchView('metrics')" title="點擊查看詳細負載曲線">
-                    <div class="gauge-container">
-                        <svg class="gauge-svg" viewBox="0 0 100 50">
-                            <path class="gauge-bg" d="M10 45 A 35 35 0 0 1 90 45" />
-                            <path id="ram-gauge" class="gauge-fill" d="M10 45 A 35 35 0 0 1 90 45" />
-                        </svg>
-                        <span class="gauge-label" id="ram-val">--%</span>
-                    </div>
-                    <div style="font-size:0.65rem;font-weight:800;color:var(--text-muted);margin-top:10px;">RAM 使用率 (Metrics Link)</div>
-                </div>
-                <div class="stat-card">
-                    <div style="font-size:1.8rem;">🌡️</div>
-                    <div id="sensor-temp" style="font-weight:900; font-size:1.2rem; margin:8px 0;">--°C</div>
-                    <div style="font-size:0.6rem; color:var(--text-muted); font-weight:800;">主機環境溫度</div>
-                </div>
-                <div class="stat-card">
-                    <div style="font-size:1.8rem;">💧</div>
-                    <div id="sensor-humid" style="font-weight:900; font-size:1.2rem; margin:8px 0;">--%</div>
-                    <div style="font-size:0.6rem; color:var(--text-muted); font-weight:800;">環境相對濕度</div>
-                </div>
-                <div class="stat-card">
-                    <div style="font-size:1.8rem;">📶</div>
-                    <div style="text-align:center;">
-                        <div style="font-size:0.75rem;"><span style="color:var(--success-color)">▲</span> <span id="bw-up">0.0</span></div>
-                        <div style="font-size:0.75rem;"><span style="color:var(--danger-color)">▼</span> <span id="bw-dn">0.0</span></div>
-                    </div>
-                    <div style="font-size:0.6rem; color:var(--text-muted); font-weight:800; margin-top:5px;">流量出口吞吐量</div>
-                </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:2rem;">
-                <div class="card" style="display:flex; flex-direction:column; padding:0; overflow:hidden; border-color:var(--border-color); background:rgba(0,0,0,0.2);">
-                    <div class="card-title" style="padding:1.8rem 1.8rem 0.5rem 1.8rem;">🖥️ 線上系統動作紀錄 (System Logs)</div>
-                    <div id="terminal-logs" style="flex:1; background: #000; padding:1.5rem; font-family:monospace; font-size:0.8rem; color:#0f0; overflow-y:auto; line-height:1.5; border-top:1px solid #30363d; min-height:220px; max-height:380px;">
-                        <div>[SYSTEM] 初始化戰情中心介面...</div>
-                    </div>
-                    <!-- 系統廣播輸入框 (強化互動層級) -->
-                    <div style="display:flex; gap:10px; background:#161b22; padding:15px; border-top:1px solid #30363d; z-index:100; position:relative;">
-                        <input type="text" id="msg-input" placeholder="發送系統廣播訊息..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid #444; color:#fff; border-radius:6px; padding:10px 15px; font-size:0.85rem; outline:none; transition:0.2s;" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='#444'" onkeypress="if(event.key==='Enter') broadCast()">
-                        <button class="btn btn-primary" style="padding:8px 20px; font-size:0.85rem; font-weight:800;" onclick="broadCast()">📡 發送廣播</button>
-                    </div>
-                </div>
-                
-                <div style="display:flex; flex-direction:column; gap:2rem;">
-                    <!-- 核心服務卡片 -->
-                    <div class="card">
-                        <div class="card-title">⚙️ 基礎核心服務狀態</div>
-                        <div id="svc-list" style="display:flex; flex-direction:column; gap:5px;"></div>
-                    </div>
-
-                    <!-- 儲存配額卡片 (獨立並具備動畫) -->
-                    <div class="card card-interactive" style="cursor:pointer;" onclick="switchView('nas-mgnt')" title="點擊查看實體儲存空間細節">
-                        <div class="card-title">🗄️ 系統儲存配額 (Storage Link)</div>
-                        <div style="margin-bottom:1.5rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:8px;">
-                                <span>SSD 系統硬碟</span><span id="sys-label">-- / --</span>
-                            </div>
-                            <div class="progress-bar"><div id="sys-bar" class="progress-fill" style="width:0%"></div></div>
-                        </div>
-                        <div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:8px;">
-                                <span>HDD 雲端資料碟</span><span id="nas-label">-- / --</span>
-                            </div>
-                            <div class="progress-bar"><div id="nas-bar" class="progress-fill" style="width:0%"></div></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 虛擬化中心 -->
-        <div id="view-virtual" class="view-section">
-            <div class="card" style="margin-bottom:2rem;">
-                <h2 class="card-title">🚀 快捷部署虛擬機 (Quick Deploy)</h2>
-                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1.5rem;">
-                    <div class="stat-card" style="padding:1rem; cursor:pointer;" onclick="promptDeployVM('win11','Windows 11 Enterprise')">
-                        <div style="font-size:2rem;margin-bottom:10px;">🪟</div><span style="font-size:0.8rem;font-weight:800;">Windows 11</span>
-                    </div>
-                    <div class="stat-card" style="padding:1rem; cursor:pointer;" onclick="promptDeployVM('ubuntu','Ubuntu 24.04 Desktop')">
-                        <div style="font-size:2rem;margin-bottom:10px;">🐧</div><span style="font-size:0.8rem;font-weight:800;">Ubuntu 24.04</span>
-                    </div>
-                    <div class="stat-card" style="padding:1rem; cursor:pointer;" onclick="promptDeployVM('macos','macOS Sequoia (KVM)')">
-                        <div style="font-size:2rem;margin-bottom:10px;">🍎</div><span style="font-size:0.8rem;font-weight:800;">macOS Sequoia</span>
-                    </div>
-                    <div class="stat-card" style="padding:1rem; cursor:pointer;" onclick="promptDeployVM('kali','Kali Linux (Red Team)')">
-                        <div style="font-size:2rem;margin-bottom:10px;">💀</div><span style="font-size:0.8rem;font-weight:800;">Kali Linux</span>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <h2 class="card-title" style="margin:0;">🗄️ 運行中的虛擬機 (Active Instances)</h2>
-                    <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="loadDocker()">重新整理</button>
-                </div>
-                <div id="docker-list" style="display:flex; flex-direction:column; gap:12px;"></div>
-            </div>
-        </div>
-
-        <!-- 私有雲儲存 -->
-        <div id="view-cloud" class="view-section">
-            <div class="nas-view-container">
-                <aside class="nas-sidebar">
-                    <button id="nas-nav-drive" class="btn btn-outline nas-nav active" onclick="nasNav('drive')" style="justify-content:flex-start; width:100%; border:none;">📂 我的雲端單元</button>
-                    <button id="nas-nav-shared" class="btn btn-outline nas-nav" onclick="nasNav('shared')" style="justify-content:flex-start; width:100%; border:none;">👥 與我共用</button>
-                    <button id="nas-nav-starred" class="btn btn-outline nas-nav" onclick="nasNav('starred')" style="justify-content:flex-start; width:100%; border:none;">⭐ 已加星號</button>
-                    <button id="nas-nav-recent" class="btn btn-outline nas-nav" onclick="nasNav('recent')" style="justify-content:flex-start; width:100%; border:none;">🕒 近期存取</button>
-                    <button id="nas-nav-trash" class="btn btn-outline nas-nav" onclick="nasNav('trash')" style="justify-content:flex-start; width:100%; border:none;">🗑️ 回收站</button>
-                    
-                    <div style="height:1px; background:var(--border-color); margin:1.5rem 0;"></div>
-                    <div style="padding:0 15px;">
-                        <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px;">個人儲存配額</div>
-                        <div id="quota-label" style="font-size:0.7rem; font-weight:800; margin-bottom:8px;">0 MB / 1024 MB</div>
-                        <div class="progress-bar"><div id="quota-bar" class="progress-fill" style="width:0%"></div></div>
-                    </div>
-                </aside>
-                
-                <div class="nas-content">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div id="nas-breadcrumb" style="font-size:0.9rem; font-weight:700;">我的雲端硬碟</div>
-                        <div style="display:flex; gap:12px;">
-                            <div style="display:flex; background:rgba(255,255,255,0.05); border-radius:8px; padding:3px;">
-                                <button id="btn-grid" class="btn btn-outline" style="padding:6px 12px; border:none;" onclick="toggleNASView('grid')">🔳</button>
-                                <button id="btn-list" class="btn btn-outline" style="padding:6px 12px; border:none;" onclick="toggleNASView('list')">≡</button>
-                            </div>
-                            <button class="btn btn-primary" onclick="toggleNewMenu()">✚ 建立 / 上傳</button>
-                            <div id="new-menu" style="position:absolute; background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:8px; display:none; right:2.5rem; top:85px; z-index:10001; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-                                <div class="context-menu-item" onclick="promptMkdir()">📁 新增資料夾</div>
-                                <div class="context-menu-item" onclick="triggerUpload()">📤 上傳檔案</div>
-                                <input type="file" id="nas-up" style="display:none;" onchange="nasUpload()">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="upload-monitor" style="display:none; background:var(--sidebar-color); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem; animation:fadeIn 0.3s;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <span id="up-filename" style="font-weight:700; color:var(--accent-color);">Uploading...</span>
-                            <span id="up-speed" style="font-size:0.75rem; color:var(--text-muted);">0.0 MB/s</span>
-                        </div>
-                        <div class="progress-bar"><div id="up-bar" class="progress-fill" style="width:0%"></div></div>
-                    </div>
-
-                    <div id="nas-explorer"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- NAS 管理中樞 (專業版) -->
-        <div id="view-nas-mgnt" class="view-section">
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.8rem;">
-                <div class="card">
-                    <div class="card-title">🗄️ 實體磁碟狀態與 S.M.A.R.T 健康報告</div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.2rem;">
-                        <!-- SSD 系統硬碟卡片 -->
-                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">[SATA_0] 系統啟動碟</span>
-                                <span style="color:var(--success-color); font-size:0.7rem; font-weight:900;">⚡ NORMAL</span>
-                            </div>
-                            <div style="font-size:1.1rem; font-weight:800; margin:10px 0;">Crucial BX500 240GB</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px;">分區: / (ext4) • 溫度: 32°C</div>
-                            <div class="progress-bar" style="height:4px;"><div id="nas-ssd-bar" class="progress-fill" style="width:0%"></div></div>
-                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem;">
-                                <span>損耗率: 2%</span><span id="nas-ssd-val">--%</span>
-                            </div>
-                        </div>
-                        <!-- HDD 資料硬碟卡片 -->
-                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">[SATA_1] 資料存儲碟</span>
-                                <span style="color:var(--success-color); font-size:0.7rem; font-weight:900;">💾 NORMAL</span>
-                            </div>
-                            <div style="font-size:1.1rem; font-weight:800; margin:10px 0;">WD Red Pro 1TB</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px;">分區: /nas (xfs) • 溫度: 38°C</div>
-                            <div class="progress-bar" style="height:4px;"><div id="nas-hdd-bar" class="progress-fill" style="width:0%"></div></div>
-                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem;">
-                                <span>損耗率: 0%</span><span id="nas-hdd-val">--%</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-title" style="margin-top:2.5rem;">🛡️ RAID 陣列控制中樞 (Software RAID 1)</div>
-                    <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; padding:20px; display:flex; align-items:center; gap:30px;">
-                        <div style="width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:var(--accent-soft); border-radius:50%; border:2px solid var(--accent-color);">
-                            <span style="font-size:2rem;">🛡️</span>
-                        </div>
-                        <div style="flex:1;">
-                            <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:10px;">
-                                <div>
-                                    <div style="font-weight:800; font-size:1.1rem;">Absolute_Data_RAID</div>
-                                    <div style="font-size:0.75rem; color:var(--text-muted);">陣列類型: RAID 1 (鏡像) • 容錯數量: 1</div>
-                                </div>
-                                <div style="text-align:right;">
-                                    <div style="color:var(--success-color); font-weight:900; font-size:0.8rem;">同步狀態: OK</div>
-                                    <div style="font-size:0.7rem; color:var(--text-muted);">最後完整校驗: 今天 04:22</div>
-                                </div>
-                            </div>
-                            <div class="progress-bar" style="height:8px; opacity:1;"><div class="progress-fill" style="width:100%; background:linear-gradient(90deg, var(--accent-color), var(--success-color));"></div></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display:flex; flex-direction:column; gap:1.8rem;">
-                    <div class="card">
-                        <div class="card-title">📊 容量分配分析</div>
-                        <div style="height:120px; display:flex; align-items:center; justify-content:center;">
-                            <div style="width:100%; height:12px; background:var(--border-color); border-radius:10px; overflow:hidden; display:flex;">
-                                <div style="width:20%; background:var(--accent-color);" title="系統關鍵數據"></div>
-                                <div style="width:45%; background:var(--success-color);" title="使用者媒體檔案"></div>
-                                <div style="width:15%; background:#ffa726;" title="Docker 容器映射"></div>
-                            </div>
-                        </div>
-                        <div style="display:flex; flex-direction:column; gap:12px; margin-top:1.5rem;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                                <span style="display:flex; align-items:center; gap:8px;"><i style="width:8px;height:8px;background:var(--accent-color);border-radius:50%;"></i> 核心系統</span>
-                                <span style="font-weight:800;">4.2G</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                                <span style="display:flex; align-items:center; gap:8px;"><i style="width:8px;height:8px;background:var(--success-color);border-radius:50%;"></i> 用戶存儲</span>
-                                <span style="font-weight:800;">12.8G</span>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                                <span style="display:flex; align-items:center; gap:8px;"><i style="width:8px;height:8px;background:#ffa726;border-radius:50%;"></i> 虛擬磁碟</span>
-                                <span style="font-weight:800;">2.1G</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 其他視窗佔位符 -->
-        <div id="view-placeholder" class="view-section">
-            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:60vh; text-align:center;">
-                <div id="ph-icon" style="font-size:6rem; margin-bottom:2rem; filter:drop-shadow(0 0 30px var(--accent-color));">🏡</div>
-                <h1 id="ph-title" style="font-size:2.5rem; font-weight:900; margin-bottom:1rem;">系統尚未開放</h1>
-                <p style="color:var(--text-muted); font-size:1.1rem; max-width:500px;">Absolute Axis 研發團隊正在為此功能進行最後的調變與接入。這將是結合 KVM 虛擬化與個人 AI 隱私的核心樞紐。</p>
-            </div>
-        </div>
-
-        <!-- 帳號管理 -->
-        <div id="view-admin" class="view-section">
-            <div style="display:flex; gap:2rem;">
-                <div class="card" style="flex:2;">
-                    <h2 class="card-title">👥 全域帳號管理 (User Management)</h2>
-                    <table class="admin-table">
-                        <thead><tr><th>用戶名稱</th><th>權限等級</th><th>頭像</th><th>操作</th></tr></thead>
-                        <tbody id="user-table-body"></tbody>
-                    </table>
-                </div>
-                <div class="card" style="flex:1;">
-                    <h2 class="card-title">➕ 快速建立帳號</h2>
-                    <input type="text" id="new-user-name" class="t-input" placeholder="登入用帳號名稱">
-                    <input type="password" id="new-user-pass" class="t-input" placeholder="初始保護密碼">
-                    <select id="new-user-role" class="t-input">
-                        <option value="Administrator">Administrator (全權限)</option>
-                        <option value="Member">Member (標準用戶)</option>
-                    </select>
-                    <button class="btn btn-primary" style="width:100%;" onclick="confirmCreateUser()">🚀 建立新用戶</button>
-                    <div style="margin-top:2rem; padding:1rem; background:rgba(248,81,73,0.05); border-radius:10px; font-size:0.75rem; color:var(--danger-color); border:1px solid rgba(248,81,73,0.2);">
-                        ⚠️ 注意：Administrator 具備控制所有虛擬機與查看系統日誌的最高權限。
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 實時數據分析 -->
-        <div id="view-metrics" class="view-section">
-            <div class="metrics-grid">
-                <div class="metric-chart-card">
-                    <div class="card-title">📊 實時 CPU 效能曲線 (60s)</div>
-                    <canvas id="chart-cpu"></canvas>
-                </div>
-                <div class="metric-chart-card">
-                    <div class="card-title">🌈 隨機 RAM 波動分析</div>
-                    <canvas id="chart-ram"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- 系統設定 -->
-        <div id="view-settings" class="view-section">
-            <div id="settings-main">
-                <div class="settings-list">
-                    <div class="settings-item" onclick="openSettingPanel('panel-identity')">
-                        <div class="title">🔑 個人身分與密碼設定</div><span>➔</span>
-                    </div>
-                    <div class="settings-item" onclick="openSettingPanel('panel-system')">
-                        <div class="title">💻 系統核心資訊與硬體規格</div><span>➔</span>
-                    </div>
-                    <div class="settings-item" onclick="openSettingPanel('panel-theme')">
-                        <div class="title">🎨 介面主題與個人化實驗室</div><span>➔</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="panel-identity" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">⬅ 返回設定列表</button>
-                <div class="card" style="max-width:500px;">
-                    <h2 class="card-title">個人身分設定</h2>
-                    <button class="btn btn-primary" style="width:100%;margin-bottom:1rem;" onclick="openProfileEdit()">修改名稱與密碼</button>
-                    <button class="btn btn-outline" style="width:100%;" onclick="openAvatarEdit()">更換個人頭像</button>
-                </div>
-            </div>
-
-            <div id="panel-system" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">⬅ 返回設定列表</button>
-                <div class="card">
-                    <h2 class="card-title">硬體與核心規格 (Server Specs)</h2>
-                    <div id="sys-specs-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem;"></div>
-                    <div style="margin-top:2rem;">
-                        <h2 class="card-title">全域維護操作</h2>
-                        <div style="display:flex; gap:15px;">
-                            <button class="btn btn-danger" onclick="authFetch('/api/action/clear_cache',{method:'POST'}).then(r=>alert('快取已清除'))">🧹 清除系統快取</button>
-                            <button class="btn btn-outline" onclick="alert('核心服務暫不支持遠端重啟')">⚡ 重啟核心服務</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="panel-theme" class="settings-panel">
-                <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">⬅ 返回設定列表</button>
-                <div class="card">
-                    <h2 class="card-title">主題切換</h2>
-                    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem;">
-                        <div class="stat-card" style="cursor:pointer;" onclick="setTheme('default')">🌑 深度海洋 (Blue)</div>
-                        <div class="stat-card" style="cursor:pointer; border-color:#f2aa1f;" onclick="setTheme('gold')">☀️ 琥珀金芒 (Gold)</div>
-                        <div class="stat-card" style="cursor:pointer; border-color:#ff66b3;" onclick="setTheme('pink')">💖 霓虹粉彩 (Pink)</div>
-                        <div class="stat-card" style="cursor:pointer; border-color:#2ecc71;" onclick="setTheme('green')">🍃 矩陣翡翠 (Green)</div>
-                        <div class="stat-card" style="cursor:pointer; border-color:#ff4d4d;" onclick="setTheme('red')">🔥 熔岩烈焰 (Red)</div>
-                        <div class="stat-card" style="cursor:pointer; border-color:#bd93f9;" onclick="setTheme('purple')">🔮 紫晶皇家 (Purple)</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Components (Views) will be injected here by app.js -->
     </main>
 
-    <!-- 終極隔離 Popover -->
-    <div id="user-popover" class="user-popover">
-        <div style="border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:12px;">
-            <span id="pop-name" style="font-weight:800; font-size:1.1rem; color:#fff; display:block;">--</span>
-            <span id="pop-role" style="font-size:0.75rem; color:var(--accent-color); font-weight:800; margin-top:5px; display:block;">--</span>
-        </div>
-        <button class="btn btn-outline" style="width:100%; margin-bottom:8px; padding:8px;" onclick="switchView('settings');toggleAxisPopover()">系統設定</button>
-        <button class="btn btn-danger" style="width:100%; padding:8px;" onclick="doLogout()">登出系統</button>
-    </div>
-
-    <!-- Modals -->
-    <div id="modal-profile" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
-        <div class="card" style="width:400px;text-align:center;">
-            <h2 style="margin-bottom:1.5rem;">修改姓名與密碼</h2>
-            <input type="text" id="edit-name" class="t-input" placeholder="新用戶名稱 (不改留空)">
-            <input type="password" id="edit-pass" class="t-input" placeholder="新登錄密碼 (不改留空)">
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:1rem;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-profile').style.display='none'">取消</button>
-                <button class="btn btn-primary" onclick="saveProfile()">確認修改</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-avatar" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
-        <div class="card" style="width:400px;text-align:center;">
-            <h2 style="margin-bottom:1.5rem;">更換個人頭像</h2>
-            <input type="text" id="edit-ava" class="t-input" placeholder="頭像圖片連結 https://...">
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:1rem;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-avatar').style.display='none'">取消</button>
-                <button class="btn btn-primary" onclick="saveAvatar()">確認更換</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-share" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
-        <div class="card" style="width:450px;">
-            <h2 style="margin-bottom:0.5rem; text-align:center;">共用此項目</h2>
-            <div style="text-align:center; color:var(--text-muted); font-size:0.8rem; margin-bottom:1.5rem;" id="share-target-name"></div>
-            <label style="font-size:0.85rem; font-weight:800;">選擇共用對象 :</label>
-            <select id="share-user-select" class="t-input"></select>
-            <div style="display:flex; gap:12px; justify-content:center;">
-                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-share').style.display='none'">取消</button>
-                <button class="btn btn-primary" style="flex:1;" onclick="confirmShare()">確認共用</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 檔案預覽 Modal (已修復與強化) -->
-    <div id="modal-preview" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.92);z-index:300000;display:none;flex-direction:column;justify-content:center;align-items:center;backdrop-filter:blur(15px);">
-        <div style="width:90%; height:85%; display:flex; flex-direction:column; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); border-radius:20px; box-shadow:0 15px 50px rgba(0,0,0,0.6); position:relative; overflow:hidden;">
-            <!-- Header -->
-            <div style="padding:20px 30px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3);">
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <div style="width:12px; height:12px; border-radius:50%; background:#ff5f56;"></div>
-                    <div style="width:12px; height:12px; border-radius:50%; background:#ffbd2e;"></div>
-                    <div style="width:12px; height:12px; border-radius:50%; background:#27c93f;"></div>
-                    <span id="preview-filename" style="margin-left:15px; font-weight:700; color:var(--text-main); font-size:1.1rem; letter-spacing:0.5px;">--</span>
-                </div>
-                <button onclick="closePreview()" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:40px; height:40px; border-radius:50%; display:flex; justify-content:center; align-items:center; cursor:pointer; font-size:1.2rem;">✕</button>
-            </div>
-            <!-- Body -->
-            <div id="preview-content" style="flex:1; display:flex; justify-content:center; align-items:center; padding:40px; overflow:auto;"></div>
-        </div>
-    </div>
-
-    <!-- 新增資料夾 Modal -->
-    <div id="modal-mkdir" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200001;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
-        <div class="card" style="width:400px; transform:translateY(-20px); animation:fadeInUp 0.3s forwards;">
-            <h2 style="margin-bottom:1.5rem; text-align:center;">📁 建立新資料夾</h2>
-            <div style="margin-bottom:20px;">
-                <label style="font-size:0.85rem;font-weight:800;color:var(--text-muted);display:block;margin-bottom:10px;">資料夾名稱</label>
-                <input type="text" id="mkdir-name" class="t-input" placeholder="請輸入名稱..." autofocus>
-            </div>
-            <div style="display:flex;gap:12px;justify-content:center;margin-top:1rem;">
-                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-mkdir').style.display='none'">取消</button>
-                <button class="btn btn-primary" style="flex:1;" onclick="confirmMkdir()">🚀 建立資料夾</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- VM Deploy Modal -->
-    <div id="modal-deploy-vm" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
-        <div class="card" style="width:450px;">
-            <h2 style="margin-bottom:0.5rem; text-align:center;" id="deploy-vm-title">部署虛擬機</h2>
-            <div style="text-align:center; color:var(--accent-color); font-weight:800; font-size:0.8rem; margin-bottom:1.5rem;" id="deploy-vm-os"></div>
-            <input type="hidden" id="vm-os-internal">
-            <div style="margin-bottom:10px;"><label style="font-size:0.85rem;font-weight:800;">虛擬機名稱 (不可有空白)</label><input type="text" id="vm-name" class="t-input" placeholder="例如: win11_dev"></div>
-            <div style="display:flex; gap:15px;">
-                <div style="flex:1;"><label style="font-size:0.85rem;font-weight:800;">配置 CPU 核心數</label><input type="number" id="vm-cpu" class="t-input" value="4" min="1" max="64"></div>
-                <div style="flex:1;"><label style="font-size:0.85rem;font-weight:800;">配置記憶體 (GB)</label><input type="number" id="vm-ram" class="t-input" value="8" min="2" max="64"></div>
-            </div>
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:1.5rem;">
-                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-deploy-vm').style.display='none'">取消</button>
-                <button class="btn btn-primary" style="flex:1;" onclick="confirmDeployVM()">🚀 開始部署</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 右鍵選單 -->
-    <div id="nas-context-menu" class="context-menu">
-        <div class="context-menu-item" id="cm-open" onclick="cmAction('open')">📂 開啟</div>
-        <div class="context-menu-item" id="cm-dl" onclick="cmAction('dl')">⬇️ 下載</div>
-        <div class="context-menu-item" id="cm-share" onclick="cmAction('share')">🔗 共用</div>
-        <div class="context-menu-item" id="cm-star" onclick="cmAction('star')">⭐ 收藏 / 取消</div>
-        <div style="height:1px; background:var(--border-color); margin:5px 0;"></div>
-        <div class="context-menu-item" id="cm-restore" style="display:none" onclick="cmAction('restore')">🔄 還原</div>
-        <div class="context-menu-item" id="cm-trash" style="color:var(--danger-color)" onclick="cmAction('trash')">🗑️ 移至回收站</div>
-        <div class="context-menu-item" id="cm-del" style="color:var(--danger-color); display:none" onclick="cmAction('delete')">❌ 永久刪除</div>
-    </div>
-
-    <!-- Script Modules -->
-    <script src="/static/js/api.js?v=7"></script>
-    <script src="/static/js/ui.js?v=7"></script>
-    <script src="/static/js/nas.js?v=7"></script>
-    <script src="/static/js/docker.js?v=7"></script>
-    <script src="/static/js/dashboard.js?v=7"></script>
-    <script src="/static/js/admin.js?v=7"></script>
-
-    <script>
-        // Bootstrap
-        document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('axis_theme') === 'light') {
-                document.body.classList.add('light-mode');
-            }
-            if (localStorage.getItem('axis-theme') === 'sparkle') {
-                document.body.classList.add('sparkle-mode');
-            }
-            updateThemeIcon();
-
-            if (authToken) {
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('top-avatar').src = localStorage.getItem('axis_avatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + localStorage.getItem('axis_user');
-                document.getElementById('pop-name').innerText = localStorage.getItem('axis_user') || "User";
-                document.getElementById('pop-role').innerText = localStorage.getItem('axis_role') || "Member";
-                if (localStorage.getItem('axis_role') === 'Administrator') {
-                    document.getElementById('nav-admin').style.display = 'flex';
-                }
-                startPolling();
-            }
-        });
-    </script>
+    <!-- Project Logic Modules -->
+    <script src="/static/js/api.js?v=10"></script>
+    <script src="/static/js/ui.js?v=10"></script>
+    <script src="/static/js/nas.js?v=10"></script>
+    <script src="/static/js/docker.js?v=10"></script>
+    <script src="/static/js/dashboard.js?v=10"></script>
+    <script src="/static/js/admin.js?v=10"></script>
+    
+    <!-- Application Entry Point (Modular Core) -->
+    <script src="/static/js/app.js?v=10"></script>
 </body>
 </html>

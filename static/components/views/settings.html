@@ -1,0 +1,47 @@
+<!-- Absolute Axis - Settings View Module -->
+<div id="view-settings" class="view-section">
+    <div id="settings-main">
+        <div class="settings-list">
+            <div class="settings-item" onclick="openSettingPanel('panel-identity')">🔑 個人身分與安全密碼</div>
+            <div class="settings-item" onclick="openSettingPanel('panel-system')">💻 伺服器規格與核心資訊</div>
+            <div class="settings-item" onclick="openSettingPanel('panel-theme')">🎨 主題色彩實驗室 (Collab)</div>
+        </div>
+    </div>
+    
+    <!-- 1. Identity Panel -->
+    <div id="panel-identity" class="settings-panel">
+        <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeSettingPanel()">⬅ 返回首頁</button>
+        <div class="card">
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <button class="btn btn-primary" style="width:100%;" onclick="openProfileEdit()">修改名稱與密碼</button>
+                <button class="btn btn-outline" style="width:100%;" onclick="openAvatarEdit()">更換頭像網址</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. System Info Panel -->
+    <div id="panel-system" class="settings-panel">
+        <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeSettingPanel()">⬅ 返回首頁</button>
+        <div class="card">
+            <div id="sys-specs-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.2rem;">
+                <!-- Auto-injected specs -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Theme Lab Panel -->
+    <div id="panel-theme" class="settings-panel">
+        <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeSettingPanel()">⬅ 返回首頁</button>
+        <div class="card">
+            <h2 class="card-title">全域配色方案 (Accent Themes)</h2>
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.2rem;">
+                <div class="stat-card" style="cursor:pointer;" onclick="setTheme('default')">🌑 深度海洋 (Blue)</div>
+                <div class="stat-card" style="cursor:pointer; border-color:#f2aa1f;" onclick="setTheme('gold')">☀️ 琥珀金芒 (Gold)</div>
+                <div class="stat-card" style="cursor:pointer; border-color:#ff66b3;" onclick="setTheme('pink')">💖 霓虹粉彩 (Pink)</div>
+                <div class="stat-card" style="cursor:pointer; border-color:#2ecc71;" onclick="setTheme('green')">🍃 矩陣翡翠 (Green)</div>
+                <div class="stat-card" style="cursor:pointer; border-color:#ff4d4d;" onclick="setTheme('red')">🔥 熔岩烈焰 (Red)</div>
+                <div class="stat-card" style="cursor:pointer; border-color:#bd93f9;" onclick="setTheme('purple')">🔮 紫晶皇家 (Purple)</div>
+            </div>
+        </div>
+    </div>
+</div>

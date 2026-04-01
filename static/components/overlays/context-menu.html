@@ -1,0 +1,13 @@
+<!-- Absolute Axis - NAS Context Menu Overlay Module -->
+<div id="nas-context-menu" class="context-menu">
+    <div class="context-menu-item" id="cm-open" onclick="cmAction('open')">📂 開啟 / 預覽</div>
+    <div class="context-menu-item" id="cm-dl" onclick="cmAction('dl')">⬇️ 直接下載</div>
+    <div class="context-menu-item" id="cm-share" onclick="cmAction('share')">🔗 建立共用連結</div>
+    <div class="context-menu-item" id="cm-star" onclick="cmAction('star')">⭐ 收藏 / 取消收藏</div>
+    
+    <div style="height:1px; background:var(--border-color); margin:5px 0;"></div>
+    
+    <div class="context-menu-item" id="cm-restore" style="display:none; color:var(--success-color);" onclick="cmAction('restore')">🔄 從回收站還原</div>
+    <div class="context-menu-item" id="cm-trash" style="color:var(--danger-color);" onclick="cmAction('trash')">🗑️ 移至回收站</div>
+    <div class="context-menu-item" id="cm-del" style="background:var(--danger-color); color:#fff; display:none;" onclick="cmAction('delete')">❌ 永久刪除 (不可恢復)</div>
+</div>

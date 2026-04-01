@@ -1,0 +1,19 @@
+<!-- Absolute Axis - Share Modal Module -->
+<div id="modal-share" class="modal-overlay">
+    <div class="card" style="width:450px;">
+        <h2 style="margin-bottom:0.5rem; text-align:center;">🔗 建立檔案共用連結</h2>
+        <div id="share-target-name" style="text-align:center; color:var(--text-muted); font-size:0.8rem; margin-bottom:1.5rem;">--</div>
+        
+        <div style="margin-bottom:1rem;">
+            <label style="font-size:0.8rem; font-weight:800; display:block; margin-bottom:8px;">選擇目標使用者 :</label>
+            <select id="share-user-select" class="t-input" style="width:100%;">
+                <!-- Dynamic injection from nas.js -->
+            </select>
+        </div>
+        
+        <div style="display:flex; gap:12px; margin-top:1.5rem;">
+            <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-share').style.display='none'">取消</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="confirmShare()">確認共用</button>
+        </div>
+    </div>
+</div>

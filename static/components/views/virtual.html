@@ -1,0 +1,27 @@
+<!-- Absolute Axis - Virtualization View Module -->
+<div id="view-virtual" class="view-section">
+    <div class="card" style="margin-bottom:2rem;">
+        <h2 class="card-title">🚀 快捷部署虛擬機 (Quick Deploy)</h2>
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1.5rem;">
+            <div class="stat-card" style="padding:1rem; cursor:pointer;" onclick="promptDeployVM('win11','Windows 11 Enterprise')">
+                <div style="font-size:2rem;margin-bottom:10px;">🪟</div><span style="font-size:0.8rem;font-weight:800;">Windows 11</span>
+            </div>
+            <div class="stat-card" style="padding:1rem; cursor:pointer;" onclick="promptDeployVM('ubuntu','Ubuntu 24.04 Desktop')">
+                <div style="font-size:2rem;margin-bottom:10px;">🐧</div><span style="font-size:0.8rem;font-weight:800;">Ubuntu 24.04</span>
+            </div>
+            <div class="stat-card" style="padding:1rem; cursor:pointer;" onclick="promptDeployVM('macos','macOS Sequoia (KVM)')">
+                <div style="font-size:2rem;margin-bottom:10px;">🍎</div><span style="font-size:0.8rem;font-weight:800;">macOS Sequoia</span>
+            </div>
+            <div class="stat-card" style="padding:1rem; cursor:pointer;" onclick="promptDeployVM('kali','Kali Linux (Red Team)')">
+                <div style="font-size:2rem;margin-bottom:10px;">💀</div><span style="font-size:0.8rem;font-weight:800;">Kali Linux</span>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h2 class="card-title" style="margin:0;">🗄️ 運行中的虛擬機 (Active Instances)</h2>
+            <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="loadDocker()">重新整理</button>
+        </div>
+        <div id="docker-list" style="display:flex; flex-direction:column; gap:12px;"></div>
+    </div>
+</div>

@@ -1,0 +1,31 @@
+<!-- Absolute Axis - Deploy VM Modal Module -->
+<div id="modal-deploy-vm" class="modal-overlay">
+    <div class="card" style="width:420px;">
+        <h2 id="deploy-vm-title" style="margin-bottom:1.5rem; text-align:center;">🚀 部署虛擬機實例</h2>
+        <input type="hidden" id="vm-os-internal">
+        
+        <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="stat-card" style="padding:15px; border:2px solid var(--accent-color); background:var(--card-bg); text-align:center;">
+                <span id="vm-os-display" style="font-weight:900; color:var(--accent-color);">-- OS Selection --</span>
+            </div>
+            
+            <input type="text" id="vm-name" class="t-input" placeholder="請輸入實例識別名稱 (如: my-ubuntu-dev)" maxlength="20">
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div>
+                    <label style="font-size:0.75rem; color:var(--text-muted); font-weight:800; display:block; margin-bottom:5px;">CPU (Cores)</label>
+                    <input type="number" id="vm-cpu" class="t-input" value="4" min="1" max="64" style="margin-bottom:0;">
+                </div>
+                <div>
+                    <label style="font-size:0.75rem; color:var(--text-muted); font-weight:800; display:block; margin-bottom:5px;">RAM (GB)</label>
+                    <input type="number" id="vm-ram" class="t-input" value="8" min="1" max="128" style="margin-bottom:0;">
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:2.5rem;">
+            <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-deploy-vm').style.display='none'">放棄部署</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="confirmDeployVM()">開始部署實例</button>
+        </div>
+    </div>
+</div>

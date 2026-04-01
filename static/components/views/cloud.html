@@ -1,0 +1,51 @@
+<!-- Absolute Axis - Private Cloud View Module -->
+<div id="view-cloud" class="view-section">
+    <div class="nas-view-container">
+        <!-- NAS Sidebar -->
+        <aside class="nas-sidebar">
+            <button id="nas-nav-drive" class="btn btn-outline nas-nav active" onclick="nasNav('drive')" style="justify-content:flex-start; width:100%; border:none;">📂 我的雲端單元</button>
+            <button id="nas-nav-shared" class="btn btn-outline nas-nav" onclick="nasNav('shared')" style="justify-content:flex-start; width:100%; border:none;">👥 與我共用</button>
+            <button id="nas-nav-starred" class="btn btn-outline nas-nav" onclick="nasNav('starred')" style="justify-content:flex-start; width:100%; border:none;">⭐ 已加星號</button>
+            <button id="nas-nav-recent" class="btn btn-outline nas-nav" onclick="nasNav('recent')" style="justify-content:flex-start; width:100%; border:none;">🕒 近期存取</button>
+            <button id="nas-nav-trash" class="btn btn-outline nas-nav" onclick="nasNav('trash')" style="justify-content:flex-start; width:100%; border:none;">🗑️ 回收站</button>
+            
+            <div style="height:1px; background:var(--border-color); margin:1.5rem 0;"></div>
+            <div style="padding:0 15px;">
+                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px;">個人儲存配額</div>
+                <div id="quota-label" style="font-size:0.7rem; font-weight:800; margin-bottom:8px;">0 MB / 1024 MB</div>
+                <div class="progress-bar"><div id="quota-bar" class="progress-fill" style="width:0%"></div></div>
+            </div>
+        </aside>
+        
+        <!-- NAS Explorer -->
+        <div class="nas-content">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div id="nas-breadcrumb" style="font-size:0.9rem; font-weight:700;">我的雲端硬碟</div>
+                <div style="display:flex; gap:12px;">
+                    <div style="display:flex; background:rgba(255,255,255,0.05); border-radius:8px; padding:3px;">
+                        <button id="btn-grid" class="btn btn-outline" style="padding:6px 12px; border:none;" onclick="toggleNASView('grid')">🔳</button>
+                        <button id="btn-list" class="btn btn-outline" style="padding:6px 12px; border:none;" onclick="toggleNASView('list')">≡</button>
+                    </div>
+                    <button class="btn btn-primary" onclick="toggleNewMenu()">✚ 建立 / 上傳</button>
+                    <div id="new-menu" style="position:absolute; background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:8px; display:none; right:2.5rem; top:85px; z-index:10001; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+                        <div class="context-menu-item" onclick="promptMkdir()">📁 新增資料夾</div>
+                        <div class="context-menu-item" onclick="triggerUpload()">📤 上傳檔案</div>
+                        <input type="file" id="nas-up" style="display:none;" onchange="nasUpload()">
+                    </div>
+                </div>
+            </div>
+            
+            <div id="upload-monitor" style="display:none; background:var(--sidebar-color); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem; animation:fadeIn 0.3s; margin-top:1.5rem;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span id="up-filename" style="font-weight:700; color:var(--accent-color);">Uploading...</span>
+                    <span id="up-speed" style="font-size:0.75rem; color:var(--text-muted);">0.0 MB/s</span>
+                </div>
+                <div class="progress-bar"><div id="up-bar" class="progress-fill" style="width:0%"></div></div>
+            </div>
+            
+            <div id="nas-explorer" class="file-grid" style="margin-top:1.5rem;">
+                <div style="color:var(--text-muted); padding:2rem; width:100%; text-align:center;">正在載入雲端檔案...</div>
+            </div>
+        </div>
+    </div>
+</div>

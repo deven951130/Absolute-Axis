@@ -1,0 +1,11 @@
+<!-- Absolute Axis - User Popover Overlay Module -->
+<div id="user-popover" class="user-popover">
+    <div style="border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:10px; font-size:0.85rem;">
+        <b id="pop-name" style="font-size:1rem; color:var(--text-main);">-- User --</b><br>
+        <small id="pop-role" style="color:var(--accent-color); font-weight:800; text-transform:uppercase;">-- Role --</small>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:5px;">
+        <button class="btn btn-outline" style="width:100%; font-size:0.8rem; padding:8px;" onclick="switchView('settings'); toggleAxisPopover()">⚙️ 個人設定</button>
+        <button class="btn btn-danger" style="width:100%; font-size:0.8rem; padding:8px;" onclick="doLogout()">🚪 登出系統</button>
+    </div>
+</div>

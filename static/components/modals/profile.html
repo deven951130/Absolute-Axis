@@ -1,0 +1,12 @@
+<!-- Absolute Axis - Profile Modal Module -->
+<div id="modal-profile" class="modal-overlay">
+    <div class="card" style="width:400px; text-align:center;">
+        <h2 style="margin-bottom:1.5rem;">修改身分與密碼</h2>
+        <input type="text" id="edit-name" class="t-input" placeholder="新名稱 (不改留空)">
+        <input type="password" id="edit-pass" class="t-input" placeholder="新密碼 (不改留空)">
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:1.5rem;">
+            <button class="btn btn-outline" onclick="document.getElementById('modal-profile').style.display='none'">取消</button>
+            <button class="btn btn-primary" onclick="saveProfile()">更新資料</button>
+        </div>
+    </div>
+</div>

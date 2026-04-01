@@ -1,0 +1,11 @@
+<!-- Absolute Axis - Mkdir Modal Module -->
+<div id="modal-mkdir" class="modal-overlay">
+    <div class="card" style="width:380px;">
+        <h2 style="margin-bottom:1.5rem; text-align:center;">📁 建立新資料夾</h2>
+        <input type="text" id="mkdir-name" class="t-input" placeholder="資料夾名稱..." maxlength="30">
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:2rem;">
+            <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-mkdir').style.display='none'">取消</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="confirmMkdir()">建立資料夾</button>
+        </div>
+    </div>
+</div>
