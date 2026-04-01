@@ -194,10 +194,8 @@ async function nasDL(p, owner = ''){
 }
 
 window.promptMkdir = async function() {
-    // 關閉選單
     const menu = document.getElementById('new-menu');
     if (menu) menu.style.display = 'none';
-    
     const name = prompt("請輸入資料夾名稱:");
     if(name) {
         const res = await authFetch('/api/nas/mkdir', {
@@ -261,6 +259,13 @@ async function nasUpload() {
     xhr.onerror = () => { alert('Upload failed!'); mon.style.display = 'none'; };
     xhr.send(formData);
 }
+
+window.triggerUpload = function() { 
+    const input = document.getElementById('nas-up'); 
+    if (input) input.click(); 
+    const menu = document.getElementById('new-menu'); 
+    if (menu) menu.style.display = 'none'; 
+};
 
 // 點擊空白處隱藏選單
 window.addEventListener('click', () => { 
