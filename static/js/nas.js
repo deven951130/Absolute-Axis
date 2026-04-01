@@ -257,5 +257,9 @@ async function nasUpload() {
     xhr.onerror = () => { alert('Upload failed!'); mon.style.display = 'none'; };
     xhr.send(formData);
 }
-w i n d o w . a d d E v e n t L i s t e n e r ( ' c l i c k ' ,   ( )   = >   {   c o n s t   c m   =   d o c u m e n t . g e t E l e m e n t B y I d ( ' n a s - c o n t e x t - m e n u ' ) ;   i f   ( c m )   c m . s t y l e . d i s p l a y   =   ' n o n e ' ;   } ) ;  
- 
+
+// 點擊空白處隱藏選單
+window.addEventListener('click', () => { 
+    const cm = document.getElementById('nas-context-menu'); 
+    if (cm) cm.style.display = 'none'; 
+});
