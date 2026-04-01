@@ -79,16 +79,25 @@ window.toggleAxisPopover = function(e) {
 }
 
 window.addEventListener('click', (e) => {
-    const btn = document.getElementById('avatar-btn');
+    // avatar popover
+    const avatarBtn = document.getElementById('avatar-btn');
     const popover = document.getElementById('user-popover');
-    if (btn && popover && !btn.contains(e.target) && !popover.contains(e.target)) {
+    if (avatarBtn && popover && !avatarBtn.contains(e.target) && !popover.contains(e.target)) {
         popover.classList.remove('active');
+    }
+    
+    // nas new menu
+    const newMenuBtn = document.querySelector('[onclick*="toggleNewMenu"]');
+    const newMenu = document.getElementById('new-menu');
+    if (newMenu && !newMenu.contains(e.target) && (!newMenuBtn || !newMenuBtn.contains(e.target))) {
+        newMenu.style.display = 'none';
     }
 });
 
-function toggleNewMenu() {
+window.toggleNewMenu = function(e) {
+    if (e) e.stopPropagation();
     const m = document.getElementById('new-menu');
-    m.style.display = (m.style.display === 'none' ? 'block' : 'none');
+    if (m) m.style.display = (m.style.display === 'none' ? 'block' : 'none');
 }
 
 // Clock logic

@@ -4,7 +4,7 @@ let currentNASPath = "";
 let nasViewMode = 'grid';
 let currentNASMode = 'drive';
 
-function toggleNASView(mode) {
+window.toggleNASView = function(mode) {
     nasViewMode = mode;
     const isLight = document.body.classList.contains('light-mode');
     const activeColor = isLight ? '#fff' : '#0d1117';
@@ -193,7 +193,11 @@ async function nasDL(p, owner = ''){
     }
 }
 
-async function promptMkdir() {
+window.promptMkdir = async function() {
+    // 關閉選單
+    const menu = document.getElementById('new-menu');
+    if (menu) menu.style.display = 'none';
+    
     const name = prompt("請輸入資料夾名稱:");
     if(name) {
         const res = await authFetch('/api/nas/mkdir', {
