@@ -210,64 +210,85 @@
             </div>
         </div>
 
-        <!-- NAS 管理中樞 (修復分頁缺失) -->
+        <!-- NAS 管理中樞 (專業版) -->
         <div id="view-nas-mgnt" class="view-section">
-            <div class="card" style="margin-bottom: 2rem;">
-                <h2 class="card-title">🗄️ 實體磁碟控制與健康監測 (Hardware Monitor)</h2>
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem;">
-                    <!-- SSD 卡片 -->
-                    <div class="stat-card" style="padding:1.5rem; text-align:left;">
-                        <div style="display:flex; justify-content:space-between; align-items:start;">
-                            <div style="font-size:2rem;">💿</div>
-                            <span class="badge badge-success" style="padding:4px 10px; font-size:0.7rem; border-radius:30px; background:rgba(39,201,63,0.1); color:var(--success-color);">Excellent</span>
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.8rem;">
+                <div class="card">
+                    <div class="card-title">🗄️ 實體磁碟狀態與 S.M.A.R.T 健康報告</div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.2rem;">
+                        <!-- SSD 系統硬碟卡片 -->
+                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">[SATA_0] 系統啟動碟</span>
+                                <span style="color:var(--success-color); font-size:0.7rem; font-weight:900;">⚡ NORMAL</span>
+                            </div>
+                            <div style="font-size:1.1rem; font-weight:800; margin:10px 0;">Crucial BX500 240GB</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px;">分區: / (ext4) • 溫度: 32°C</div>
+                            <div class="progress-bar" style="height:4px;"><div id="nas-ssd-bar" class="progress-fill" style="width:0%"></div></div>
+                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem;">
+                                <span>損耗率: 2%</span><span id="nas-ssd-val">--%</span>
+                            </div>
                         </div>
-                        <h3 style="margin:12px 0 5px; font-size:1.1rem;">Crucial NVMe SSD</h3>
-                        <div style="color:var(--text-muted); font-size:0.75rem; margin-bottom:15px;">系統掛載點: / (OS ROOT)</div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.8rem; font-weight:800;">
-                            <span>溫度: <span style="color:var(--accent-color);">32°C</span></span>
-                            <span>已用: <span id="nas-ssd-val">--%</span></span>
+                        <!-- HDD 資料硬碟卡片 -->
+                        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">[SATA_1] 資料存儲碟</span>
+                                <span style="color:var(--success-color); font-size:0.7rem; font-weight:900;">💾 NORMAL</span>
+                            </div>
+                            <div style="font-size:1.1rem; font-weight:800; margin:10px 0;">WD Red Pro 1TB</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px;">分區: /nas (xfs) • 溫度: 38°C</div>
+                            <div class="progress-bar" style="height:4px;"><div id="nas-hdd-bar" class="progress-fill" style="width:0%"></div></div>
+                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem;">
+                                <span>損耗率: 0%</span><span id="nas-hdd-val">--%</span>
+                            </div>
                         </div>
-                        <div class="progress-bar" style="height:6px;"><div id="nas-ssd-bar" class="progress-fill" style="width:0%"></div></div>
                     </div>
-                    <!-- HDD 卡片 -->
-                    <div class="stat-card" style="padding:1.5rem; text-align:left;">
-                        <div style="display:flex; justify-content:space-between; align-items:start;">
-                            <div style="font-size:2rem;">💾</div>
-                            <span class="badge badge-success" style="padding:4px 10px; font-size:0.7rem; border-radius:30px; background:rgba(39,201,63,0.1); color:var(--success-color);">Healthy</span>
+
+                    <div class="card-title" style="margin-top:2.5rem;">🛡️ RAID 陣列控制中樞 (Software RAID 1)</div>
+                    <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; padding:20px; display:flex; align-items:center; gap:30px;">
+                        <div style="width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:var(--accent-soft); border-radius:50%; border:2px solid var(--accent-color);">
+                            <span style="font-size:2rem;">🛡️</span>
                         </div>
-                        <h3 style="margin:12px 0 5px; font-size:1.1rem;">Seagate IronWolf Pro</h3>
-                        <div style="color:var(--text-muted); font-size:0.75rem; margin-bottom:15px;">數據掛載點: /data (NAS ROOT)</div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.8rem; font-weight:800;">
-                            <span>溫度: <span style="color:var(--danger-color);">38°C</span></span>
-                            <span>已用: <span id="nas-hdd-val">--%</span></span>
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:10px;">
+                                <div>
+                                    <div style="font-weight:800; font-size:1.1rem;">Absolute_Data_RAID</div>
+                                    <div style="font-size:0.75rem; color:var(--text-muted);">陣列類型: RAID 1 (鏡像) • 容錯數量: 1</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="color:var(--success-color); font-weight:900; font-size:0.8rem;">同步狀態: OK</div>
+                                    <div style="font-size:0.7rem; color:var(--text-muted);">最後完整校驗: 今天 04:22</div>
+                                </div>
+                            </div>
+                            <div class="progress-bar" style="height:8px; opacity:1;"><div class="progress-fill" style="width:100%; background:linear-gradient(90deg, var(--accent-color), var(--success-color));"></div></div>
                         </div>
-                        <div class="progress-bar" style="height:6px;"><div id="nas-hdd-bar" class="progress-fill" style="width:0%"></div></div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card">
-                <h2 class="card-title">🔌 核心核心通訊協議閘道</h2>
-                <div style="display:flex; flex-direction:column; gap:12px;" id="nas-protocols">
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 18px; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid var(--border-color);">
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <span style="font-size:1.2rem;">📡</span>
-                            <div>
-                                <div style="font-weight:700; font-size:0.9rem;">SMB / CIFS</div>
-                                <div style="font-size:0.75rem; color:var(--text-muted);">區域網路主動式共享與自動掛載</div>
+                <div style="display:flex; flex-direction:column; gap:1.8rem;">
+                    <div class="card">
+                        <div class="card-title">📊 容量分配分析</div>
+                        <div style="height:120px; display:flex; align-items:center; justify-content:center;">
+                            <div style="width:100%; height:12px; background:var(--border-color); border-radius:10px; overflow:hidden; display:flex;">
+                                <div style="width:20%; background:var(--accent-color);" title="系統關鍵數據"></div>
+                                <div style="width:45%; background:var(--success-color);" title="使用者媒體檔案"></div>
+                                <div style="width:15%; background:#ffa726;" title="Docker 容器映射"></div>
                             </div>
                         </div>
-                        <span style="color:var(--success-color); font-size:0.8rem; font-weight:800;">🟢 ACTIVE</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 18px; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid var(--border-color);">
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <span style="font-size:1.2rem;">🛡️</span>
-                            <div>
-                                <div style="font-weight:700; font-size:0.9rem;">SFTP / SSHFS</div>
-                                <div style="font-size:0.75rem; color:var(--text-muted);">高安全性開發者遠端通訊隧道</div>
+                        <div style="display:flex; flex-direction:column; gap:12px; margin-top:1.5rem;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                                <span style="display:flex; align-items:center; gap:8px;"><i style="width:8px;height:8px;background:var(--accent-color);border-radius:50%;"></i> 核心系統</span>
+                                <span style="font-weight:800;">4.2G</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                                <span style="display:flex; align-items:center; gap:8px;"><i style="width:8px;height:8px;background:var(--success-color);border-radius:50%;"></i> 用戶存儲</span>
+                                <span style="font-weight:800;">12.8G</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                                <span style="display:flex; align-items:center; gap:8px;"><i style="width:8px;height:8px;background:#ffa726;border-radius:50%;"></i> 虛擬磁碟</span>
+                                <span style="font-weight:800;">2.1G</span>
                             </div>
                         </div>
-                        <span style="color:var(--success-color); font-size:0.8rem; font-weight:800;">🟢 ACTIVE</span>
                     </div>
                 </div>
             </div>
