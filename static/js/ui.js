@@ -102,6 +102,28 @@ window.toggleNewMenu = function(e) {
     if (m) m.style.display = (m.style.display === 'none' ? 'block' : 'none');
 }
 
+// 個人設定彈窗觸發器 (Identity Panel Triggers)
+window.openProfileEdit = function() {
+    const m = document.getElementById('modal-profile');
+    if (m) m.style.display = 'flex';
+}
+
+window.openAvatarEdit = function() {
+    const m = document.getElementById('modal-avatar');
+    if (m) m.style.display = 'flex';
+}
+
+// 個人設定彈窗觸發器 (Identity Panel Triggers)
+window.openProfileEdit = function() {
+    const m = document.getElementById('modal-profile');
+    if (m) m.style.display = 'flex';
+}
+
+window.openAvatarEdit = function() {
+    const m = document.getElementById('modal-avatar');
+    if (m) m.style.display = 'flex';
+}
+
 // Clock logic
 setInterval(() => {
     const clock = document.getElementById('clock');
