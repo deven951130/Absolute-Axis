@@ -159,12 +159,12 @@ function showCM(e, path, isDir, ext, owner = '') {
     if (!cm) return;
     cm.style.display = 'block'; cm.style.left = e.clientX + 'px'; cm.style.top = e.clientY + 'px';
     
-    document.getElementById('cm-share').style.display = (currentNASMode==='drive' && !isDir)?'flex':'none';
+    document.getElementById('cm-share').style.display = (currentNASMode==='drive')?'flex':'none';
     document.getElementById('cm-star').style.display = (currentNASMode==='drive')?'flex':'none';
     document.getElementById('cm-restore').style.display = (currentNASMode==='trash')?'flex':'none';
     document.getElementById('cm-trash').style.display = (currentNASMode==='drive')?'flex':'none';
     document.getElementById('cm-del').style.display = (currentNASMode==='trash')?'flex':'none';
-    document.getElementById('cm-dl').style.display = (isDir)?'none':'flex';
+    document.getElementById('cm-dl').style.display = 'flex';
     document.getElementById('cm-open').innerText = isDir?'📂 開啟資料夾':'🔍 預覽檔案';
 }
 
