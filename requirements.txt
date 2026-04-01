@@ -3,3 +3,7 @@ uvicorn==0.34.0
 pydantic==2.10.3
 psutil==6.1.1
 python-multipart==0.0.20
+sqlalchemy==2.0.28
+passlib[bcrypt]==1.7.4
+PyJWT==2.8.0
+docker==7.0.0

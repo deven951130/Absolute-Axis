@@ -6,9 +6,15 @@ import os
 
 # Config mapping & Routers
 from app.config import BASE_PATH
+from app.database import engine, Base
+from app.utils import init_db_user
 from app.routers import auth, admin, user, system, docker, nas
 
 app = FastAPI(title="Absolute Axis Server")
+
+# Initialize Database Tables
+Base.metadata.create_all(bind=engine)
+init_db_user()
 
 app.add_middleware(
     CORSMiddleware,

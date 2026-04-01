@@ -1,23 +1,23 @@
-import os
-import shutil
-import secrets
 from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+import shutil
 
-from app.models import CreateUserRequest, ProfileUpdate, AdminUserUpdate
-from app.utils import get_current_user_obj, read_db, write_db, hash_password, log_event
+from app.models import CreateUserRequest, AdminUserUpdate
+from app.utils import get_current_user_obj, get_password_hash, log_event
 from app.config import NAS_ROOT, QUOTA_PER_USER
+from app.database import get_db, User
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 @router.get("/users")
-def list_users(user: dict = Depends(get_current_user_obj)):
+def list_users(user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
     if user["role"] != "Administrator": 
         raise HTTPException(status_code=403)
-    db = read_db()
-    return [{"username": k, "role": v["role"], "avatar": v.get("avatar","")} for k, v in db.items()]
+    users = db.query(User).all()
+    return [{"username": u.username, "role": u.role, "avatar": u.avatar} for u in users]
 
 @router.post("/create_user")
-def create_user(req: CreateUserRequest, user: dict = Depends(get_current_user_obj)):
+def create_user(req: CreateUserRequest, user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
     if user["role"] != "Administrator": 
         raise HTTPException(status_code=403)
         
@@ -25,34 +25,35 @@ def create_user(req: CreateUserRequest, user: dict = Depends(get_current_user_ob
     if u.free < QUOTA_PER_USER: 
         raise HTTPException(status_code=400, detail="Insufficient HDD space for 1GB quota")
         
-    db = read_db()
-    if req.username in db: 
+    existing_user = db.query(User).filter(User.username == req.username).first()
+    if existing_user: 
         raise HTTPException(status_code=400, detail="User exists")
         
-    s = secrets.token_hex(16)
-    db[req.username] = {
-        "hash": hash_password(req.password, s), 
-        "salt": s, 
-        "role": req.role
-    }
+    new_user = User(
+        username=req.username,
+        password_hash=get_password_hash(req.password),
+        role=req.role
+    )
+    db.add(new_user)
+    db.commit()
     
-    write_db(db)
     log_event(user["username"], f"Admin: Created user {req.username}")
     return {"status": "ok"}
 
 @router.post("/update_user")
-def admin_update_user(req: AdminUserUpdate, user: dict = Depends(get_current_user_obj)):
+def admin_update_user(req: AdminUserUpdate, user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
     if user["role"] != "Administrator": 
         raise HTTPException(status_code=403)
-    db = read_db()
-    if req.target_user not in db: 
+    
+    target_user_obj = db.query(User).filter(User.username == req.target_user).first()
+    if not target_user_obj:
         raise HTTPException(status_code=404)
     
     if req.new_pass:
-        db[req.target_user]["hash"] = hash_password(req.new_pass, db[req.target_user]["salt"])
+        target_user_obj.password_hash = get_password_hash(req.new_pass)
     if req.new_role:
-        db[req.target_user]["role"] = req.new_role
+        target_user_obj.role = req.new_role
         
-    write_db(db)
+    db.commit()
     log_event(user["username"], f"Admin: Modified user {req.target_user}")
     return {"status": "ok"}

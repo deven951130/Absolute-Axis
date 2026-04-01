@@ -10,8 +10,13 @@ else:
     BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     SYS_ROOT = "C:\\" if os.name == 'nt' else "/"
 
-USER_DB_PATH = os.path.join(BASE_PATH, "users.json")
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{os.path.join(BASE_PATH, 'axis.db')}"
 LOG_DB_PATH = os.path.join(BASE_PATH, "logs.json")
+
+# JWT Security Config
+JWT_SECRET = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"  # SHA-256 hash output as secure key
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 Days
 
 # NAS_ROOT: 優先偵測專用掛載目錄，若無則使用專案內的 nas 目錄
 NAS_ALT = os.path.join(BASE_PATH, "nas_storage")

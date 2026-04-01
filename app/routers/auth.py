@@ -1,27 +1,24 @@
-import secrets
-from fastapi import APIRouter, HTTPException
-
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from app.models import LoginRequest
-from app.utils import read_db, hash_password, log_event
-from app.config import ACTIVE_SESSIONS
+from app.utils import verify_password, create_access_token, log_event
+from app.database import get_db, User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/login")
-def login(req: LoginRequest):
-    db = read_db()
-    u = db.get(req.username)
-    if not u or hash_password(req.password, u["salt"]) != u["hash"]:
+def login(req: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == req.username).first()
+    if not user or not verify_password(req.password, user.password_hash):
         log_event(req.username or "Unknown", "SECURITY: Authentication Failure.")
         raise HTTPException(status_code=401, detail="Unauthorized")
     
-    token = secrets.token_hex(32)
-    ACTIVE_SESSIONS[token] = req.username
+    token = create_access_token(data={"sub": user.username})
     log_event(req.username, "Identity Verification: Session Established.")
     
     return {
         "token": token, 
-        "username": req.username, 
-        "role": u["role"], 
-        "avatar": u.get("avatar", "")
+        "username": user.username, 
+        "role": user.role, 
+        "avatar": user.avatar
     }

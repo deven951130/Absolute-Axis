@@ -5,10 +5,12 @@ import random
 import platform
 from datetime import datetime
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
 from app.models import MessageRequest
 from app.utils import get_current_user_obj, log_event
-from app.config import SYS_ROOT, NAS_ROOT, SYSTEM_LOGS
+from app.config import SYS_ROOT, NAS_ROOT
+from app.database import get_db, AuditLog
 
 router = APIRouter(tags=["system"])
 
@@ -65,8 +67,13 @@ def get_services(user: dict = Depends(get_current_user_obj)):
     return res
 
 @router.get("/api/system/logs")
-def get_logs(user: dict = Depends(get_current_user_obj)): 
-    return SYSTEM_LOGS
+def get_logs(user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)): 
+    logs = db.query(AuditLog).order_by(AuditLog.id.desc()).limit(50).all()
+    res = []
+    for log in reversed(logs):
+        ts = log.timestamp.strftime("%H:%M:%S")
+        res.append(f"[{ts}] [{log.username}] {log.action}")
+    return res
 
 @router.post("/api/system/message")
 def post_msg(req: MessageRequest, user: dict = Depends(get_current_user_obj)):
