@@ -95,15 +95,15 @@
             </div>
 
             <div style="display:grid; grid-template-columns: 2fr 1fr; gap:2rem;">
-                <div class="card" style="display:flex; flex-direction:column; position:relative;">
-                    <div class="card-title">🖥️ 線上系統動作紀錄 (System Logs)</div>
-                    <div id="terminal-logs" style="flex:1; background: #000; padding:1.5rem; border-radius:12px 12px 0 0; font-family:monospace; font-size:0.8rem; color:#0f0; overflow-y:auto; line-height:1.5; border:1px solid #30363d; min-height:280px; max-height:430px; border-bottom:none;">
+                <div class="card" style="display:flex; flex-direction:column; padding:0; overflow:hidden; border-color:var(--border-color); background:rgba(0,0,0,0.2);">
+                    <div class="card-title" style="padding:1.8rem 1.8rem 0.5rem 1.8rem;">🖥️ 線上系統動作紀錄 (System Logs)</div>
+                    <div id="terminal-logs" style="flex:1; background: #000; padding:1.5rem; font-family:monospace; font-size:0.8rem; color:#0f0; overflow-y:auto; line-height:1.5; border-top:1px solid #30363d; min-height:220px; max-height:380px;">
                         <div>[SYSTEM] 初始化戰情中心介面...</div>
                     </div>
-                    <!-- 系統廣播輸入框 -->
-                    <div style="display:flex; gap:10px; background:#0d1117; padding:12px; border:1px solid #30363d; border-radius:0 0 12px 12px;">
-                        <input type="text" id="msg-input" placeholder="發送系統廣播訊息..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:#fff; border-radius:6px; padding:8px 15px; font-size:0.8rem; outline:none;" onkeypress="if(event.key==='Enter') broadCast()">
-                        <button class="btn btn-primary" style="padding:6px 20px; font-size:0.8rem; white-space:nowrap;" onclick="broadCast()">📡 發送廣播</button>
+                    <!-- 系統廣播輸入框 (強化互動層級) -->
+                    <div style="display:flex; gap:10px; background:#161b22; padding:15px; border-top:1px solid #30363d; z-index:100; position:relative;">
+                        <input type="text" id="msg-input" placeholder="發送系統廣播訊息..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid #444; color:#fff; border-radius:6px; padding:10px 15px; font-size:0.85rem; outline:none; transition:0.2s;" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='#444'" onkeypress="if(event.key==='Enter') broadCast()">
+                        <button class="btn btn-primary" style="padding:8px 20px; font-size:0.85rem; font-weight:800;" onclick="broadCast()">📡 發送廣播</button>
                     </div>
                 </div>
                 
