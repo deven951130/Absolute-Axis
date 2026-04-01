@@ -60,13 +60,13 @@ body { background-color: var(--bg-color); color: var(--text-main); min-height: 1
     min-width: 0; 
 }
 .view-section { display: none; flex: 1; min-width: 0; }
-.view-section.active { display: flex; flex-direction: column; animation: fadeIn 0.3s ease-out; }
+.view-section.active { display: flex !important; flex-direction: column; animation: fadeIn 0.3s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
 
 .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; position: relative; z-index: 900; }
 
 .user-popover { position: fixed; top: 85px; right: 2.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; width: 240px; box-shadow: 0 12px 40px rgba(0,0,0,0.6); padding: 1.5rem; display: none; flex-direction: column; z-index: 99999; }
-.user-popover.active { display: flex; }
+.user-popover.active { display: flex !important; }
 
 .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
 .stat-card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); padding: 1.8rem; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s; }

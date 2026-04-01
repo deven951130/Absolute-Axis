@@ -52,9 +52,18 @@ const App = {
             const loginOverlay = document.getElementById('login-overlay');
             if (loginOverlay) loginOverlay.style.display = 'none';
             
-            document.getElementById('top-avatar').src = localStorage.getItem('axis_avatar') || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + localStorage.getItem('axis_user');
+            // 同步頭像數據 (Sync Avatar across UI)
+            const savedAva = localStorage.getItem('axis_avatar');
+            const fallbackAva = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + localStorage.getItem('axis_user');
+            const finalAva = (savedAva && savedAva.trim() !== "") ? savedAva : fallbackAva;
+            
+            const topAva = document.getElementById('top-avatar');
+            const popAva = document.getElementById('pop-avatar');
+            if (topAva) topAva.src = finalAva;
+            if (popAva) popAva.src = finalAva;
+            
             document.getElementById('pop-name').innerText = localStorage.getItem('axis_user');
-            document.getElementById('pop-role').innerText = localStorage.getItem('axis_role');
+            document.getElementById('pop-role').innerText = localStorage.getItem('axis_role') || "Member";
             
             if (typeof switchView === 'function') switchView('dashboard');
             if (typeof initCharts === 'function') initCharts();
