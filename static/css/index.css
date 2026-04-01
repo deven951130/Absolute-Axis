@@ -1,34 +1,41 @@
 :root {
+    /* 預設背景 (Dark) */
     --bg-color: #0d1117; --sidebar-color: #161b22; --card-bg: #21262d; 
-    --text-main: #c9d1d9; --text-muted: #8b949e; --accent-color: #58a6ff; --accent-soft: rgba(88, 166, 255, 0.1);
-    --danger-color: #f85149; --success-color: #3fb950; --border-color: #30363d;
+    --text-main: #c9d1d9; --text-muted: #8b949e; --border-color: #30363d;
     --sidebar-width: 280px;
+    
+    /* 預設配色 (Ocean Blue) */
+    --accent-color: #58a6ff; 
+    --accent-glow: rgba(88, 166, 255, 0.5);
+    --accent-soft: rgba(88, 166, 255, 0.1);
+    --brand-color: var(--accent-color);
 }
-body.theme-gold {
-    --text-main: #ffd700; --text-muted: #e6b800; --accent-color: #ffd700; --border-color: #5d4a00; --accent-soft: rgba(255, 215, 0, 0.2);
+
+/* 背景切換邏輯 (Light Mode) */
+body.light-mode {
+    --bg-color: #f6f8fa; --sidebar-color: #ffffff; --card-bg: #ffffff; 
+    --text-main: #1f2328; --text-muted: #57606a; --border-color: #d0d7de;
 }
-body.theme-pink {
-    --text-main: #ff66a3; --text-muted: #ff3385; --accent-color: #ff66a3; --border-color: #ff0066; --accent-soft: rgba(255, 102, 163, 0.2);
-}
-body.theme-green {
-    --text-main: #00ff66; --text-muted: #00cc52; --accent-color: #00ff66; --border-color: #006622; --accent-soft: rgba(0, 255, 102, 0.2);
-}
-body.theme-red {
-    --text-main: #ff4d4d; --text-muted: #ff1a1a; --accent-color: #ff4d4d; --border-color: #800000; --accent-soft: rgba(255, 77, 77, 0.2);
-}
-body.theme-purple {
-    --text-main: #bc13fe; --text-muted: #9d00e0; --accent-color: #bc13fe; --border-color: #4b0082; --accent-soft: rgba(188, 19, 254, 0.2);
-}
+
+/* 六種配色氛圍 - 修正對比度與文字清晰度 */
+body.theme-gold   { --accent-color: #f2aa1f; --accent-glow: rgba(242, 170, 31, 0.5); --accent-soft: rgba(242, 170, 31, 0.1); }
+body.theme-pink   { --accent-color: #ff66b3; --accent-glow: rgba(255, 102, 179, 0.5); --accent-soft: rgba(255, 102, 179, 0.1); }
+body.theme-green  { --accent-color: #2ecc71; --accent-glow: rgba(46, 204, 113, 0.5); --accent-soft: rgba(46, 204, 113, 0.1); }
+body.theme-red    { --accent-color: #ff4d4d; --accent-glow: rgba(255, 77, 77, 0.5); --accent-soft: rgba(255, 77, 77, 0.1); }
+body.theme-purple { --accent-color: #bd93f9; --accent-glow: rgba(189, 147, 249, 0.5); --accent-soft: rgba(189, 147, 249, 0.1); }
+body.theme-default{ --accent-color: #58a6ff; --accent-glow: rgba(88, 166, 255, 0.5); --accent-soft: rgba(88, 166, 255, 0.1); }
+
+/* 全局文字色彩應對 - 確保 active 項目的高亮感 */
+.nav-item { color: var(--text-muted); transition: all 0.2s; }
+.nav-item.active { color: var(--accent-color); background: var(--accent-soft); font-weight: 800; border-right: 3px solid var(--accent-color); }
+.nav-item:hover { color: var(--text-main); background: var(--accent-soft); }
+
 #theme-toggle {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: transparent;
+    transition: all 0.3s;
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
 }
-body:not(.theme-default) #theme-toggle {
-    background: var(--accent-soft); 
-    border-color: var(--accent-color);
-    box-shadow: 0 0 10px var(--accent-soft);
-}
+body.light-mode #theme-toggle { background: #eee; border-color: #ccc; }
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Tahoma", sans-serif; }
 body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
 

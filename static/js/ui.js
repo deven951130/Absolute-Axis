@@ -4,22 +4,20 @@ const THEMES = ['default', 'gold', 'pink', 'green', 'red', 'purple'];
 function updateThemeIcon() {
     const btn = document.getElementById('theme-toggle');
     if (!btn) return;
-    const current = THEMES.find(t => document.body.classList.contains('theme-' + t)) || 'default';
-    const icons = { 'default': '🌑', 'gold': '☀️', 'pink': '💖', 'green': '🍃', 'red': '🔥', 'purple': '🔮' };
-    btn.innerText = icons[current];
+    btn.innerText = document.body.classList.contains('light-mode') ? '🌙' : '☀️';
 }
 
 function toggleTheme() {
-    const current = THEMES.find(t => document.body.classList.contains('theme-' + t)) || 'default';
-    let nextIdx = (THEMES.indexOf(current) + 1) % THEMES.length;
-    setTheme(THEMES[nextIdx]);
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    localStorage.setItem('axis-bg-mode', isLight ? 'light' : 'dark');
+    updateThemeIcon();
 }
 
 function setTheme(theme) {
     THEMES.forEach(t => document.body.classList.remove('theme-' + t));
     document.body.classList.add('theme-' + theme);
-    localStorage.setItem('axis-theme', theme);
-    updateThemeIcon();
+    localStorage.setItem('axis-accent-theme', theme);
 }
 
 function switchView(v) {
