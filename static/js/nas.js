@@ -1,4 +1,5 @@
 // Absolute Axis - Private Cloud (NAS) Module
+console.log("--- NAS MODULE V2.1 LOADED ---");
 let currentNASPath = "";
 let nasViewMode = 'grid';
 let currentNASMode = 'drive';
