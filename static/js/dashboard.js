@@ -50,6 +50,17 @@ async function startPolling() {
             const nBar = document.getElementById('nas-bar');
             if (nLab) nLab.innerText = `${(d.nas_disk.used/(1024**3)).toFixed(1)}G / ${(d.nas_disk.total/(1024**3)).toFixed(0)}G`;
             if (nBar) nBar.style.width = d.nas_disk.percent + '%';
+
+            // --- NAS Mgnt Page Binding (Added) ---
+            const ssdVal = document.getElementById('nas-ssd-val');
+            const ssdBar = document.getElementById('nas-ssd-bar');
+            if (ssdVal) ssdVal.innerText = d.sys_disk.percent.toFixed(1) + '%';
+            if (ssdBar) ssdBar.style.width = d.sys_disk.percent + '%';
+
+            const hddVal = document.getElementById('nas-hdd-val');
+            const hddBar = document.getElementById('nas-hdd-bar');
+            if (hddVal) hddVal.innerText = d.nas_disk.percent.toFixed(1) + '%';
+            if (hddBar) hddBar.style.width = d.nas_disk.percent + '%';
             
             const bwUp = document.getElementById('bw-up');
             const bwDn = document.getElementById('bw-dn');

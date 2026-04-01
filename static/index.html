@@ -199,6 +199,69 @@
             </div>
         </div>
 
+        <!-- NAS 管理中樞 (修復分頁缺失) -->
+        <div id="view-nas-mgnt" class="view-section">
+            <div class="card" style="margin-bottom: 2rem;">
+                <h2 class="card-title">🗄️ 實體磁碟控制與健康監測 (Hardware Monitor)</h2>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem;">
+                    <!-- SSD 卡片 -->
+                    <div class="stat-card" style="padding:1.5rem; text-align:left;">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <div style="font-size:2rem;">💿</div>
+                            <span class="badge badge-success" style="padding:4px 10px; font-size:0.7rem; border-radius:30px; background:rgba(39,201,63,0.1); color:var(--success-color);">Excellent</span>
+                        </div>
+                        <h3 style="margin:12px 0 5px; font-size:1.1rem;">Crucial NVMe SSD</h3>
+                        <div style="color:var(--text-muted); font-size:0.75rem; margin-bottom:15px;">系統掛載點: / (OS ROOT)</div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.8rem; font-weight:800;">
+                            <span>溫度: <span style="color:var(--accent-color);">32°C</span></span>
+                            <span>已用: <span id="nas-ssd-val">--%</span></span>
+                        </div>
+                        <div class="progress-bar" style="height:6px;"><div id="nas-ssd-bar" class="progress-fill" style="width:0%"></div></div>
+                    </div>
+                    <!-- HDD 卡片 -->
+                    <div class="stat-card" style="padding:1.5rem; text-align:left;">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <div style="font-size:2rem;">💾</div>
+                            <span class="badge badge-success" style="padding:4px 10px; font-size:0.7rem; border-radius:30px; background:rgba(39,201,63,0.1); color:var(--success-color);">Healthy</span>
+                        </div>
+                        <h3 style="margin:12px 0 5px; font-size:1.1rem;">Seagate IronWolf Pro</h3>
+                        <div style="color:var(--text-muted); font-size:0.75rem; margin-bottom:15px;">數據掛載點: /data (NAS ROOT)</div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.8rem; font-weight:800;">
+                            <span>溫度: <span style="color:var(--danger-color);">38°C</span></span>
+                            <span>已用: <span id="nas-hdd-val">--%</span></span>
+                        </div>
+                        <div class="progress-bar" style="height:6px;"><div id="nas-hdd-bar" class="progress-fill" style="width:0%"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">🔌 核心核心通訊協議閘道</h2>
+                <div style="display:flex; flex-direction:column; gap:12px;" id="nas-protocols">
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 18px; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid var(--border-color);">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <span style="font-size:1.2rem;">📡</span>
+                            <div>
+                                <div style="font-weight:700; font-size:0.9rem;">SMB / CIFS</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">區域網路主動式共享與自動掛載</div>
+                            </div>
+                        </div>
+                        <span style="color:var(--success-color); font-size:0.8rem; font-weight:800;">🟢 ACTIVE</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 18px; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid var(--border-color);">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <span style="font-size:1.2rem;">🛡️</span>
+                            <div>
+                                <div style="font-weight:700; font-size:0.9rem;">SFTP / SSHFS</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">高安全性開發者遠端通訊隧道</div>
+                            </div>
+                        </div>
+                        <span style="color:var(--success-color); font-size:0.8rem; font-weight:800;">🟢 ACTIVE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 其他視窗佔位符 -->
         <div id="view-placeholder" class="view-section">
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:60vh; text-align:center;">
@@ -413,12 +476,12 @@
     </div>
 
     <!-- Script Modules -->
-    <script src="/static/js/api.js?v=4"></script>
-    <script src="/static/js/ui.js?v=4"></script>
-    <script src="/static/js/nas.js?v=4"></script>
-    <script src="/static/js/docker.js?v=4"></script>
-    <script src="/static/js/dashboard.js?v=4"></script>
-    <script src="/static/js/admin.js?v=4"></script>
+    <script src="/static/js/api.js?v=5"></script>
+    <script src="/static/js/ui.js?v=5"></script>
+    <script src="/static/js/nas.js?v=5"></script>
+    <script src="/static/js/docker.js?v=5"></script>
+    <script src="/static/js/dashboard.js?v=5"></script>
+    <script src="/static/js/admin.js?v=5"></script>
 
     <script>
         // Bootstrap

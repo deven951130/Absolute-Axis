@@ -19,9 +19,9 @@ function setTheme(theme) {
 }
 
 function switchView(v) {
-    if (['smart', 'ai', 'nas-mgnt'].includes(v)) {
-        const ts = { 'smart': '智慧宅控', 'ai': '核心 AI 助手', 'nas-mgnt': 'NAS 管理中樞' };
-        const is = { 'smart': '🏡', 'ai': '🤖', 'nas-mgnt': '🗄️' };
+    if (['smart', 'ai'].includes(v)) {
+        const ts = { 'smart': '智慧宅控', 'ai': '核心 AI 助手' };
+        const is = { 'smart': '🏡', 'ai': '🤖' };
         document.getElementById('ph-title').innerText = ts[v] + " 系統尚未開放";
         document.getElementById('ph-icon').innerText = is[v];
         v = 'placeholder';
