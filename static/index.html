@@ -387,10 +387,13 @@
                 <button class="btn btn-outline" style="margin-bottom:2rem;" onclick="closeSettingPanel()">⬅ 返回設定列表</button>
                 <div class="card">
                     <h2 class="card-title">主題切換</h2>
-                    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1rem;">
-                        <div class="stat-card" style="cursor:pointer;" onclick="setTheme('dark')">🌑 深度核心 (預設)</div>
-                        <div class="stat-card" style="cursor:pointer; border-color:var(--accent-color);" onclick="toggleTheme()">☀️ 日光模式 (字體配色)</div>
-                        <div class="stat-card" style="cursor:pointer; border-color:#ff66a3;" onclick="setTheme('sparkle')">💖 Sparkle 特約主題</div>
+                    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem;">
+                        <div class="stat-card" style="cursor:pointer;" onclick="setTheme('default')">🌑 深度核心 (Blue)</div>
+                        <div class="stat-card" style="cursor:pointer; border-color:#ffd700;" onclick="setTheme('gold')">☀️ 太陽核心 (Gold)</div>
+                        <div class="stat-card" style="cursor:pointer; border-color:#ff66a3;" onclick="setTheme('pink')">💖 Sparkle 特約 (Pink)</div>
+                        <div class="stat-card" style="cursor:pointer; border-color:#00ff66;" onclick="setTheme('green')">🍃 矩陣核心 (Green)</div>
+                        <div class="stat-card" style="cursor:pointer; border-color:#ff4d4d;" onclick="setTheme('red')">🔥 烈焰核心 (Red)</div>
+                        <div class="stat-card" style="cursor:pointer; border-color:#bc13fe;" onclick="setTheme('purple')">🔮 皇家核心 (Purple)</div>
                     </div>
                 </div>
             </div>

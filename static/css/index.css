@@ -4,29 +4,30 @@
     --danger-color: #f85149; --success-color: #3fb950; --border-color: #30363d;
     --sidebar-width: 280px;
 }
-body.light-mode {
-    /* 不再改動背景顏色 --bg-color, --sidebar-color, --card-bg */
-    --text-main: #ffd700; /* 直接將文字變為亮眼的金色，呼應太陽模式 */
-    --text-muted: #e6b800;
-    --accent-color: #ffd700; 
-    --border-color: #5d4a00; 
-    --accent-soft: rgba(255, 215, 0, 0.2);
+body.theme-gold {
+    --text-main: #ffd700; --text-muted: #e6b800; --accent-color: #ffd700; --border-color: #5d4a00; --accent-soft: rgba(255, 215, 0, 0.2);
+}
+body.theme-pink {
+    --text-main: #ff66a3; --text-muted: #ff3385; --accent-color: #ff66a3; --border-color: #ff0066; --accent-soft: rgba(255, 102, 163, 0.2);
+}
+body.theme-green {
+    --text-main: #00ff66; --text-muted: #00cc52; --accent-color: #00ff66; --border-color: #006622; --accent-soft: rgba(0, 255, 102, 0.2);
+}
+body.theme-red {
+    --text-main: #ff4d4d; --text-muted: #ff1a1a; --accent-color: #ff4d4d; --border-color: #800000; --accent-soft: rgba(255, 77, 77, 0.2);
+}
+body.theme-purple {
+    --text-main: #bc13fe; --text-muted: #9d00e0; --accent-color: #bc13fe; --border-color: #4b0082; --accent-soft: rgba(188, 19, 254, 0.2);
 }
 #theme-toggle {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: transparent;
     border: 1px solid var(--border-color);
 }
-body.light-mode #theme-toggle {
-    background: rgba(255, 215, 0, 0.15); /* 太陽模式下的環繞背景 */
-    border-color: #ffd700;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
-}
-body.sparkle-mode {
-    --accent-color: #ff66a3;
-    --brand-color: #f85149;
-    --success-color: #ff66a3;
-    --accent-soft: rgba(255, 102, 163, 0.1);
+body:not(.theme-default) #theme-toggle {
+    background: var(--accent-soft); 
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-soft);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Tahoma", sans-serif; }
 body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; overflow: hidden; transition: background-color 0.3s, color 0.3s; }

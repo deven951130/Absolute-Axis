@@ -1,23 +1,25 @@
 // Absolute Axis - UI & Navigation Module
+const THEMES = ['default', 'gold', 'pink', 'green', 'red', 'purple'];
+
 function updateThemeIcon() {
     const btn = document.getElementById('theme-toggle');
     if (!btn) return;
-    btn.innerText = document.body.classList.contains('light-mode') ? '🌙' : '☀️';
+    const current = THEMES.find(t => document.body.classList.contains('theme-' + t)) || 'default';
+    const icons = { 'default': '🌑', 'gold': '☀️', 'pink': '💖', 'green': '🍃', 'red': '🔥', 'purple': '🔮' };
+    btn.innerText = icons[current];
 }
 
 function toggleTheme() {
-    document.body.classList.toggle('light-mode');
-    const theme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
-    localStorage.setItem('axis_theme', theme);
-    updateThemeIcon();
+    const current = THEMES.find(t => document.body.classList.contains('theme-' + t)) || 'default';
+    let nextIdx = (THEMES.indexOf(current) + 1) % THEMES.length;
+    setTheme(THEMES[nextIdx]);
 }
 
 function setTheme(theme) {
-    document.body.classList.remove('sparkle-mode', 'light-mode');
-    if (theme === 'sparkle') document.body.classList.add('sparkle-mode');
-    if (theme === 'light') document.body.classList.add('light-mode');
+    THEMES.forEach(t => document.body.classList.remove('theme-' + t));
+    document.body.classList.add('theme-' + theme);
     localStorage.setItem('axis-theme', theme);
-    if (typeof updateThemeIcon === 'function') updateThemeIcon();
+    updateThemeIcon();
 }
 
 function switchView(v) {
