@@ -100,28 +100,35 @@
                     <div id="terminal-logs" style="flex:1; background: #000; padding:1.5rem; border-radius:12px 12px 0 0; font-family:monospace; font-size:0.8rem; color:#0f0; overflow-y:auto; line-height:1.5; border:1px solid #30363d; min-height:280px; max-height:430px; border-bottom:none;">
                         <div>[SYSTEM] 初始化戰情中心介面...</div>
                     </div>
-                    <!-- 系統廣播輸入框 (新功能) -->
+                    <!-- 系統廣播輸入框 -->
                     <div style="display:flex; gap:10px; background:#0d1117; padding:12px; border:1px solid #30363d; border-radius:0 0 12px 12px;">
                         <input type="text" id="msg-input" placeholder="發送系統廣播訊息..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:#fff; border-radius:6px; padding:8px 15px; font-size:0.8rem; outline:none;" onkeypress="if(event.key==='Enter') broadCast()">
                         <button class="btn btn-primary" style="padding:6px 20px; font-size:0.8rem; white-space:nowrap;" onclick="broadCast()">📡 發送廣播</button>
                     </div>
                 </div>
-                <div class="card card-interactive" style="cursor:pointer;" onclick="switchView('nas-mgnt')" title="點擊查看實體儲存空間細節">
-                    <div class="card-title">⚙️ 基礎核心服務狀態</div>
-                    <div id="svc-list" style="display:flex; flex-direction:column; gap:5px;"></div>
-                    <div style="height:1px; background:var(--border-color); margin:2rem 0;"></div>
-                    <div class="card-title">🗄️ 系統儲存配額 (Storage Link)</div>
-                    <div style="margin-bottom:1.5rem;">
-                        <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:8px;">
-                            <span>SSD 系統硬碟</span><span id="sys-label">-- / --</span>
-                        </div>
-                        <div class="progress-bar"><div id="sys-bar" class="progress-fill" style="width:0%"></div></div>
+                
+                <div style="display:flex; flex-direction:column; gap:2rem;">
+                    <!-- 核心服務卡片 -->
+                    <div class="card">
+                        <div class="card-title">⚙️ 基礎核心服務狀態</div>
+                        <div id="svc-list" style="display:flex; flex-direction:column; gap:5px;"></div>
                     </div>
-                    <div>
-                        <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:8px;">
-                            <span>HDD 雲端資料碟</span><span id="nas-label">-- / --</span>
+
+                    <!-- 儲存配額卡片 (獨立並具備動畫) -->
+                    <div class="card card-interactive" style="cursor:pointer;" onclick="switchView('nas-mgnt')" title="點擊查看實體儲存空間細節">
+                        <div class="card-title">🗄️ 系統儲存配額 (Storage Link)</div>
+                        <div style="margin-bottom:1.5rem;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:8px;">
+                                <span>SSD 系統硬碟</span><span id="sys-label">-- / --</span>
+                            </div>
+                            <div class="progress-bar"><div id="sys-bar" class="progress-fill" style="width:0%"></div></div>
                         </div>
-                        <div class="progress-bar"><div id="nas-bar" class="progress-fill" style="width:0%"></div></div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:8px;">
+                                <span>HDD 雲端資料碟</span><span id="nas-label">-- / --</span>
+                            </div>
+                            <div class="progress-bar"><div id="nas-bar" class="progress-fill" style="width:0%"></div></div>
+                        </div>
                     </div>
                 </div>
             </div>
