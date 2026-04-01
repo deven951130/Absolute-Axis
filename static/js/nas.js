@@ -151,6 +151,7 @@ function closePreview() {
 // NAS Context Menu & Actions
 let cmData = {path: '', isDir: false, ext: '', owner: ''};
 function showCM(e, path, isDir, ext, owner = '') {
+    console.log("Right click triggered on:", path);
     e.preventDefault(); e.stopPropagation();
     cmData = {path, isDir, ext, owner};
     const cm = document.getElementById('nas-context-menu');
