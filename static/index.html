@@ -755,6 +755,8 @@
             document.getElementById('cm-trash').style.display = (currentNASMode==='drive')?'flex':'none';
             document.getElementById('cm-del').style.display = (currentNASMode==='trash')?'flex':'none';
             document.getElementById('cm-dl').style.display = (isDir)?'none':'flex';
+            const ownerElem = document.getElementById('cm-set-owner');
+            if (ownerElem) ownerElem.style.display = (currentNASMode==='drive' && !isShared)?'flex':'none';
             document.getElementById('cm-open').innerText = isDir?'📂 開啟資料夾':'🔍 預覽檔案';
         }
 
