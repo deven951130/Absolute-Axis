@@ -81,13 +81,20 @@ async function saveProfile() {
     }
 }
 
-async function saveAvatar() {
-    const ava = document.getElementById('edit-ava').value;
-    await authFetch('/api/user/update_profile', {
+window.saveAvatar = async function() {
+    const ava = document.getElementById('edit-ava').value.trim();
+    const res = await authFetch('/api/user/update_profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ avatar: ava })
     });
-    if (ava) localStorage.setItem('axis_avatar', ava);
-    location.reload();
+    
+    if (res.ok) {
+        // 核心修正：不論是否為空，皆同步 localStorage 確保快取一致性
+        localStorage.setItem('axis_avatar', ava);
+        alert("頭像更新成功！");
+        location.reload();
+    } else {
+        alert("更新失敗，請檢查聯網狀態或圖片網址。");
+    }
 }
