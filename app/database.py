@@ -30,6 +30,19 @@ class AuditLog(Base):
     username = Column(String, index=True)
     action = Column(String, nullable=False)
 
+class FileStar(Base):
+    __tablename__ = "file_stars"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, index=True)
+    path = Column(String, index=True)
+
+class FileShare(Base):
+    __tablename__ = "file_shares"
+    id = Column(Integer, primary_key=True, index=True)
+    owner = Column(String, index=True)
+    target = Column(String, index=True)
+    path = Column(String, index=True)
+
 # Dependency to get DB session
 def get_db():
     db = SessionLocal()
