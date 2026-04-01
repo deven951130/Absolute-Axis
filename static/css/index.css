@@ -9,6 +9,10 @@
     --accent-glow: rgba(88, 166, 255, 0.5);
     --accent-soft: rgba(88, 166, 255, 0.1);
     --brand-color: var(--accent-color);
+    
+    /* 語意色彩 (Semantic Colors) */
+    --success-color: #238636; 
+    --danger-color: #da3633;
 }
 
 /* 背景切換邏輯 (Light Mode) */
