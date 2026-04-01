@@ -367,6 +367,21 @@
         </div>
     </div>
 
+    <!-- 新增資料夾 Modal -->
+    <div id="modal-mkdir" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200001;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
+        <div class="card" style="width:400px; transform:translateY(-20px); animation:fadeInUp 0.3s forwards;">
+            <h2 style="margin-bottom:1.5rem; text-align:center;">📁 建立新資料夾</h2>
+            <div style="margin-bottom:20px;">
+                <label style="font-size:0.85rem;font-weight:800;color:var(--text-muted);display:block;margin-bottom:10px;">資料夾名稱</label>
+                <input type="text" id="mkdir-name" class="t-input" placeholder="請輸入名稱..." autofocus>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:center;margin-top:1rem;">
+                <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-mkdir').style.display='none'">取消</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="confirmMkdir()">🚀 建立資料夾</button>
+            </div>
+        </div>
+    </div>
+
     <!-- VM Deploy Modal -->
     <div id="modal-deploy-vm" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(10px);">
         <div class="card" style="width:450px;">
@@ -398,12 +413,12 @@
     </div>
 
     <!-- Script Modules -->
-    <script src="/static/js/api.js?v=3"></script>
-    <script src="/static/js/ui.js?v=3"></script>
-    <script src="/static/js/nas.js?v=3"></script>
-    <script src="/static/js/docker.js?v=3"></script>
-    <script src="/static/js/dashboard.js?v=3"></script>
-    <script src="/static/js/admin.js?v=3"></script>
+    <script src="/static/js/api.js?v=4"></script>
+    <script src="/static/js/ui.js?v=4"></script>
+    <script src="/static/js/nas.js?v=4"></script>
+    <script src="/static/js/docker.js?v=4"></script>
+    <script src="/static/js/dashboard.js?v=4"></script>
+    <script src="/static/js/admin.js?v=4"></script>
 
     <script>
         // Bootstrap

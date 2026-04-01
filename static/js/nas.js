@@ -193,16 +193,34 @@ async function nasDL(p, owner = ''){
     }
 }
 
-window.promptMkdir = async function() {
-    const menu = document.getElementById('new-menu');
-    if (menu) menu.style.display = 'none';
-    const name = prompt("請輸入資料夾名稱:");
-    if(name) {
-        const res = await authFetch('/api/nas/mkdir', {
-            method:'POST', headers:{'Content-Type':'application/json'}, 
-            body:JSON.stringify({path: currentNASPath, name: name})
-        });
-        if(res.ok) loadNASFiles(currentNASPath);
+window.promptMkdir = function() {
+    const mainM = document.getElementById('new-menu');
+    if (mainM) mainM.style.display = 'none';
+    
+    const m = document.getElementById('modal-mkdir');
+    const input = document.getElementById('mkdir-name');
+    if (m && input) {
+        input.value = "";
+        m.style.display = 'flex';
+        input.focus();
+    }
+}
+
+window.confirmMkdir = async function() {
+    const input = document.getElementById('mkdir-name');
+    const name = input.value.trim();
+    if(!name) return alert("請輸入名稱");
+    
+    const res = await authFetch('/api/nas/mkdir', {
+        method:'POST', headers:{'Content-Type':'application/json'}, 
+        body:JSON.stringify({path: currentNASPath, name: name})
+    });
+    
+    if(res.ok) {
+        document.getElementById('modal-mkdir').style.display = 'none';
+        loadNASFiles(currentNASPath);
+    } else {
+        alert("建立失敗，請檢查權限或名稱是否衝突");
     }
 }
 
