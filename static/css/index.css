@@ -6,11 +6,11 @@
 }
 body.light-mode {
     /* 不再改動背景顏色 --bg-color, --sidebar-color, --card-bg */
-    --text-main: #ffffff; /* 讓文字在暗色背景下變得更亮、更白 */
-    --text-muted: #abb2bf;
-    --accent-color: #ffd700; /* 切換為更溫暖的強調色 */
-    --border-color: #4b5563; /* 邊框略微增亮以呈現對比 */
-    --accent-soft: rgba(255, 215, 0, 0.1);
+    --text-main: #ffd700; /* 直接將文字變為亮眼的金色，呼應太陽模式 */
+    --text-muted: #e6b800;
+    --accent-color: #ffd700; 
+    --border-color: #5d4a00; 
+    --accent-soft: rgba(255, 215, 0, 0.2);
 }
 #theme-toggle {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

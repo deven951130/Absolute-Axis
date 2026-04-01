@@ -13,9 +13,11 @@ function toggleTheme() {
 }
 
 function setTheme(theme) {
-    document.body.classList.remove('sparkle-mode');
+    document.body.classList.remove('sparkle-mode', 'light-mode');
     if (theme === 'sparkle') document.body.classList.add('sparkle-mode');
+    if (theme === 'light') document.body.classList.add('light-mode');
     localStorage.setItem('axis-theme', theme);
+    if (typeof updateThemeIcon === 'function') updateThemeIcon();
 }
 
 function switchView(v) {
