@@ -139,3 +139,20 @@ canvas { width: 100% !important; height: 100% !important; }
 .context-menu-item { padding: 10px 15px; font-size: 0.85rem; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
 .context-menu-item:hover { background: var(--accent-soft); color: var(--accent-color); }
 @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+/* 彈窗覆蓋層基礎樣式 - 確保模組化後預設隱藏並具備現代美感 */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: none; /* 核心修正：預設不顯示 */
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: fadeIn 0.2s ease-out;
+}
+.modal-overlay.active {
+    display: flex;
+}
