@@ -5,10 +5,22 @@
     --sidebar-width: 280px;
 }
 body.light-mode {
-    --bg-color: #f6f8fa; --sidebar-color: #ffffff; --card-bg: #ffffff; 
-    --text-main: #1f2328; --text-muted: #3c444d; --border-color: #d0d7de;
-    --accent-soft: rgba(0, 51, 153, 0.05);
-    --card-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    /* 不再改動背景顏色 --bg-color, --sidebar-color, --card-bg */
+    --text-main: #ffffff; /* 讓文字在暗色背景下變得更亮、更白 */
+    --text-muted: #abb2bf;
+    --accent-color: #ffd700; /* 切換為更溫暖的強調色 */
+    --border-color: #4b5563; /* 邊框略微增亮以呈現對比 */
+    --accent-soft: rgba(255, 215, 0, 0.1);
+}
+#theme-toggle {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+    border: 1px solid var(--border-color);
+}
+body.light-mode #theme-toggle {
+    background: rgba(255, 215, 0, 0.15); /* 太陽模式下的環繞背景 */
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
 }
 body.sparkle-mode {
     --accent-color: #ff66a3;
