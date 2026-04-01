@@ -1,0 +1,22 @@
+<!-- Absolute Axis - User Creation Modal Module -->
+<div id="modal-create-user" class="modal-overlay" style="display: none;">
+    <div class="card" style="width:400px; text-align:center;">
+        <h2 style="margin-bottom:1.5rem;">🆕 新增核心成員 (Add Member)</h2>
+        <div style="text-align:left; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">帳號帳號 (Username)</div>
+        <input type="text" id="new-user-name" class="t-input" placeholder="User ID">
+        
+        <div style="text-align:left; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">存取密碼 (Access Token)</div>
+        <input type="password" id="new-user-pass" class="t-input" placeholder="Password">
+        
+        <div style="text-align:left; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">核心角色 (Role)</div>
+        <select id="new-user-role" class="t-input" style="background:var(--bg-color); color:var(--text-main);">
+            <option value="Member">Member</option>
+            <option value="Administrator">Administrator</option>
+        </select>
+        
+        <div style="display:flex; gap:12px; margin-top:1rem;">
+            <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-create-user').style.display='none'">取消</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="confirmCreateUser()">建立帳號</button>
+        </div>
+    </div>
+</div>

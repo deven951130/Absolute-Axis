@@ -1,7 +1,10 @@
 <!-- Absolute Axis - Admin View Module -->
 <div id="view-admin" class="view-section">
     <div class="card">
-        <h2 class="card-title">👥 系統用戶權限管理</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.8rem;">
+            <h2 class="card-title" style="margin-bottom:0;">👥 系統用戶權限管理</h2>
+            <button class="btn btn-primary" style="padding:8px 16px;" onclick="document.getElementById('modal-create-user').style.display='flex'">+ 新增核心成員</button>
+        </div>
         <div style="overflow-x:auto;">
             <table class="admin-table">
                 <thead>

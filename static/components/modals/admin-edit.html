@@ -1,0 +1,18 @@
+<!-- Absolute Axis - Admin Edit Modal Module -->
+<div id="modal-admin-edit" class="modal-overlay" style="display: none;">
+    <div class="card" style="width:400px; text-align:center;">
+        <h2 style="margin-bottom:1.5rem;">⚙️ 管理員 - 編輯權限</h2>
+        <div style="font-size:1.1rem; font-weight:900; color:var(--accent-color); margin-bottom:1.5rem;" id="target-user-name">-- USER --</div>
+        
+        <div style="text-align:left; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">變更角色 (Administrator/Member)</div>
+        <input type="text" id="admin-user-role" class="t-input" placeholder="角色 (Member / Administrator)">
+        
+        <div style="text-align:left; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">強制設定新密碼 (不改留空)</div>
+        <input type="password" id="admin-user-pass" class="t-input" placeholder="新的強致密碼">
+        
+        <div style="display:flex; gap:12px; margin-top:1rem;">
+            <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-admin-edit').style.display='none'">取消</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="confirmAdminEdit()">確定修改</button>
+        </div>
+    </div>
+</div>
