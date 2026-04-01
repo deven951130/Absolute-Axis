@@ -30,11 +30,12 @@ const App = {
     },
 
     async loadComponent(url, target) {
-        const res = await fetch(url);
+        // 強制加入版本號以打破瀏覽器快取 (Cache Busting)
+        const res = await fetch(`${url}?v=12`);
         if (!res.ok) throw new Error(`Failed to load component: ${url}`);
         const html = await res.text();
         const container = (target === 'body') ? document.body : document.querySelector(target);
-        container.insertAdjacentHTML('beforeend', html);
+        if (container) container.insertAdjacentHTML('beforeend', html);
     },
 
     boot() {
