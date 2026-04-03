@@ -4,43 +4,46 @@
         <div class="card">
             <div class="card-title">🗄️ 實體磁碟狀態與 S.M.A.R.T 健康報告</div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.2rem;">
-                <!-- SSD -->
+                <!-- Physical Disk 0 (System) -->
                 <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">[SATA_0] 系統啟動碟</span>
-                        <span style="color:var(--success-color); font-size:0.7rem; font-weight:900;">⚡ NORMAL</span>
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;" id="disk-0-dev">[DEVICE_0]</span>
+                        <span style="color:var(--success-color); font-size:0.7rem; font-weight:900;" id="disk-0-status">--</span>
                     </div>
-                    <div style="font-size:1.1rem; font-weight:800; margin:10px 0;">Crucial BX500 240GB</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px;">分區: / (ext4) • 溫度: 32°C</div>
-                    <div class="progress-bar" style="height:4px;"><div id="nas-ssd-bar" class="progress-fill" style="width:0%"></div></div>
+                    <div style="font-size:1.05rem; font-weight:800; margin:10px 0; color:var(--accent-color);" id="disk-0-name">Loading Drive...</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px;" id="disk-0-info">偵測中...</div>
+                    <div class="progress-bar" style="height:4px;"><div id="disk-0-bar" class="progress-fill" style="width:0%"></div></div>
                     <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem;">
-                        <span>損耗率: 2%</span><span id="nas-ssd-val">--%</span>
+                        <span id="disk-0-temp">TEMP: --°C</span><span id="disk-0-val">--%</span>
                     </div>
                 </div>
-                <!-- HDD -->
-                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem;">
+                <!-- Physical Disk 1 (Storage) -->
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem; border-left: 2px solid var(--accent-color);">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">[SATA_1] 資料存儲碟</span>
-                        <span style="color:var(--success-color); font-size:0.7rem; font-weight:900;">💾 NORMAL</span>
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;" id="disk-1-dev">[DEVICE_1]</span>
+                        <span style="color:var(--success-color); font-size:0.7rem; font-weight:900;" id="disk-1-status">--</span>
                     </div>
-                    <div style="font-size:1.1rem; font-weight:800; margin:10px 0;">WD Red Pro 1TB</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px;">分區: /nas (xfs) • 溫度: 38°C</div>
-                    <div class="progress-bar" style="height:4px;"><div id="nas-hdd-bar" class="progress-fill" style="width:0%"></div></div>
+                    <div style="font-size:1.05rem; font-weight:800; margin:10px 0; color:var(--accent-color);" id="disk-1-name">Loading Drive...</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px;" id="disk-1-info">偵測中...</div>
+                    <div class="progress-bar" style="height:4px;"><div id="disk-1-bar" class="progress-fill" style="width:0%"></div></div>
                     <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem;">
-                        <span>損耗率: 0%</span><span id="nas-hdd-val">--%</span>
+                        <span id="disk-1-temp">TEMP: --°C</span><span id="disk-1-val">--%</span>
                     </div>
                 </div>
             </div>
 
-            <div class="card-title" style="margin-top:2.5rem;">🛡️ RAID 陣列控制中樞 (Software RAID 1)</div>
+            <div class="card-title" style="margin-top:2.5rem;">🛡️ 實體儲存池控制中樞 (Physical Storage Pool)</div>
             <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:12px; padding:20px; display:flex; align-items:center; gap:30px;">
-                <div style="width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:var(--accent-soft); border-radius:50%; border:2px solid var(--accent-color); font-size:2rem;">🛡️</div>
+                <div style="width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:var(--accent-soft); border-radius:50%; border:2px solid var(--accent-color); font-size:2rem;" id="pool-icon">🗄️</div>
                 <div style="flex:1;">
                     <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:10px;">
-                        <div><div style="font-weight:800; font-size:1.1rem;">Absolute_Data_RAID</div><div style="font-size:0.75rem; color:var(--text-muted);">RAID 1 (鏡像) • 容錯數量: 1</div></div>
-                        <div style="text-align:right;"><div style="color:var(--success-color); font-weight:900; font-size:0.8rem;">狀態: OK</div></div>
+                        <div>
+                            <div style="font-weight:800; font-size:1.1rem;" id="raid-name">Absolute_Storage_Pool</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);" id="raid-type">JBOD / Single Drive Logic</div>
+                        </div>
+                        <div style="text-align:right;"><div style="color:var(--success-color); font-weight:900; font-size:0.8rem;" id="raid-status">STATUS: ONLINE</div></div>
                     </div>
-                    <div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:100%; background:linear-gradient(90deg, var(--accent-color), var(--success-color));"></div></div>
+                    <div class="progress-bar" style="height:8px;"><div id="raid-bar" class="progress-fill" style="width:100%; background:linear-gradient(90deg, var(--accent-color), var(--success-color));"></div></div>
                 </div>
             </div>
         </div>
@@ -48,9 +51,13 @@
         <div class="card" style="height:fit-content;">
             <div class="card-title">📊 儲存佔用細節</div>
             <div style="display:flex; flex-direction:column; gap:12px;">
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>核心系統</span><b>4.2G</b></div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>用戶媒體</span><b>12.8G</b></div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>Docker 掛載</span><b>2.1G</b></div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>核心系統</span><b id="det-core">--G</b></div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>用戶媒體 (NAS)</span><b id="det-user">--G</b></div>
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>Docker 掛載區</span><b id="det-docker">--G</b></div>
+                <hr style="border:0; border-top:1px solid var(--border-color); margin:10px 0;">
+                <div style="text-align:center;">
+                    <button class="btn btn-primary" style="width:100%; font-size:0.75rem; font-weight:800;" onclick="refreshNASHardware()">🔄 刷新讀取 S.M.A.R.T 報告</button>
+                </div>
             </div>
         </div>
     </div>

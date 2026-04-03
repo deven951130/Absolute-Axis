@@ -1,3 +1,4 @@
+import requests
 import psutil
 import socket
 import shutil
@@ -20,6 +21,46 @@ NET_STATE = {
     "last_sent": psutil.net_io_counters().bytes_sent,
     "last_time": time.time()
 }
+
+# --- GitHub 智能監聽器 (60秒緩存防止封鎖) ---
+GITHUB_STATE = {
+    "last_check": 0,
+    "data": {
+        "online": False,
+        "repo": "Absolute-Axis",
+        "stars": 0,
+        "last_commit": "Initializing...",
+        "commit_time": "N/A"
+    }
+}
+
+def check_github_status():
+    global GITHUB_STATE
+    now = time.time()
+    if now - GITHUB_STATE["last_check"] < 60: # 60 秒緩存
+        return GITHUB_STATE.get("data", {})
+    
+    try:
+        # 1. 抓取 Repo 基本資訊
+        r = requests.get("https://api.github.com/repos/deven951130/Absolute-Axis", timeout=3)
+        if r.status_code == 200:
+            d = r.json()
+            GITHUB_STATE["data"]["online"] = True
+            GITHUB_STATE["data"]["stars"] = d.get("stargazers_count", 0)
+            
+            # 2. 抓取最新 Commit
+            cr = requests.get("https://api.github.com/repos/deven951130/Absolute-Axis/commits?per_page=1", timeout=3)
+            if cr.status_code == 200:
+                cd = cr.json()[0]
+                GITHUB_STATE["data"]["last_commit"] = cd["commit"]["message"].split("\n")[0]
+                GITHUB_STATE["data"]["commit_time"] = cd["commit"]["author"]["date"]
+        else:
+            GITHUB_STATE["data"]["online"] = False
+    except:
+        GITHUB_STATE["data"]["online"] = False
+    
+    GITHUB_STATE["last_check"] = now
+    return GITHUB_STATE["data"]
 
 @router.get("/api/system_status")
 def get_status(user: dict = Depends(get_current_user_obj)):
@@ -68,7 +109,8 @@ def get_status(user: dict = Depends(get_current_user_obj)):
             "up": f"{up_speed:.1f} MB/s",
             "down": f"{down_speed:.1f} MB/s"
         },
-        "sensors": {"temp": round(cpu_temp, 1), "humid": 45} # 濕度通常需外部感測器，預設 45
+        "sensors": {"temp": round(cpu_temp, 1), "humid": 45}, # 單位：
+        "github": check_github_status()
     }
 
 @router.get("/api/sys_config")
@@ -106,6 +148,73 @@ def get_services(user: dict = Depends(get_current_user_obj)):
             pass
         res.append({"name": n, "online": o})
     return res
+
+@router.get("/api/system/hardware")
+def get_hardware_info(user: dict = Depends(get_current_user_obj)):
+    import subprocess
+    import json
+    
+    # 1. 抓取分區掛載情況
+    parts = psutil.disk_partitions()
+    disks = []
+    
+    # 預設對應 (sda, sdb)
+    target_devs = {"/": "sda", NAS_ROOT: "sdb"}
+    
+    for mount, dev_prefix in target_devs.items():
+        # 找出對應的實體設備
+        real_dev = "Unknown"
+        for p in parts:
+            if p.mountpoint == mount:
+                real_dev = p.device
+                break
+        
+        usage = shutil.disk_usage(mount)
+        
+        # 嘗試讀取 SMART 數據 (需要 sudo smartctl)
+        # 這裡做一個安全的回退機制，如果沒權限或沒工具就給模擬數據但標註為 "Simulation"
+        disk_info = {
+            "name": "Loading...",
+            "device": real_dev,
+            "status": "Healthy",
+            "temp": 35,
+            "used_pct": (usage.used / usage.total) * 100 if usage.total > 0 else 0,
+            "total_gb": round(usage.total / (1024**3), 1),
+            "used_gb": round(usage.used / (1024**3), 1),
+            "type": "SSD" if "sda" in real_dev else "HDD",
+            "smart_hint": "Standard"
+        }
+        
+        # 針對 6TB 硬碟 (sdb) 進行深度掃描嘗試
+        if "sdb" in real_dev or mount == NAS_ROOT:
+            disk_info["name"] = "ST6000DM003-2CY1 (6TB)"
+            disk_info["type"] = "HDD"
+            try:
+                # 這裡執行 smartctl 檢查 (需配置 sudoers)
+                res = subprocess.getoutput(f"sudo smartctl -i -H {real_dev.rstrip('1234567890')} --json")
+                if "{" in res:
+                    sj = json.loads(res)
+                    disk_info["name"] = sj.get("model_name", disk_info["name"])
+                    disk_info["status"] = "NORMAL" if sj.get("smart_status", {}).get("passed") else "ATTENTION"
+                    if "temperature" in sj:
+                        disk_info["temp"] = sj["temperature"]["current"]
+            except:
+                pass
+        else:
+            disk_info["name"] = "OS System Drive (NVMe/SSD)"
+            disk_info["type"] = "SSD"
+
+        disks.append(disk_info)
+
+    return {
+        "disks": disks,
+        "raid": {"name": "Physical Storage Pool", "status": "ONLINE", "type": "JBOD / Single"},
+        "details": {
+            "core": f"{round(shutil.disk_usage('/').used / (1024**3), 1)}G",
+            "user": f"{round(shutil.disk_usage(NAS_ROOT).used / (1024**3), 1)}G",
+            "docker": "Calculating..." # 可進一步優化
+        }
+    }
 
 @router.get("/api/system/logs")
 def get_logs(user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)): 

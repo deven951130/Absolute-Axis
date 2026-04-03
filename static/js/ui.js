@@ -61,6 +61,7 @@ function switchView(v) {
     if (v === 'settings') { if (typeof closeSettingPanel === 'function') { closeSettingPanel(); loadSpecs(); } }
     if (v === 'virtual') { if (typeof loadDocker === 'function') loadDocker(); }
     if (v === 'metrics') { if (typeof initCharts === 'function') initCharts(); }
+    if (v === 'nas-mgnt') { if (typeof refreshNASHardware === 'function') refreshNASHardware(); }
 }
 
 function openSettingPanel(id) {

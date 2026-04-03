@@ -83,6 +83,25 @@ async function startPolling() {
                 if (ramChart.data.datasets[0].data.length > 30) ramChart.data.datasets[0].data.shift();
                 ramChart.update();
             }
+
+            // GitHub Status (Added)
+            if (d.github) {
+                const g = d.github;
+                const dot = document.getElementById('gh-dot');
+                const repo = document.getElementById('gh-repo');
+                const commit = document.getElementById('gh-commit');
+                const sTime = document.getElementById('gh-time');
+                const stars = document.getElementById('gh-stars');
+
+                if (dot) dot.className = `status-dot ${g.online ? 'online pulse' : ''}`;
+                if (repo) repo.innerText = g.repo;
+                if (commit) commit.innerText = g.last_commit;
+                if (sTime) {
+                    const now = new Date();
+                    sTime.innerText = g.online ? `Last Sync: ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}` : 'Last Sync: Offline';
+                }
+                if (stars) stars.innerText = `⭐ ${g.stars}`;
+            }
         }
 
         // 終端紀錄 (修復輪詢與同步)
@@ -113,7 +132,7 @@ async function startPolling() {
     } catch (e) {
         console.error("Polling error:", e);
     }
-    setTimeout(startPolling, 3000);
+    setTimeout(startPolling, 5000); // 調整為 5 秒
 }
 
 async function loadSpecs() {

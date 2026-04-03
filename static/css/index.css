@@ -160,3 +160,31 @@ canvas { width: 100% !important; height: 100% !important; }
 .modal-overlay.active {
     display: flex;
 }
+
+/* GitHub Vitality Styles */
+.gh-card {
+    border-left: 4px solid #238636 !important;
+    background: linear-gradient(135deg, rgba(22,27,34,0.7), rgba(13,17,23,0.8)) !important;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: 0.3s;
+}
+
+.status-dot.online {
+    background: #238636;
+}
+
+.status-dot.pulse {
+    animation: gh-pulse 2s infinite;
+}
+
+@keyframes gh-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(35, 134, 54, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(35, 134, 54, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(35, 134, 54, 0); }
+}
