@@ -36,11 +36,12 @@ async function doLogin() {
             localStorage.setItem('axis_avatar', d.avatar);
             location.reload();
         } else {
-            alert('登入失敗：身分驗證未通過');
+            const errData = await res.json().catch(() => ({}));
+            alert(`登入失敗 [${res.status}]：${errData.detail || '身分驗證未通過'}`);
         }
     } catch (e) {
         console.error(e);
-        alert('連線至伺服器失敗');
+        alert(`連線至伺服器失敗：${e.message}`);
     }
 }
 
