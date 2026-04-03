@@ -57,6 +57,23 @@
         </div>
         
         <div style="display:flex; flex-direction:column; gap:2rem;">
+            <!-- 儲存配額 (優先級提升：移至最上方) -->
+            <div class="card card-interactive" style="cursor:pointer; border-left: 4px solid var(--accent-color);" onclick="switchView('nas-mgnt')" title="點擊查看實體儲存空間細節">
+                <div class="card-title">🗄️ 系統儲存配額 (Storage Link)</div>
+                <div style="margin-bottom:1.5rem;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:8px;">
+                        <span>SSD 系統硬碟</span><span id="sys-label">-- / --</span>
+                    </div>
+                    <div class="progress-bar"><div id="sys-bar" class="progress-fill" style="width:0%"></div></div>
+                </div>
+                <div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:8px;">
+                        <span>HDD 雲端資料碟</span><span id="nas-label">-- / --</span>
+                    </div>
+                    <div class="progress-bar"><div id="nas-bar" class="progress-fill" style="width:0%"></div></div>
+                </div>
+            </div>
+
             <!-- GitHub 監控眼 -->
             <div class="card gh-card" style="position:relative; overflow:hidden;">
                 <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
@@ -80,23 +97,6 @@
             <div class="card">
                 <div class="card-title">⚙️ 基礎核心服務狀態</div>
                 <div id="svc-list" style="display:flex; flex-direction:column; gap:5px;"></div>
-            </div>
-
-            <!-- 儲存配額 -->
-            <div class="card card-interactive" style="cursor:pointer;" onclick="switchView('nas-mgnt')" title="點擊查看實體儲存空間細節">
-                <div class="card-title">🗄️ 系統儲存配額 (Storage Link)</div>
-                <div style="margin-bottom:1.5rem;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:8px;">
-                        <span>SSD 系統硬碟</span><span id="sys-label">-- / --</span>
-                    </div>
-                    <div class="progress-bar"><div id="sys-bar" class="progress-fill" style="width:0%"></div></div>
-                </div>
-                <div>
-                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:8px;">
-                        <span>HDD 雲端資料碟</span><span id="nas-label">-- / --</span>
-                    </div>
-                    <div class="progress-bar"><div id="nas-bar" class="progress-fill" style="width:0%"></div></div>
-                </div>
             </div>
         </div>
     </div>
