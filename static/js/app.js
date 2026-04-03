@@ -31,7 +31,7 @@ const App = {
 
     async loadComponent(url, target) {
         // 強制加入版本號以打破瀏覽器快取 (Cache Busting)
-        const res = await fetch(`${url}?v=12`);
+        const res = await fetch(`${url}?v=13`);
         if (!res.ok) throw new Error(`Failed to load component: ${url}`);
         const html = await res.text();
         const container = (target === 'body') ? document.body : document.querySelector(target);
