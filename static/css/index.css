@@ -41,7 +41,14 @@ body.theme-default{ --accent-color: #58a6ff; --accent-glow: rgba(88, 166, 255, 0
 }
 body.light-mode #theme-toggle { background: #eee; border-color: #ccc; }
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Tahoma", sans-serif; }
-body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
+body { 
+    background-color: var(--bg-color); 
+    color: var(--text-main); 
+    min-height: 100vh; 
+    display: flex; 
+    transition: background-color 0.3s, color 0.3s; 
+    overflow-x: hidden; /* 防止水平溢出 */
+}
 
 .sidebar {
     width: 260px;
@@ -49,11 +56,12 @@ body { background-color: var(--bg-color); color: var(--text-main); min-height: 1
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    position: relative;
+    position: sticky; /* 核心修正：讓選單在滾動時固定在左側 */
+    top: 0;
     z-index: 100;
-    height: 100vh !important;
-    overflow: hidden !important; /* 核心修正：側邊欄外層不捲動，交由內層容器 */
+    height: 100vh; /* 側邊欄維持視窗高度 */
     flex-shrink: 0;
+    overflow-y: auto; /* 如果選單太長，側邊欄內部仍可微捲 */
 }
 
 .sidebar-nav-container {
@@ -102,28 +110,27 @@ body { background-color: var(--bg-color); color: var(--text-main); min-height: 1
 .main-content { 
     flex: 1; 
     padding: 2.5rem; 
-    padding-bottom: 10rem; /* 加強底部緩衝空間 */
-    overflow-y: auto !important; 
+    padding-bottom: 10rem; 
     display: flex; 
     flex-direction: column; 
     background: var(--bg-color); 
     position: relative; 
     min-width: 0; 
+    min-height: 100vh; /* 確保內容區至少佔滿一屏 */
 }
 
-/* 主區域滾動條顯化 - V19 補丁 */
-.main-content::-webkit-scrollbar {
-    width: 8px;
+/* 全域滾動條顯化 - V20 補丁 (回歸視窗最右側) */
+::-webkit-scrollbar {
+    width: 10px;
 }
-.main-content::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
     background: var(--accent-color);
     border-radius: 10px;
-    opacity: 0.5;
 }
-.main-content::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
     background: var(--brand-color);
 }
-.main-content::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
     background: rgba(0,0,0,0.05);
 }
 .view-section { display: none; flex: 1; min-width: 0; }
