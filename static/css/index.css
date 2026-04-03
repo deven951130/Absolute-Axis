@@ -102,13 +102,29 @@ body { background-color: var(--bg-color); color: var(--text-main); min-height: 1
 .main-content { 
     flex: 1; 
     padding: 2.5rem; 
-    padding-bottom: 8rem; /* 增加底部緩衝，確保下方內容可完全捲出 */
-    overflow-y: auto; 
+    padding-bottom: 10rem; /* 加強底部緩衝空間 */
+    overflow-y: auto !important; 
     display: flex; 
     flex-direction: column; 
     background: var(--bg-color); 
     position: relative; 
     min-width: 0; 
+}
+
+/* 主區域滾動條顯化 - V19 補丁 */
+.main-content::-webkit-scrollbar {
+    width: 8px;
+}
+.main-content::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 10px;
+    opacity: 0.5;
+}
+.main-content::-webkit-scrollbar-thumb:hover {
+    background: var(--brand-color);
+}
+.main-content::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.05);
 }
 .view-section { display: none; flex: 1; min-width: 0; }
 .view-section.active { display: flex !important; flex-direction: column; animation: fadeIn 0.3s ease-out; }

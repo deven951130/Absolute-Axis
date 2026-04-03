@@ -1,5 +1,12 @@
 # Absolute Axis 更新日誌 (Update Logs)
 
+### [V18] - 2026-04-03
+#### 【佈局重構：側邊選單捲軸定案修復】
+- **結構手術**：解耦 Logo 區與導覽區，建立 `.sidebar-nav-container` 獨立滾動容器。
+- **Flexbox 硬化**：強制讓 Logo 區不縮放 (`flex-shrink: 0`)，徹底消除空間爭奪。
+- **捲軸顯化**：將 8px 主題色捲軸精確掛載至內層容器。
+- **全域同步**：全面升級 CSS/JS 快取版本號至 V18。
+
 ## [2026-04-03] - 系統全資產遷移準備
 ### **遷移設施 (Migration Infrastructure)**
 - **金級鏡像封裝 (Golden Image Packing)**：完成全機代碼、SQLite 資料庫與 NAS 存儲目錄的 1:1 密封打包。
