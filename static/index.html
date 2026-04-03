@@ -21,7 +21,7 @@
         </div>
     </div>
 
-    <!-- 左側導覽列 (靜態骨架) -->
+    <!-- 左側導覽列 (佈局重構 V18) -->
     <aside class="sidebar">
         <div class="brand">
             <div class="logo-box" style="overflow:hidden;">
@@ -29,18 +29,20 @@
             </div>
             ABSOLUTE AXIS
         </div>
-        <ul class="nav-menu">
-            <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">🏘️ 戰情總覽</li>
-            <li class="nav-item" id="nav-virtual" onclick="switchView('virtual')">🖥️ 虛擬化中心</li>
-            <li class="nav-item" id="nav-smart" onclick="switchView('smart')">🏡 智慧宅控</li>
-            <li class="nav-item" id="nav-cloud" onclick="switchView('cloud')">☁️ 私有雲儲存</li>
-            <li class="nav-item" id="nav-nas-mgnt" onclick="switchView('nas-mgnt')">🗄️ NAS 管理</li>
-            <li class="nav-item" id="nav-metrics" onclick="switchView('metrics')">📊 實時數據分析</li>
-            <li class="nav-item" id="nav-ai" onclick="switchView('ai')">🤖 核心助手</li>
-            <div class="nav-separator"></div>
-            <li class="nav-item" id="nav-admin" onclick="switchView('admin')" style="display:none">👥 帳號管理</li>
-            <li class="nav-item" id="nav-settings" onclick="switchView('settings')">⚙️ 系統設定</li>
-        </ul>
+        <div class="sidebar-nav-container">
+            <ul class="nav-menu">
+                <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">🏘️ 戰情總覽</li>
+                <li class="nav-item" id="nav-virtual" onclick="switchView('virtual')">🖥️ 虛擬化中心</li>
+                <li class="nav-item" id="nav-smart" onclick="switchView('smart')">🏡 智慧宅控</li>
+                <li class="nav-item" id="nav-cloud" onclick="switchView('cloud')">☁️ 私有雲儲存</li>
+                <li class="nav-item" id="nav-nas-mgnt" onclick="switchView('nas-mgnt')">🗄️ NAS 管理</li>
+                <li class="nav-item" id="nav-metrics" onclick="switchView('metrics')">📊 實時數據分析</li>
+                <li class="nav-item" id="nav-ai" onclick="switchView('ai')">🤖 核心助手</li>
+                <div class="nav-separator"></div>
+                <li class="nav-item" id="nav-admin" onclick="switchView('admin')" style="display:none">👥 帳號管理</li>
+                <li class="nav-item" id="nav-settings" onclick="switchView('settings')">⚙️ 系統設定</li>
+            </ul>
+        </div>
     </aside>
 
     <!-- 主要內容區 (動態注入容器) -->
@@ -64,15 +66,15 @@
     </main>
 
     <!-- Project Logic Modules -->
-    <script src="/static/js/api.js?v=17"></script>
-    <script src="/static/js/ui.js?v=17"></script>
-    <script src="/static/js/nas.js?v=17"></script>
-    <script src="/static/js/nas-mgnt.js?v=17"></script>
-    <script src="/static/js/docker.js?v=17"></script>
-    <script src="/static/js/dashboard.js?v=17"></script>
-    <script src="/static/js/admin.js?v=17"></script>
+    <script src="/static/js/api.js?v=18"></script>
+    <script src="/static/js/ui.js?v=18"></script>
+    <script src="/static/js/nas.js?v=18"></script>
+    <script src="/static/js/nas-mgnt.js?v=18"></script>
+    <script src="/static/js/docker.js?v=18"></script>
+    <script src="/static/js/dashboard.js?v=18"></script>
+    <script src="/static/js/admin.js?v=18"></script>
     
     <!-- Application Entry Point (Modular Core) -->
-    <script src="/static/js/app.js?v=17"></script>
+    <script src="/static/js/app.js?v=18"></script>
 </body>
 </html>

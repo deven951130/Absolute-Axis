@@ -51,27 +51,43 @@ body { background-color: var(--bg-color); color: var(--text-main); min-height: 1
     flex-direction: column;
     position: relative;
     z-index: 100;
-    height: 100vh !important; /* 強制全高 */
-    max-height: 100vh !important;
-    overflow-y: auto !important; /* 強制垂直滾動 */
-    overflow-x: hidden !important;
-    padding: 2rem 0;
+    height: 100vh !important;
+    overflow: hidden !important; /* 核心修正：側邊欄外層不捲動，交由內層容器 */
     flex-shrink: 0;
 }
 
-/* 側邊欄滾動條優化 - 顯化補丁 */
-.sidebar::-webkit-scrollbar {
-    width: 8px; /* 增加寬度使其可見 */
+.sidebar-nav-container {
+    flex: 1; /* 佔滿剩餘高度 */
+    overflow-y: auto !important; /* 核心修正：僅在此層級允許垂直捲動 */
+    overflow-x: hidden;
+    padding-bottom: 3rem; /* 增加底部緩衝 */
 }
-.sidebar::-webkit-scrollbar-thumb {
-    background: var(--accent-color); /* 使用主題色 */
+
+.brand { 
+    flex-shrink: 0; /* 確保 logo 區不被壓縮 */
+    padding: 2rem 1.8rem;
+    font-size: 1.25rem; 
+    font-weight: 800; 
+    color: var(--brand-color, var(--accent-color)); 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    letter-spacing: 0.5px; 
+}
+
+/* 側邊欄滾動條優化 - 視覺強化補丁 */
+.sidebar-nav-container::-webkit-scrollbar {
+    width: 8px;
+}
+.sidebar-nav-container::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
     border-radius: 10px;
     opacity: 0.5;
 }
-.sidebar::-webkit-scrollbar-thumb:hover {
+.sidebar-nav-container::-webkit-scrollbar-thumb:hover {
     background: var(--brand-color);
 }
-.sidebar::-webkit-scrollbar-track {
+.sidebar-nav-container::-webkit-scrollbar-track {
     background: rgba(0,0,0,0.1);
 }
 
