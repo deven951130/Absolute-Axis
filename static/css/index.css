@@ -45,9 +45,10 @@ body {
     background-color: var(--bg-color); 
     color: var(--text-main); 
     min-height: 100vh; 
-    display: flex; 
+    display: block; /* 改為塊級佈局，確保高度可由內容撐開 */
     transition: background-color 0.3s, color 0.3s; 
-    overflow-x: hidden; /* 防止水平溢出 */
+    overflow-x: hidden; 
+    overflow-y: scroll !important; /* 強制啟動瀏覽器原生捲軸 */
 }
 
 .sidebar {
@@ -56,12 +57,14 @@ body {
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    position: sticky; /* 核心修正：讓選單在滾動時固定在左側 */
+    position: fixed; /* 始終固定於左側 */
+    left: 0;
     top: 0;
-    z-index: 100;
-    height: 100vh; /* 側邊欄維持視窗高度 */
+    bottom: 0;
+    z-index: 1001; /* 確保在最上層 */
+    height: 100vh;
     flex-shrink: 0;
-    overflow-y: auto; /* 如果選單太長，側邊欄內部仍可微捲 */
+    overflow-y: auto;
 }
 
 .sidebar-nav-container {
@@ -108,20 +111,31 @@ body {
 .nav-separator { height: 1px; background: var(--border-color); margin: 20px 25px; }
 
 .main-content { 
-    flex: 1; 
+    margin-left: 260px; /* 給側邊欄留空間 */
     padding: 2.5rem; 
-    padding-bottom: 10rem; 
+    padding-bottom: 12rem; /* 再度增加墊高空間 */
     display: flex; 
     flex-direction: column; 
     background: var(--bg-color); 
     position: relative; 
     min-width: 0; 
-    min-height: 100vh; /* 確保內容區至少佔滿一屏 */
+    min-height: 100vh;
 }
 
-/* 全域滾動條顯化 - V20 補丁 (回歸視窗最右側) */
+/* 頂部 Header 在捲動時固定懸浮 (選配，但對體驗極佳) */
+.top-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg-color);
+    z-index: 1000;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* 全域滾動條顯化 - V21 補丁 (原生佈局優化) */
 ::-webkit-scrollbar {
-    width: 10px;
+    width: 12px; /* 稍微加寬捲軸方便抓取 */
 }
 ::-webkit-scrollbar-thumb {
     background: var(--accent-color);
