@@ -1,3 +1,4 @@
+import os
 import requests
 import psutil
 import socket
@@ -37,26 +38,30 @@ GITHUB_STATE = {
 def check_github_status():
     global GITHUB_STATE
     now = time.time()
-    if now - GITHUB_STATE["last_check"] < 60: # 60 秒緩存
+    if now - GITHUB_STATE["last_check"] < 120: # 120 秒緩存 (節流)
         return GITHUB_STATE.get("data", {})
+    
+    # 從伺服器環境變數安全讀取存取令牌 (無硬編碼金鑰)
+    token = os.getenv("GITHUB_TOKEN")
+    headers = {"Authorization": f"token {token}"} if token else {}
     
     try:
         # 1. 抓取 Repo 基本資訊
-        r = requests.get("https://api.github.com/repos/deven951130/Absolute-Axis", timeout=3)
+        r = requests.get("https://api.github.com/repos/deven951130/Absolute-Axis", headers=headers, timeout=5)
         if r.status_code == 200:
             d = r.json()
             GITHUB_STATE["data"]["online"] = True
             GITHUB_STATE["data"]["stars"] = d.get("stargazers_count", 0)
             
-            # 2. 抓取最新 Commit
-            cr = requests.get("https://api.github.com/repos/deven951130/Absolute-Axis/commits?per_page=1", timeout=3)
+            # 2. 抓取最新 Commit (加速抓取)
+            cr = requests.get("https://api.github.com/repos/deven951130/Absolute-Axis/commits?per_page=1", headers=headers, timeout=5)
             if cr.status_code == 200:
                 cd = cr.json()[0]
                 GITHUB_STATE["data"]["last_commit"] = cd["commit"]["message"].split("\n")[0]
                 GITHUB_STATE["data"]["commit_time"] = cd["commit"]["author"]["date"]
         else:
             GITHUB_STATE["data"]["online"] = False
-    except:
+    except Exception as e:
         GITHUB_STATE["data"]["online"] = False
     
     GITHUB_STATE["last_check"] = now

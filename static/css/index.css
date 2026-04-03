@@ -51,8 +51,10 @@ body { background-color: var(--bg-color); color: var(--text-main); min-height: 1
     flex-direction: column;
     position: relative;
     z-index: 100;
-    overflow-y: auto; /* 允許垂直滾動 */
-    overflow-x: hidden;
+    height: 100vh !important; /* 強制全高 */
+    max-height: 100vh !important;
+    overflow-y: auto !important; /* 強制垂直滾動 */
+    overflow-x: hidden !important;
     padding: 2rem 0;
     flex-shrink: 0;
 }
