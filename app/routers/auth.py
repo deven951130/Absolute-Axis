@@ -10,11 +10,15 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == req.username).first()
     if not user or not verify_password(req.password, user.password_hash):
-        log_event(req.username or "Unknown", "SECURITY: Authentication Failure.")
+        try:
+            log_event(req.username or "Unknown", "SECURITY: Authentication Failure.")
+        except: pass
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     token = create_access_token(data={"sub": user.username})
-    log_event(req.username, "Identity Verification: Session Established.")
+    try:
+        log_event(req.username, "Identity Verification: Session Established.")
+    except: pass
     
     return {
         "token": token, 

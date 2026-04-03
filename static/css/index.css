@@ -59,16 +59,20 @@ body { background-color: var(--bg-color); color: var(--text-main); min-height: 1
     flex-shrink: 0;
 }
 
-/* 側邊欄滾動條優化 */
+/* 側邊欄滾動條優化 - 顯化補丁 */
 .sidebar::-webkit-scrollbar {
-    width: 4px;
+    width: 8px; /* 增加寬度使其可見 */
 }
 .sidebar::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--accent-color); /* 使用主題色 */
     border-radius: 10px;
+    opacity: 0.5;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--brand-color);
 }
 .sidebar::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(0,0,0,0.1);
 }
 
 .brand { font-size: 1.25rem; font-weight: 800; color: var(--brand-color, var(--accent-color)); margin-bottom: 2.5rem; display: flex; align-items: center; gap: 12px; padding: 0 1.8rem; letter-spacing: 0.5px; }
