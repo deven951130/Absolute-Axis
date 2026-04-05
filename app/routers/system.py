@@ -235,7 +235,15 @@ def post_msg(req: MessageRequest, user: dict = Depends(get_current_user_obj)):
     log_event(user["username"], f"BROADCAST: {req.message}")
     return {"status": "ok"}
 
-@router.post("/api/action/clear_cache")
-def clear_cache(user: dict = Depends(get_current_user_obj)):
-    log_event(user["username"], "Maintenance: Executed system cache purge.")
-    return {"status": "ok"}
+@router.post("/api/action/restart")
+def restart_server(user: dict = Depends(get_current_user_obj)):
+    log_event(user["username"], "SYSTEM: Initiated a server process restart.")
+    # On Windows/Linux, if running via a service manager or uvicorn --reload, 
+    # exiting the process will trigger a restart.
+    import threading
+    def die():
+        time.sleep(1)
+        os._exit(0) # Immediate exit to force service manager to restart
+    
+    threading.Thread(target=die, daemon=True).start()
+    return {"status": "restarting"}

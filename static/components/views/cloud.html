@@ -29,7 +29,8 @@
                     <button class="btn btn-primary" onclick="toggleNewMenu()">✚ 建立 / 上傳</button>
                     <div id="new-menu" style="position:absolute; background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:8px; display:none; right:2.5rem; top:85px; z-index:10001; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
                         <div class="context-menu-item" onclick="promptMkdir()">📁 新增資料夾</div>
-                        <div class="context-menu-item" onclick="triggerUpload()">📤 上傳檔案</div>
+                        <div class="context-menu-item" onclick="triggerUpload(false)">📤 上傳檔案</div>
+                        <div class="context-menu-item" style="color:var(--accent-color); border-top:1px solid var(--border-color); margin-top:5px; padding-top:10px;" onclick="triggerUpload(true)">🔄 上傳並重啟服務</div>
                         <input type="file" id="nas-up" style="display:none;" onchange="nasUpload()">
                     </div>
                 </div>

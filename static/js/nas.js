@@ -9,7 +9,8 @@ const NASManager = {
         viewMode: localStorage.getItem('nas_view_mode') || 'grid',
         currentMode: 'drive',
         isLoaded: false,
-        isLoading: false
+        isLoading: false,
+        shouldRestart: false
     },
 
     init() {
@@ -446,12 +447,19 @@ const NASManager = {
             }
         };
         
-        xhr.onload = () => {
+        xhr.onload = async () => {
             if (xhr.status >= 200 && xhr.status < 300) {
-                setTimeout(() => {
-                    if (mon) mon.style.display = 'none';
-                    this.loadFiles(this.state.currentPath);
-                }, 800);
+                if (this.state.shouldRestart) {
+                    if (name) name.innerText = "正在重新啟動伺服器...";
+                    if (bar) bar.style.background = "var(--success-color)";
+                    try { await authFetch('/api/action/restart', {method:'POST'}); } catch(e) {}
+                    setTimeout(() => location.reload(), 3000); // 3 秒後重新整理網頁
+                } else {
+                    setTimeout(() => {
+                        if (mon) mon.style.display = 'none';
+                        this.loadFiles(this.state.currentPath);
+                    }, 800);
+                }
             } else {
                 let detail = "上傳失敗";
                 try { detail = JSON.parse(xhr.responseText).detail || detail; } catch(e) {}
@@ -468,7 +476,8 @@ const NASManager = {
         xhr.send(formData);
     },
 
-    triggerUpload() {
+    triggerUpload(restart = false) {
+        this.state.shouldRestart = restart;
         const input = document.getElementById('nas-up');
         if (input) input.click();
         const menu = document.getElementById('new-menu');
@@ -482,7 +491,7 @@ window.nasNav = (m) => NASManager.nav(m);
 window.loadNASFiles = (p) => NASManager.loadFiles(p);
 window.promptMkdir = () => NASManager.promptMkdir();
 window.confirmMkdir = () => NASManager.confirmMkdir();
-window.triggerUpload = () => NASManager.triggerUpload();
+window.triggerUpload = (r) => NASManager.triggerUpload(r);
 window.nasUpload = () => NASManager.upload();
 window.previewFile = (p, e, o) => NASManager.previewFile(p, e, o);
 window.closePreview = () => NASManager.closePreview();
