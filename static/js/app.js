@@ -65,13 +65,15 @@ const App = {
             document.getElementById('pop-name').innerText = localStorage.getItem('axis_user');
             document.getElementById('pop-role').innerText = localStorage.getItem('axis_role') || "Member";
             
-            if (typeof switchView === 'function') switchView('dashboard');
-            if (typeof initCharts === 'function') initCharts();
+            const savedView = localStorage.getItem('axis_current_view') || 'dashboard';
+            if (typeof switchView === 'function') switchView(savedView);
             
-            // Start Metrics Heartbeat (2000ms Polling)
+            if (typeof initCharts === 'function' && savedView === 'dashboard') initCharts();
+            
+            // Start Metrics Heartbeat (Background)
             if (typeof startPolling === 'function') {
                 startPolling();
-                setInterval(startPolling, 2000);
+                // setInterval removed, dashboard.js handles self-scheduling
             }
 
             // Role-based UI visibility

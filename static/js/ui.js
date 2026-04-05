@@ -29,6 +29,13 @@ function switchView(v) {
         v = 'placeholder';
     }
     
+    // 如果已經在該視圖且已載入完成，則跳過重複載入（除非是手動重新啟動）
+    const currentActiveView = document.querySelector('.view-section.active');
+    if (currentActiveView && currentActiveView.id === 'view-' + v && v !== 'dashboard') {
+        console.log(`Already in view: ${v}, skipping redundant switch.`);
+        return;
+    }
+
     document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
     
@@ -55,6 +62,9 @@ function switchView(v) {
     
     document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').innerText.replace(' 系統尚未開放', '');
 
+    // 儲存當前視圖，實現持久化
+    localStorage.setItem('axis_current_view', v);
+
     // 路由行為觸發器
     if (v === 'cloud') { if (typeof loadNASFiles === 'function') loadNASFiles(''); }
     if (v === 'admin') { if (typeof loadUsers === 'function') loadUsers(); }
@@ -62,6 +72,9 @@ function switchView(v) {
     if (v === 'virtual') { if (typeof loadDocker === 'function') loadDocker(); }
     if (v === 'metrics') { if (typeof initCharts === 'function') initCharts(); }
     if (v === 'nas-mgnt') { if (typeof refreshNASHardware === 'function') refreshNASHardware(); }
+
+    // 觸發視圖切換自定義事件
+    document.dispatchEvent(new CustomEvent('view-switched', { detail: { view: v } }));
 }
 
 function openSettingPanel(id) {

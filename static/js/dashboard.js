@@ -131,8 +131,11 @@ async function startPolling() {
         }
     } catch (e) {
         console.error("Polling error:", e);
+    } finally {
+        // Ensure only one next poll is scheduled
+        if (window._pollTimer) clearTimeout(window._pollTimer);
+        window._pollTimer = setTimeout(startPolling, 5000); 
     }
-    setTimeout(startPolling, 5000); // 調整為 5 秒
 }
 
 async function loadSpecs() {
