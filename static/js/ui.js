@@ -66,7 +66,12 @@ function switchView(v) {
     localStorage.setItem('axis_current_view', v);
 
     // 路由行為觸發器
-    if (v === 'cloud') { if (typeof loadNASFiles === 'function') loadNASFiles(''); }
+    if (v === 'cloud') { 
+        if (typeof loadNASFiles === 'function') {
+            const savedPath = localStorage.getItem('nas_current_path') || '';
+            loadNASFiles(savedPath); 
+        } 
+    }
     if (v === 'admin') { if (typeof loadUsers === 'function') loadUsers(); }
     if (v === 'settings') { if (typeof closeSettingPanel === 'function') { closeSettingPanel(); loadSpecs(); } }
     if (v === 'virtual') { if (typeof loadDocker === 'function') loadDocker(); }

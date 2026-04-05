@@ -59,6 +59,9 @@ const NASManager = {
         const exp = document.getElementById('nas-explorer');
         if (!exp) return;
 
+        this.state.currentPath = path;
+        localStorage.setItem('nas_current_path', path);
+
         // Reset sidebar state if navigating from specific views
         if (path && (this.state.currentMode === 'starred' || this.state.currentMode === 'recent')) {
             this.state.currentMode = 'drive';
