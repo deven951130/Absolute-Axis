@@ -30,7 +30,28 @@
         </div>
     </div>
 
-    <!-- 3. Theme Lab Panel -->
+    <!-- 3. Thermal Management Panel -->
+    <div id="panel-thermal" class="settings-panel">
+        <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeSettingPanel()">⬅ 返回首頁</button>
+        
+        <div class="metrics-grid" style="grid-template-columns: 1fr; margin-bottom:1.2rem;">
+            <div class="card" style="padding:1.5rem;">
+                <h3 class="card-title" style="margin-bottom:1.5rem;">🌡️ 即時溫度監控</h3>
+                <div id="thermal-temps-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:1rem;">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="padding:1.5rem;">
+            <h3 class="card-title" style="margin-bottom:1.5rem;">⚙️ 風扇轉速控制 (PWM)</h3>
+            <div id="thermal-fans-list" style="display:flex; flex-direction:column; gap:1rem;">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Theme Lab Panel -->
     <div id="panel-theme" class="settings-panel">
         <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeSettingPanel()">⬅ 返回首頁</button>
         <div class="card">
