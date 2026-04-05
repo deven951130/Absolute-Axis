@@ -30,13 +30,31 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
     return encoded_jwt
 
+_QUOTA_CACHE = {}
+
 def get_dir_size(start_path='.'):
+    """
+    Optimized directory size calculation using os.scandir.
+    Includes a 5-second in-memory cache to prevent IO storms.
+    """
+    now = datetime.now()
+    if start_path in _QUOTA_CACHE:
+        val, ts = _QUOTA_CACHE[start_path]
+        if (now - ts).total_seconds() < 5:
+            return val
+
     total_size = 0
-    for dirpath, dirnames, filenames in os.walk(start_path):
-        for f in filenames:
-            fp = os.path.join(dirpath, f)
-            if not os.path.islink(fp):
-                total_size += os.path.getsize(fp)
+    try:
+        with os.scandir(start_path) as it:
+            for entry in it:
+                if entry.is_file(follow_symlinks=False):
+                    total_size += entry.stat().st_size
+                elif entry.is_dir(follow_symlinks=False):
+                    total_size += get_dir_size(entry.path)
+    except (PermissionError, OSError):
+        pass
+
+    _QUOTA_CACHE[start_path] = (total_size, now)
     return total_size
 
 def log_event(username: str, action: str):
