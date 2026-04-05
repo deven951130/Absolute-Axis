@@ -72,10 +72,9 @@ const NASManager = {
         try {
             const res = await authFetch(`/api/nas/list?path=${encodeURIComponent(path)}&mode=${this.state.currentMode}`);
             if (!res.ok) {
-                const err = await res.json().catch(() => ({detail: "Unknown error"}));
-                throw new Error(err.detail || "伺服器回應錯誤");
+                const errData = await res.json().catch(() => ({detail: "伺服器內部錯誤"}));
+                throw new Error(errData.detail || "無法存取雲端空間");
             }
-            
             const data = await res.json();
             this.renderExplorer(data);
             this.updateQuota(data);
@@ -86,7 +85,8 @@ const NASManager = {
             exp.innerHTML = `
                 <div style="color:var(--danger-color); padding:3rem; width:100%; text-align:center;">
                     <div style="font-size:2.5rem; margin-bottom:1rem;">⚠️</div>
-                    <div>無法載入雲端檔案：${err.message}</div>
+                    <div style="font-weight:700; margin-bottom:0.5rem;">載入失敗</div>
+                    <div style="font-size:0.85rem; opacity:0.8; max-width:400px; margin:0 auto; line-height:1.6;">${err.message}</div>
                     <button class="btn btn-outline" style="margin-top:1.5rem;" onclick="NASManager.loadFiles('${path}')">再次嘗試</button>
                 </div>
             `;
