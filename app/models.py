@@ -23,6 +23,7 @@ class CreateUserRequest(BaseModel):
     username: str
     password: str
     role: str = "Member"
+    quota_gb: Optional[int] = 1 # Default 1GB
 
 class ProfileUpdate(BaseModel):
     new_name: Optional[str] = None
@@ -33,6 +34,7 @@ class AdminUserUpdate(BaseModel):
     target_user: str
     new_pass: Optional[str] = None
     new_role: Optional[str] = None
+    quota_gb: Optional[int] = None
 
 class ShareRequest(BaseModel):
     path: str

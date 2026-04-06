@@ -24,7 +24,7 @@ def list_nas_files(path: str = "", mode: str = "drive", user: dict = Depends(get
         if mode == "drive":
             t = safe_path(path, u)
             if not os.path.exists(t): 
-                return {"files": [], "quota_used": 0, "quota_total": QUOTA_PER_USER}
+                return {"files": [], "quota_used": 0, "quota_total": user["quota_bytes"]}
             
             starred_paths = [s.path for s in db.query(FileStar).filter(FileStar.username == u).all()]
             shared_paths = [s.path for s in db.query(FileShare).filter(FileShare.owner == u).all()]
@@ -111,7 +111,7 @@ def list_nas_files(path: str = "", mode: str = "drive", user: dict = Depends(get
         return {
             "files": items if mode == "recent" else sorted(items, key=lambda x: (not x["is_dir"], x["name"].lower())),
             "quota_used": get_dir_size(user_root), 
-            "quota_total": QUOTA_PER_USER
+            "quota_total": user["quota_bytes"]
         }
     except Exception as overall_ex:
         print(f"Overall NAS List Error: {overall_ex}")
@@ -185,8 +185,9 @@ def make_dir(req: ItemRequest, user: dict = Depends(get_current_user_obj)):
 async def upload_nas(path: str = Form(""), file: UploadFile = File(...), user: dict = Depends(get_current_user_obj)):
     u = user["username"]
     user_root = safe_path("", u)
-    if get_dir_size(user_root) + file.size > QUOTA_PER_USER:
-        raise HTTPException(status_code=400, detail="Quota Exceeded (Limit 1GB)")
+    if get_dir_size(user_root) + file.size > user["quota_bytes"]:
+        limit_gb = round(user["quota_bytes"] / 1073741824, 1)
+        raise HTTPException(status_code=400, detail=f"Quota Exceeded (Limit {limit_gb}GB)")
     t = safe_path(os.path.join(path, file.filename), u)
     with open(t, "wb") as b: 
         shutil.copyfileobj(file.file, b)

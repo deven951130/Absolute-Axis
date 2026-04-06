@@ -14,7 +14,7 @@ def list_users(user: dict = Depends(get_current_user_obj), db: Session = Depends
     if user["role"] != "Administrator": 
         raise HTTPException(status_code=403)
     users = db.query(User).all()
-    return [{"username": u.username, "role": u.role, "avatar": u.avatar} for u in users]
+    return [{"username": u.username, "role": u.role, "avatar": u.avatar, "quota_bytes": u.quota_bytes} for u in users]
 
 @router.post("/create_user")
 def create_user(req: CreateUserRequest, user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
@@ -22,8 +22,11 @@ def create_user(req: CreateUserRequest, user: dict = Depends(get_current_user_ob
         raise HTTPException(status_code=403)
         
     u = shutil.disk_usage(NAS_ROOT)
-    if u.free < QUOTA_PER_USER: 
-        raise HTTPException(status_code=400, detail="Insufficient HDD space for 1GB quota")
+    # Convert GB to Bytes
+    requested_quota = req.quota_gb * 1073741824 if req.quota_gb else QUOTA_PER_USER
+    
+    if u.free < requested_quota: 
+        raise HTTPException(status_code=400, detail="Insufficient HDD space for requested quota")
         
     existing_user = db.query(User).filter(User.username == req.username).first()
     if existing_user: 
@@ -32,7 +35,8 @@ def create_user(req: CreateUserRequest, user: dict = Depends(get_current_user_ob
     new_user = User(
         username=req.username,
         password_hash=get_password_hash(req.password),
-        role=req.role
+        role=req.role,
+        quota_bytes=requested_quota
     )
     db.add(new_user)
     db.commit()
@@ -53,6 +57,8 @@ def admin_update_user(req: AdminUserUpdate, user: dict = Depends(get_current_use
         target_user_obj.password_hash = get_password_hash(req.new_pass)
     if req.new_role:
         target_user_obj.role = req.new_role
+    if req.quota_gb:
+        target_user_obj.quota_bytes = req.quota_gb * 1073741824
         
     db.commit()
     log_event(user["username"], f"Admin: Modified user {req.target_user}")

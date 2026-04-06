@@ -21,6 +21,7 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     role = Column(String, default="Member")
     avatar = Column(String, default="")
+    quota_bytes = Column(Integer, default=1073741824) # Default 1GB
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

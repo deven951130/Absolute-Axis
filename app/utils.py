@@ -85,7 +85,7 @@ def get_current_user_obj(authorization: str = Header(None), db: Session = Depend
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
         
-    return {"username": user.username, "role": user.role, "avatar": user.avatar}
+    return {"username": user.username, "role": user.role, "avatar": user.avatar, "quota_bytes": user.quota_bytes}
 
 def safe_path(rel: str, username: str):
     base = os.path.abspath(os.path.join(NAS_ROOT, username))

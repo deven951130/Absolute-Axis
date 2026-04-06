@@ -10,6 +10,9 @@
         <div style="text-align:left; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">強制設定新密碼 (不改留空)</div>
         <input type="password" id="admin-user-pass" class="t-input" placeholder="新的強致密碼">
         
+        <div style="text-align:left; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">儲存空間配額 (GB)</div>
+        <input type="number" id="admin-user-quota" class="t-input" placeholder="例如：1, 5, 10" min="1">
+        
         <div style="display:flex; gap:12px; margin-top:1rem;">
             <button class="btn btn-outline" style="flex:1;" onclick="document.getElementById('modal-admin-edit').style.display='none'">取消</button>
             <button class="btn btn-primary" style="flex:1;" onclick="confirmAdminEdit()">確定修改</button>

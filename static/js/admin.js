@@ -11,7 +11,8 @@ async function loadUsers() {
             <td style="padding:15px;"><b>${u.username}</b></td>
             <td style="padding:15px;"><span class="role-badge ${u.role === 'Administrator' ? 'role-admin' : 'role-member'}">${u.role}</span></td>
             <td style="padding:15px;"><img src="${u.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + u.username}" style="width:28px;height:28px;border-radius:50%;"></td>
-            <td style="padding:15px;"><button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;" onclick="editUser('${u.username}','${u.role}')">編輯</button></td>
+            <td style="padding:15px; font-size:0.85rem; color:var(--text-muted);">${(u.quota_bytes / 1073741824).toFixed(1)} GB</td>
+            <td style="padding:15px;"><button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;" onclick="editUser('${u.username}','${u.role}', ${(u.quota_bytes / 1073741824).toFixed(0)})">編輯</button></td>
         </tr>
     `).join('');
 }
@@ -20,12 +21,13 @@ async function confirmCreateUser() {
     const u = document.getElementById('new-user-name').value;
     const p = document.getElementById('new-user-pass').value;
     const r = document.getElementById('new-user-role').value;
+    const q = document.getElementById('new-user-quota').value;
     if (!u || !p) return alert("請填寫完整資訊");
     
     const res = await authFetch('/api/admin/create_user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: u, password: p, role: r })
+        body: JSON.stringify({ username: u, password: p, role: r, quota_gb: parseInt(q) })
     });
     
     if (res.ok) {
@@ -39,20 +41,22 @@ async function confirmCreateUser() {
 }
 
 let editingUser = "";
-function editUser(u, r) {
+function editUser(u, r, q) {
     editingUser = u;
     document.getElementById('target-user-name').innerText = u;
     document.getElementById('admin-user-role').value = r;
+    document.getElementById('admin-user-quota').value = q || 1;
     document.getElementById('modal-admin-edit').style.display = 'flex';
 }
 
 async function confirmAdminEdit() {
     const p = document.getElementById('admin-user-pass').value;
     const r = document.getElementById('admin-user-role').value;
+    const q = document.getElementById('admin-user-quota').value;
     const res = await authFetch('/api/admin/update_user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target_user: editingUser, new_pass: p, new_role: r })
+        body: JSON.stringify({ target_user: editingUser, new_pass: p, new_role: r, quota_gb: parseInt(q) })
     });
     if (res.ok) {
         alert("變更成功！");

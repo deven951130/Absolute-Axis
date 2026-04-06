@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  axis-server:
+    build: .
+    container_name: axis-server
+    restart: always
+    network_mode: host
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - TZ=Asia/Taipei
+      # 綁定至 Tailscale IP (Phase 1 建立的 IP)
+      - HOST_IP=100.83.64.84
+    volumes:
+      - .:/app
+      - ./nas:/app/nas
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /app
+    command: >
+      sh -c "pip install -r requirements.txt && 
+             uvicorn app.main:app --host 100.83.64.84 --port 8000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  default:
+    name: tailscale_mesh
+    external: true
