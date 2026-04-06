@@ -2,16 +2,25 @@ import os
 
 # ----------------- 資料路徑核心 (Dynamic Environment Detection) -----------------
 # 優先讀取環境變數，若無則自動偵測
-BASE_PATH = os.getenv("AXIS_BASE_PATH", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ALT_BASE = "/home/sparkle/aiot-master"
+if os.path.exists(ALT_BASE):
+    BASE_PATH = ALT_BASE
+else:
+    BASE_PATH = os.getenv("AXIS_BASE_PATH", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # NAS_ROOT: 優先偵測專用掛載目錄
 NAS_ROOT = os.getenv("AXIS_NAS_PATH", os.path.join(BASE_PATH, "nas"))
 
 if not os.path.exists(NAS_ROOT): 
-    os.makedirs(NAS_ROOT)
+    # Fallback to nas_storage if it exists (legacy support)
+    NAS_ALT = os.path.join(BASE_PATH, "nas_storage")
+    if os.path.exists(NAS_ALT):
+        NAS_ROOT = NAS_ALT
+    else:
+        os.makedirs(NAS_ROOT)
 
 # 系統根路徑偵測 (用於磁碟空間計算)
-SYS_ROOT = "/" if os.name != 'nt' else "C:\\"
+SYS_ROOT = "/" if (os.name != 'nt' or os.path.exists(ALT_BASE)) else "C:\\"
 
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{os.path.join(BASE_PATH, 'axis.db')}"
 LOG_DB_PATH = os.path.join(BASE_PATH, "logs.json")
