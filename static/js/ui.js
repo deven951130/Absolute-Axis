@@ -87,20 +87,14 @@ function openSettingPanel(id) {
     document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 
-    // 觸發特定面板的初始化
-    if (id === 'panel-thermal' && window.ThermalManager) {
-        window.ThermalManager.init();
-    }
+
 }
 
 function closeSettingPanel() {
     document.getElementById('settings-main').style.display = 'block';
     document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
     
-    // 停止散熱輪詢
-    if (window.ThermalManager) {
-        window.ThermalManager.stopPolling();
-    }
+
 }
 
 window.toggleAxisPopover = function(e) {
