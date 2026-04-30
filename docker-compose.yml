@@ -9,8 +9,8 @@ services:
     environment:
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - TZ=Asia/Taipei
-      # 綁定至 Tailscale IP (Phase 1 建立的 IP)
-      - HOST_IP=100.83.64.84
+      # 綁定至 Tailscale IP (從 .env 讀取，預設為全監聽)
+      - HOST_IP=${HOST_IP:-0.0.0.0}
     volumes:
       - .:/app
       - ./nas:/app/nas
@@ -18,7 +18,7 @@ services:
     working_dir: /app
     command: >
       sh -c "pip install -r requirements.txt && 
-             uvicorn app.main:app --host 100.83.64.84 --port 8000"
+             uvicorn app.main:app --host $$HOST_IP --port 8000"
     logging:
       driver: "json-file"
       options:
