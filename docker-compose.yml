@@ -25,7 +25,11 @@ services:
         max-size: "10m"
         max-file: "3"
 
-networks:
-  default:
-    name: tailscale_mesh
-    external: true
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: axis-cloudflared
+    restart: always
+    network_mode: host
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run

@@ -1,3 +1,11 @@
+### [V31] - 2026-05-02 更新日誌
+- **[修復] Cloudflare Tunnel 連線恢復**：修復了 VM 內部 `docker-compose.yml` 遺失 `cloudflared` 服務的問題，並將 Tunnel 管理模式從「本地管理」遷移至「儀表板管理」，成功恢復 `https://absoluteaxis.dpdns.org/` 存取。
+- **[部署] Docker 環境強固化**：新增 `Dockerfile` 並修正 `docker-compose.yml` 的網路配置，移除不存在的 `tailscale_mesh` 網路定義，改採穩定的 `host` 模式。
+- **[修復] 環境變數對位**：同步 VM 內部的 `.env` 檔案，補齊缺失的 `CLOUDFLARE_TUNNEL_TOKEN`，確保內網穿透服務正常啟動。
+
+### [V30] - 2026-05-02 更新日誌
+- **[部署] Cloudflare Tunnel 整合**：將零信任網路通道 (cloudflared) 模組化整合至 `docker-compose.yml`，並統一由 `.env` 檔案管理 Tunnel Token，實現內網穿透一鍵啟動與基礎設施即代碼 (IaC)。
+
 ### [V29] - 2026-05-02 更新日誌
 - **[部署] IP 權責釐清**：明確標註 PVE 宿主機 (100.124.203.61) 與 VM 虛擬機之連線對象差異，避免開發者連錯主機導致權限問題。
 
