@@ -1,6 +1,6 @@
 ### [V27] - 2026-05-02 更新日誌
-- **[運維] 遠端存取配置**：提供基於 SSH 與 Tailscale 的遠端控制指令集，支援 Windows 端對 Proxmox Ubuntu VM 的命令列接管。
-- **[運維] 開發環境優化**：建議採用 VS Code Remote-SSH 擴充功能，以實現「開發-部署-測試」一體化的遠端工作流。
+- **[部署] 遠端存取啟用**：完成 Proxmox VM (axis-main) 的 SSH 遠端連線配置指引，確保開發者可從筆電端直接管控。
+- **[環境] 階段三初始化**：確立區域網路 (192.168.0.159) 與 Tailscale 虛擬網格雙軌連線方案，解決跨網域存取需求。
 
 ### [V26] - 2026-04-30 更新日誌
 - **[架構] Proxmox 遷移準備**：完成 Docker Compose 綁定 IP 動態化，將寫死的 Tailscale IP 改為由 `.env` 動態讀取 (`HOST_IP`)，以支援在全新 Proxmox Ubuntu VM 上的自動化部署。
