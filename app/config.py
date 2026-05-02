@@ -30,6 +30,11 @@ JWT_SECRET = os.getenv("AXIS_JWT_SECRET", "9f86d081884c7d659a2feaa0c55ad015a3bf4
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 Days
 
+# PVE Config
+PVE_HOST = os.getenv("PVE_HOST", "100.124.203.61")
+PVE_USER = os.getenv("PVE_USER", "root@pam")
+PVE_PASS = os.getenv("PVE_PASS", "deven951130")
+
 QUOTA_PER_USER = 1 * 1024 * 1024 * 1024  # 1GB 配額
 ACTIVE_SESSIONS = {}
 SYSTEM_LOGS = []

@@ -38,31 +38,39 @@ GITHUB_STATE = {
 def check_github_status():
     global GITHUB_STATE
     now = time.time()
-    if now - GITHUB_STATE["last_check"] < 120: # 120 秒緩存 (節流)
+    if now - GITHUB_STATE["last_check"] < 120: 
         return GITHUB_STATE.get("data", {})
     
-    # 從伺服器環境變數安全讀取存取令牌 (無硬編碼金鑰)
     token = os.getenv("GITHUB_TOKEN")
-    headers = {"Authorization": f"token {token}"} if token else {}
-    
+    # 如果 token 是預設值，視為無效
+    if not token or token == "your_github_token_here":
+        GITHUB_STATE["data"]["online"] = False
+        GITHUB_STATE["data"]["last_commit"] = "Please config GITHUB_TOKEN in .env"
+        GITHUB_STATE["last_check"] = now
+        return GITHUB_STATE["data"]
+
+    headers = {"Authorization": f"token {token}"}
     try:
-        # 1. 抓取 Repo 基本資訊
         r = requests.get("https://api.github.com/repos/deven951130/Absolute-Axis", headers=headers, timeout=5)
         if r.status_code == 200:
             d = r.json()
             GITHUB_STATE["data"]["online"] = True
             GITHUB_STATE["data"]["stars"] = d.get("stargazers_count", 0)
             
-            # 2. 抓取最新 Commit (加速抓取)
             cr = requests.get("https://api.github.com/repos/deven951130/Absolute-Axis/commits?per_page=1", headers=headers, timeout=5)
             if cr.status_code == 200:
                 cd = cr.json()[0]
                 GITHUB_STATE["data"]["last_commit"] = cd["commit"]["message"].split("\n")[0]
                 GITHUB_STATE["data"]["commit_time"] = cd["commit"]["author"]["date"]
+        elif r.status_code == 401:
+            GITHUB_STATE["data"]["online"] = False
+            GITHUB_STATE["data"]["last_commit"] = "Invalid GITHUB_TOKEN"
         else:
             GITHUB_STATE["data"]["online"] = False
+            GITHUB_STATE["data"]["last_commit"] = f"HTTP {r.status_code}"
     except Exception as e:
         GITHUB_STATE["data"]["online"] = False
+        GITHUB_STATE["data"]["last_commit"] = "Network Error"
     
     GITHUB_STATE["last_check"] = now
     return GITHUB_STATE["data"]
@@ -80,21 +88,26 @@ def get_status(user: dict = Depends(get_current_user_obj)):
     counters = psutil.net_io_counters()
     diff_t = now - NET_STATE["last_time"]
     
-    up_speed = (counters.bytes_sent - NET_STATE["last_sent"]) / diff_t / (1024 * 1024) if diff_t > 0 else 0
-    down_speed = (counters.bytes_recv - NET_STATE["last_recv"]) / diff_t / (1024 * 1024) if diff_t > 0 else 0
+    # 避免除以零或間隔太短
+    if diff_t < 0.1:
+        up_speed = 0
+        down_speed = 0
+    else:
+        up_speed = (counters.bytes_sent - NET_STATE["last_sent"]) / diff_t / (1024 * 1024)
+        down_speed = (counters.bytes_recv - NET_STATE["last_recv"]) / diff_t / (1024 * 1024)
     
-    # 更新狀態
-    NET_STATE.update({"last_recv": counters.bytes_recv, "last_sent": counters.bytes_sent, "last_time": now})
+    # 更新狀態 (只在有合理間隔時更新)
+    if diff_t >= 0.5:
+        NET_STATE.update({"last_recv": counters.bytes_recv, "last_sent": counters.bytes_sent, "last_time": now})
     
     # 嘗試讀取實體感測器
     temps = psutil.sensors_temperatures()
     cpu_temp = 0
     if temps and 'coretemp' in temps:
         cpu_temp = temps['coretemp'][0].current
-    elif temps and 'cpu_thermal' in temps: # RPi fallback
+    elif temps and 'cpu_thermal' in temps:
         cpu_temp = temps['cpu_thermal'][0].current
     else:
-        # Fallback: 基於 CPU 負載擬合 (僅為沒感測器時的參考值)
         cpu_temp = 30 + (psutil.cpu_percent() * 0.4)
 
     return {
@@ -103,7 +116,7 @@ def get_status(user: dict = Depends(get_current_user_obj)):
         "sys_disk": {
             "total": sys_usage.total, "used": sys_usage.used,
             "percent": (sys_usage.used / sys_usage.total) * 100 if sys_usage.total > 0 else 0,
-            "health": "Excellent", "temp": round(cpu_temp - 2) # 系統碟通常比 CPU 冷
+            "health": "Excellent", "temp": round(cpu_temp - 2)
         },
         "nas_disk": {
             "total": nas_usage.total, "used": nas_usage.used,
@@ -111,10 +124,10 @@ def get_status(user: dict = Depends(get_current_user_obj)):
             "health": "Healthy", "temp": round(cpu_temp - 5)
         },
         "bandwidth": {
-            "up": f"{up_speed:.1f} MB/s",
-            "down": f"{down_speed:.1f} MB/s"
+            "up": f"{max(0, up_speed):.2f} MB/s",
+            "down": f"{max(0, down_speed):.2f} MB/s"
         },
-        "sensors": {"temp": round(cpu_temp, 1), "humid": 45}, # 單位：
+        "sensors": {"temp": round(cpu_temp, 1), "humid": 45}, 
         "github": check_github_status()
     }
 

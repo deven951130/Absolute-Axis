@@ -8,3 +8,5 @@ passlib[bcrypt]==1.7.4
 bcrypt==3.2.0
 PyJWT==2.8.0
 docker==7.0.0
+proxmoxer==2.1.0
+requests==2.32.3
