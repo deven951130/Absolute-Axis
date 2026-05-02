@@ -15,6 +15,8 @@ services:
       - .:/app
       - ./nas:/app/nas
       - /var/run/docker.sock:/var/run/docker.sock
+      - /dev:/dev
+    privileged: true
     working_dir: /app
     command: >
       sh -c "pip install -r requirements.txt && 

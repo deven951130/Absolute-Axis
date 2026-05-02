@@ -1,0 +1,69 @@
+import paramiko
+
+def run_cmd_on_vm(command):
+    pve_client = paramiko.SSHClient()
+    pve_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    pve_client.connect('100.124.203.61', username='root', password='deven951130', timeout=10)
+    
+    vm_ip = '192.168.0.159'
+    vm_user = 'sparkle'
+    vm_pass = '951130'
+    
+    transport = pve_client.get_transport()
+    channel = transport.open_channel("direct-tcpip", (vm_ip, 22), ('100.124.203.61', 22))
+    
+    vm_client = paramiko.SSHClient()
+    vm_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    vm_client.connect(vm_ip, username=vm_user, password=vm_pass, sock=channel)
+    
+    stdin, stdout, stderr = vm_client.exec_command(command)
+    out = stdout.read().decode(errors='replace')
+    err = stderr.read().decode(errors='replace')
+    
+    vm_client.close()
+    pve_client.close()
+    return out, err
+
+# Update requirements.txt on VM
+req_content = """fastapi==0.115.6
+uvicorn==0.34.0
+pydantic==2.10.3
+psutil==6.1.1
+python-multipart==0.0.20
+sqlalchemy==2.0.28
+passlib[bcrypt]==1.7.4
+bcrypt==3.2.0
+PyJWT==2.8.0
+docker==7.0.0
+"""
+print("--- Updating requirements.txt on VM ---")
+run_cmd_on_vm(f"cat <<'EOF' > /home/sparkle/Absolute-Axis/requirements.txt\n{req_content}\nEOF")
+
+# Update app/utils.py on VM (just the specific change for get_password_hash)
+# It's safer to overwrite the whole file since I have it locally.
+with open('e:/absolute axis/app/utils.py', 'r', encoding='utf-8') as f:
+    utils_content = f.read()
+
+print("--- Updating app/utils.py on VM ---")
+run_cmd_on_vm(f"cat <<'EOF' > /home/sparkle/Absolute-Axis/app/utils.py\n{utils_content}\nEOF")
+
+# Rebuild and restart
+print("--- Rebuilding and restarting containers ---")
+out, err = run_cmd_on_vm("cd /home/sparkle/Absolute-Axis && docker compose up -d --build")
+print(out)
+if err: print("ERR:", err)
+
+# Initialize DB user
+print("--- Initializing DB user ---")
+import time
+time.sleep(5)
+docker_cmd = "docker exec axis-server python3 -c \"import sys; sys.path.append('/app'); from app.utils import init_db_user; init_db_user()\""
+out, err = run_cmd_on_vm(docker_cmd)
+print(out)
+if err: print("ERR:", err)
+
+# Verify
+print("\n--- Final user check ---")
+python_verify = "python3 -c \"import sqlite3; conn = sqlite3.connect('/home/sparkle/Absolute-Axis/axis.db'); cur = conn.cursor(); cur.execute('SELECT username FROM users'); print(cur.fetchall())\""
+out, err = run_cmd_on_vm(python_verify)
+print(out)

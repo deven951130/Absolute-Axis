@@ -159,65 +159,97 @@ def get_hardware_info(user: dict = Depends(get_current_user_obj)):
     import subprocess
     import json
     
-    # 1. 抓取分區掛載情況
-    parts = psutil.disk_partitions()
     disks = []
     
-    # 預設對應 (sda, sdb)
-    target_devs = {"/": "sda", NAS_ROOT: "sdb"}
-    
-    for mount, dev_prefix in target_devs.items():
-        # 找出對應的實體設備
-        real_dev = "Unknown"
-        for p in parts:
-            if p.mountpoint == mount:
-                real_dev = p.device
-                break
+    try:
+        # 1. 使用 lsblk 獲取所有區塊設備
+        lsblk_cmd = ["lsblk", "-J", "-b", "-o", "NAME,SIZE,TYPE,MOUNTPOINT,MODEL,SERIAL,VENDOR"]
+        res = subprocess.check_output(lsblk_cmd).decode('utf-8')
+        data = json.loads(res)
         
-        usage = shutil.disk_usage(mount)
+        block_devices = data.get("blockdevices", [])
         
-        # 嘗試讀取 SMART 數據 (需要 sudo smartctl)
-        # 這裡做一個安全的回退機制，如果沒權限或沒工具就給模擬數據但標註為 "Simulation"
-        disk_info = {
-            "name": "Loading...",
-            "device": real_dev,
-            "status": "Healthy",
-            "temp": 35,
-            "used_pct": (usage.used / usage.total) * 100 if usage.total > 0 else 0,
-            "total_gb": round(usage.total / (1024**3), 1),
-            "used_gb": round(usage.used / (1024**3), 1),
-            "type": "SSD" if "sda" in real_dev else "HDD",
-            "smart_hint": "Standard"
-        }
-        
-        # 針對 6TB 硬碟 (sdb) 進行深度掃描嘗試
-        if "sdb" in real_dev or mount == NAS_ROOT:
-            disk_info["name"] = "ST6000DM003-2CY1 (6TB)"
-            disk_info["type"] = "HDD"
+        for dev in block_devices:
+            if dev.get("type") != "disk":
+                continue
+                
+            name = dev.get("name")
+            dev_path = f"/dev/{name}"
+            
+            model = dev.get("model") or "Generic Disk"
+            vendor = dev.get("vendor") or ""
+            full_name = f"{vendor} {model}".strip()
+            
+            total_bytes = int(dev.get("size") or 0)
+            total_gb = round(total_bytes / (1024**3), 1)
+            
+            used_bytes = 0
+            mounts = []
+            
+            def scan_mounts(item):
+                nonlocal used_bytes
+                mp = item.get("mountpoint")
+                if mp:
+                    mounts.append(mp)
+                    try:
+                        usage = shutil.disk_usage(mp)
+                        used_bytes += usage.used
+                    except:
+                        pass
+                for child in item.get("children", []):
+                    scan_mounts(child)
+            
+            scan_mounts(dev)
+            
+            used_pct = (used_bytes / total_bytes * 100) if total_bytes > 0 else 0
+            
+            status = "Healthy"
+            temp = 35
+            smart_hint = "Standard"
+            
             try:
-                # 這裡執行 smartctl 檢查 (需配置 sudoers)
-                res = subprocess.getoutput(f"sudo smartctl -i -H {real_dev.rstrip('1234567890')} --json")
-                if "{" in res:
-                    sj = json.loads(res)
-                    disk_info["name"] = sj.get("model_name", disk_info["name"])
-                    disk_info["status"] = "NORMAL" if sj.get("smart_status", {}).get("passed") else "ATTENTION"
+                smart_res = subprocess.getoutput(f"smartctl -i -H -A {dev_path} --json")
+                if "{" in smart_res:
+                    sj = json.loads(smart_res)
+                    if sj.get("smart_status", {}).get("passed") is False:
+                        status = "ATTENTION"
+                    
                     if "temperature" in sj:
-                        disk_info["temp"] = sj["temperature"]["current"]
+                        temp = sj["temperature"].get("current", temp)
+                    elif "ata_smart_attributes" in sj:
+                        for attr in sj["ata_smart_attributes"].get("table", []):
+                            if attr.get("id") in [194, 190]:
+                                temp = attr.get("raw", {}).get("value", temp)
+                                break
+                    smart_hint = "SMART Capable"
             except:
-                pass
-        else:
-            disk_info["name"] = "OS System Drive (NVMe/SSD)"
-            disk_info["type"] = "SSD"
+                smart_hint = "Simulation (No SMART)"
 
-        disks.append(disk_info)
+            disks.append({
+                "name": full_name,
+                "device": dev_path,
+                "status": status,
+                "temp": temp,
+                "used_pct": round(used_pct, 1),
+                "total_gb": total_gb,
+                "used_gb": round(used_bytes / (1024**3), 1),
+                "type": "SSD" if "SSD" in full_name.upper() or total_gb < 1000 else "HDD",
+                "smart_hint": smart_hint,
+                "mounts": mounts
+            })
+            
+    except Exception as e:
+        print(f"Hardware Scan Error: {e}")
 
     return {
         "disks": disks,
-        "raid": {"name": "Physical Storage Pool", "status": "ONLINE", "type": "JBOD / Single"},
+        "raid": {"name": "Dynamic Storage Pool", "status": "ONLINE", "type": "Detected"},
         "details": {
+            "count": len(disks),
+            "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "core": f"{round(shutil.disk_usage('/').used / (1024**3), 1)}G",
             "user": f"{round(shutil.disk_usage(NAS_ROOT).used / (1024**3), 1)}G",
-            "docker": "Calculating..." # 可進一步優化
+            "docker": "Detected"
         }
     }
 

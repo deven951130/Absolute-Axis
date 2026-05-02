@@ -1,0 +1,35 @@
+import paramiko
+import json
+
+def run_cmd_on_vm(command):
+    pve_client = paramiko.SSHClient()
+    pve_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    pve_client.connect('100.124.203.61', username='root', password='deven951130', timeout=10)
+    
+    vm_ip = '192.168.0.159'
+    vm_user = 'sparkle'
+    vm_pass = '951130'
+    
+    transport = pve_client.get_transport()
+    channel = transport.open_channel("direct-tcpip", (vm_ip, 22), ('100.124.203.61', 22))
+    
+    vm_client = paramiko.SSHClient()
+    vm_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    vm_client.connect(vm_ip, username=vm_user, password=vm_pass, sock=channel)
+    
+    stdin, stdout, stderr = vm_client.exec_command(command)
+    out = stdout.read().decode(errors='replace')
+    err = stderr.read().decode(errors='replace')
+    
+    vm_client.close()
+    pve_client.close()
+    return out, err
+
+print("--- Testing lsblk on VM host ---")
+out, err = run_cmd_on_vm("lsblk -J -o NAME,SIZE,TYPE,MOUNTPOINT,MODEL")
+print(out)
+
+print("\n--- Testing smartctl on /dev/sda ---")
+out, err = run_cmd_on_vm("sudo smartctl -i -H /dev/sda --json")
+# print(out[:500] + "...") # Shortened
+print(out)

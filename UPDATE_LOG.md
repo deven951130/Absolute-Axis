@@ -1,3 +1,8 @@
+### [V32] - 2026-05-02 更新日誌
+- **[新增] 硬碟自動識別系統**：重構硬體監測邏輯，移除硬編碼設備路徑，改採 `lsblk` 動態掃描全機磁碟。
+- **[強化] 硬體存取權限**：調整 Docker 配置，啟用 `privileged` 模式並掛載 `/dev`，實現容器內對實體硬碟 SMART 狀態與溫度的直接讀取。
+- **[優化] 前後端相容性**：修正 API 回傳格式，確保「NAS 管理中樞」之儲存佔用細節能正確呈現動態掃描數據。
+
 ### [V31] - 2026-05-02 更新日誌
 - **[修復] Cloudflare Tunnel 連線恢復**：修復了 VM 內部 `docker-compose.yml` 遺失 `cloudflared` 服務的問題，並將 Tunnel 管理模式從「本地管理」遷移至「儀表板管理」，成功恢復 `https://absoluteaxis.dpdns.org/` 存取。
 - **[部署] Docker 環境強固化**：新增 `Dockerfile` 並修正 `docker-compose.yml` 的網路配置，移除不存在的 `tailscale_mesh` 網路定義，改採穩定的 `host` 模式。

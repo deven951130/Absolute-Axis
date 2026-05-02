@@ -1,0 +1,57 @@
+import paramiko
+
+def run_cmd_on_vm(command):
+    pve_client = paramiko.SSHClient()
+    pve_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    pve_client.connect('100.124.203.61', username='root', password='deven951130', timeout=10)
+    
+    vm_ip = '192.168.0.159'
+    vm_user = 'sparkle'
+    vm_pass = '951130'
+    
+    transport = pve_client.get_transport()
+    channel = transport.open_channel("direct-tcpip", (vm_ip, 22), ('100.124.203.61', 22))
+    
+    vm_client = paramiko.SSHClient()
+    vm_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    vm_client.connect(vm_ip, username=vm_user, password=vm_pass, sock=channel)
+    
+    stdin, stdout, stderr = vm_client.exec_command(command)
+    out = stdout.read().decode(errors='replace')
+    err = stderr.read().decode(errors='replace')
+    
+    vm_client.close()
+    pve_client.close()
+    return out, err
+
+# Update Dockerfile on VM
+docker_content = """FROM python:3.11-slim
+RUN apt-get update && apt-get install -y iputils-ping curl && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+"""
+print("--- Updating Dockerfile on VM ---")
+run_cmd_on_vm(f"cat <<'EOF' > /home/sparkle/Absolute-Axis/Dockerfile\n{docker_content}\nEOF")
+
+# Rebuild and restart
+print("--- Rebuilding and restarting containers ---")
+out, err = run_cmd_on_vm("cd /home/sparkle/Absolute-Axis && docker compose up -d --build")
+print(out)
+if err: print("ERR:", err)
+
+# Initialize DB user
+print("--- Initializing DB user ---")
+import time
+time.sleep(10) # Give it more time to install if needed, but it should be in the image now
+docker_cmd = "docker exec axis-server python3 -c \"import sys; sys.path.append('/app'); from app.utils import init_db_user; init_db_user()\""
+out, err = run_cmd_on_vm(docker_cmd)
+print(out)
+if err: print("ERR:", err)
+
+# Verify
+print("\n--- Final user check ---")
+python_verify = "python3 -c \"import sqlite3; conn = sqlite3.connect('/home/sparkle/Absolute-Axis/axis.db'); cur = conn.cursor(); cur.execute('SELECT username FROM users'); print(cur.fetchall())\""
+out, err = run_cmd_on_vm(python_verify)
+print(out)

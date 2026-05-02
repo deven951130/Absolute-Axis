@@ -1,0 +1,41 @@
+import paramiko
+
+def run_cmd_on_vm(command):
+    pve_client = paramiko.SSHClient()
+    pve_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    pve_client.connect('100.124.203.61', username='root', password='deven951130', timeout=10)
+    
+    vm_ip = '192.168.0.159'
+    vm_user = 'sparkle'
+    vm_pass = '951130'
+    
+    transport = pve_client.get_transport()
+    channel = transport.open_channel("direct-tcpip", (vm_ip, 22), ('100.124.203.61', 22))
+    
+    vm_client = paramiko.SSHClient()
+    vm_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    vm_client.connect(vm_ip, username=vm_user, password=vm_pass, sock=channel)
+    
+    stdin, stdout, stderr = vm_client.exec_command(command)
+    out = stdout.read().decode(errors='replace')
+    err = stderr.read().decode(errors='replace')
+    
+    vm_client.close()
+    pve_client.close()
+    return out, err
+
+print("--- Testing /api/system/hardware via curl inside VM ---")
+# Use curl to call the API (since it's on the host network, localhost:8000 works)
+# We need a token to call it, but I can use docker exec to bypass auth if I modify the code or just check the logs.
+# Actually, I'll just check if lsblk works inside the container.
+
+docker_cmd = "docker exec axis-server lsblk -J -o NAME,SIZE,TYPE,MOUNTPOINT,MODEL,SERIAL,VENDOR"
+out, err = run_cmd_on_vm(docker_cmd)
+print(out)
+if err: print("ERR:", err)
+
+print("\n--- Testing smartctl inside container ---")
+docker_cmd = "docker exec axis-server smartctl -i /dev/sda"
+out, err = run_cmd_on_vm(docker_cmd)
+print(out)
+if err: print("ERR:", err)
