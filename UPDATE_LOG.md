@@ -1,4 +1,5 @@
 ### [V35] - 2026-05-16 更新日誌
+- **[整合] IoT 溫濕度聯動**：介接 Blynk API，將 Absolute-Axis 儀表板首頁的溫度數據，無縫替換為 ESP32 (`power.ino`) DHT 感測器即時回傳的實體房間溫濕度。
 - **[新增] 基礎設施自動化引導**：針對 Proxmox PVE (192.168.0.138) 實作自動化啟動配置。
 - **[配置] 虛擬機自動啟動 (Autostart)**：將核心虛擬機 `axis-main` (VM ID 100) 設為開機自動啟動 (`onboot: 1`)，確保硬體重啟後服務能秒速回歸。
 - **[維護] 服務狀態巡檢**：遠端觸發 VM 100 啟動並確認 Docker 容器 (`axis-server`, `axis-cloudflared`) 具備 `restart: always` 策略，達成全鏈路開機自啟。
