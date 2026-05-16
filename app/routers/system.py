@@ -148,8 +148,8 @@ def get_status(user: dict = Depends(get_current_user_obj)):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(0.5)
-            # 檢查本機 25565
-            if s.connect_ex(("127.0.0.1", 25565)) == 0:
+            # 檢查獨立 LXC 容器 192.168.0.108 的 25565
+            if s.connect_ex(("192.168.0.108", 25565)) == 0:
                 mc_online = True
     except:
         pass
