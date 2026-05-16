@@ -119,8 +119,8 @@ def get_status(user: dict = Depends(get_current_user_obj)):
         r1 = requests.get(f"https://blynk.cloud/external/api/get?token={blynk_token}&v1", timeout=5)
         r2 = requests.get(f"https://blynk.cloud/external/api/get?token={blynk_token}&v2", timeout=5)
         if r1.status_code == 200 and r2.status_code == 200:
-            t_str = r1.text.strip('[]"\\' ')
-            h_str = r2.text.strip('[]"\\' ')
+            t_str = r1.text.strip('[]" \n\r\t')
+            h_str = r2.text.strip('[]" \n\r\t')
             if t_str and h_str:
                 room_temp = float(t_str)
                 room_humid = float(h_str)
