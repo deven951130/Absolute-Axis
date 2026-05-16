@@ -42,26 +42,28 @@ def check_github_status():
         return GITHUB_STATE.get("data", {})
     
     token = os.getenv("GITHUB_TOKEN")
-    # 如果 token 是預設值，視為無效
-    if not token or token == "your_github_token_here":
-        GITHUB_STATE["data"]["online"] = False
-        GITHUB_STATE["data"]["last_commit"] = "Please config GITHUB_TOKEN in .env"
-        GITHUB_STATE["last_check"] = now
-        return GITHUB_STATE["data"]
-
-    headers = {"Authorization": f"token {token}"}
+    headers = {}
+    if token and token != "your_github_token_here":
+        headers["Authorization"] = f"token {token}"
+    
     try:
+        # Get Repo Stats
         r = requests.get("https://api.github.com/repos/deven951130/Absolute-Axis", headers=headers, timeout=5)
         if r.status_code == 200:
             d = r.json()
             GITHUB_STATE["data"]["online"] = True
             GITHUB_STATE["data"]["stars"] = d.get("stargazers_count", 0)
+            GITHUB_STATE["data"]["repo_name"] = d.get("full_name", "Absolute-Axis")
             
+            # Get Last Commit
             cr = requests.get("https://api.github.com/repos/deven951130/Absolute-Axis/commits?per_page=1", headers=headers, timeout=5)
             if cr.status_code == 200:
                 cd = cr.json()[0]
                 GITHUB_STATE["data"]["last_commit"] = cd["commit"]["message"].split("\n")[0]
                 GITHUB_STATE["data"]["commit_time"] = cd["commit"]["author"]["date"]
+        elif r.status_code == 403: # Rate limit or forbidden
+            GITHUB_STATE["data"]["online"] = False
+            GITHUB_STATE["data"]["last_commit"] = "GitHub Rate Limit (Use Token)"
         elif r.status_code == 401:
             GITHUB_STATE["data"]["online"] = False
             GITHUB_STATE["data"]["last_commit"] = "Invalid GITHUB_TOKEN"
@@ -100,7 +102,6 @@ def get_status(user: dict = Depends(get_current_user_obj)):
     if diff_t >= 0.5:
         NET_STATE.update({"last_recv": counters.bytes_recv, "last_sent": counters.bytes_sent, "last_time": now})
     
-    # 嘗試讀取實體感測器
     temps = psutil.sensors_temperatures()
     cpu_temp = 0
     if temps and 'coretemp' in temps:
@@ -109,6 +110,22 @@ def get_status(user: dict = Depends(get_current_user_obj)):
         cpu_temp = temps['cpu_thermal'][0].current
     else:
         cpu_temp = 30 + (psutil.cpu_percent() * 0.4)
+
+    # 從 Blynk 獲取 ESP32 (power.ino) 的溫濕度資料
+    room_temp = round(cpu_temp, 1)
+    room_humid = 45
+    try:
+        blynk_token = "UZYFY_G5i8f19q63raO80FUCidSyAmMm"
+        r1 = requests.get(f"https://blynk.cloud/external/api/get?token={blynk_token}&v1", timeout=2)
+        r2 = requests.get(f"https://blynk.cloud/external/api/get?token={blynk_token}&v2", timeout=2)
+        if r1.status_code == 200 and r2.status_code == 200:
+            t_str = r1.text.strip('[]"\\' ')
+            h_str = r2.text.strip('[]"\\' ')
+            if t_str and h_str:
+                room_temp = float(t_str)
+                room_humid = float(h_str)
+    except Exception as e:
+        print(f"Blynk Fetch Error: {e}")
 
     return {
         "cpu_percent": psutil.cpu_percent(interval=None),
@@ -127,7 +144,7 @@ def get_status(user: dict = Depends(get_current_user_obj)):
             "up": f"{max(0, up_speed):.2f} MB/s",
             "down": f"{max(0, down_speed):.2f} MB/s"
         },
-        "sensors": {"temp": round(cpu_temp, 1), "humid": 45}, 
+        "sensors": {"temp": room_temp, "humid": room_humid}, 
         "github": check_github_status()
     }
 
