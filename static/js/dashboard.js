@@ -102,6 +102,26 @@ async function startPolling() {
                 }
                 if (stars) stars.innerText = `⭐ ${g.stars}`;
             }
+
+            // Minecraft Status (Added)
+            if (d.minecraft) {
+                const mcStatus = document.getElementById('mc-status');
+                const mcIp = document.getElementById('mc-ip');
+                if (mcStatus) {
+                    if (d.minecraft.online) {
+                        mcStatus.innerText = '● 連線中 (Online)';
+                        mcStatus.style.background = 'var(--success-color)';
+                        mcStatus.style.color = '#000';
+                    } else {
+                        mcStatus.innerText = '○ 離線 (Offline)';
+                        mcStatus.style.background = '#444';
+                        mcStatus.style.color = '#fff';
+                    }
+                }
+                if (mcIp) {
+                    mcIp.innerText = d.minecraft.ip !== 'Unknown' ? `${d.minecraft.ip}:${d.minecraft.port}` : '--';
+                }
+            }
         }
 
         // 終端紀錄 (修復輪詢與同步)

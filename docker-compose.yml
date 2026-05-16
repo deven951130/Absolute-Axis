@@ -35,3 +35,24 @@ services:
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
     command: tunnel --no-autoupdate run
+
+  minecraft-server:
+    image: itzg/minecraft-server
+    container_name: axis-mc
+    restart: unless-stopped
+    ports:
+      - "25565:25565"
+    environment:
+      EULA: "TRUE"
+      MEMORY: "10G"
+      # 使用 CUSTOM 模式，這樣它會直接執行資料夾內的啟動檔或主程式
+      TYPE: "CUSTOM"
+      CUSTOM_JAR_EXEC: "bash start.sh" # 如果是 Forge/Fabric 整合包通常會有 start.sh
+      # 若沒有 start.sh，itzg 映像檔也有自動化尋找機制
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 10.5G
+    volumes:
+      - ./minecraft-data:/data

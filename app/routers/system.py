@@ -134,6 +134,26 @@ def get_status(user: dict = Depends(get_current_user_obj)):
         room_temp = 88.8
         room_humid = 88
 
+    # 獲取外部實體 IP
+    public_ip = "Unknown"
+    try:
+        ip_req = requests.get("https://api.ipify.org?format=json", timeout=2)
+        if ip_req.status_code == 200:
+            public_ip = ip_req.json().get("ip", "Unknown")
+    except:
+        pass
+
+    # 檢查 Minecraft 伺服器狀態
+    mc_online = False
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.5)
+            # 檢查本機 25565
+            if s.connect_ex(("127.0.0.1", 25565)) == 0:
+                mc_online = True
+    except:
+        pass
+
     return {
         "cpu_percent": psutil.cpu_percent(interval=None),
         "ram_percent": psutil.virtual_memory().percent,
@@ -152,6 +172,11 @@ def get_status(user: dict = Depends(get_current_user_obj)):
             "down": f"{max(0, down_speed):.2f} MB/s"
         },
         "sensors": {"temp": room_temp, "humid": room_humid}, 
+        "minecraft": {
+            "online": mc_online,
+            "ip": public_ip,
+            "port": 25565
+        },
         "github": check_github_status()
     }
 
