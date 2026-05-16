@@ -116,16 +116,23 @@ def get_status(user: dict = Depends(get_current_user_obj)):
     room_humid = 45
     try:
         blynk_token = "UZYFY_G5i8f19q63raO80FUCidSyAmMm"
-        r1 = requests.get(f"https://blynk.cloud/external/api/get?token={blynk_token}&v1", timeout=2)
-        r2 = requests.get(f"https://blynk.cloud/external/api/get?token={blynk_token}&v2", timeout=2)
+        r1 = requests.get(f"https://blynk.cloud/external/api/get?token={blynk_token}&v1", timeout=5)
+        r2 = requests.get(f"https://blynk.cloud/external/api/get?token={blynk_token}&v2", timeout=5)
         if r1.status_code == 200 and r2.status_code == 200:
             t_str = r1.text.strip('[]"\\' ')
             h_str = r2.text.strip('[]"\\' ')
             if t_str and h_str:
                 room_temp = float(t_str)
                 room_humid = float(h_str)
+        else:
+            # If status is not 200, show 99.9 to indicate API error
+            room_temp = 99.9
+            room_humid = 99
     except Exception as e:
         print(f"Blynk Fetch Error: {e}")
+        # If exception occurs, show 88.8 to indicate network/timeout error
+        room_temp = 88.8
+        room_humid = 88
 
     return {
         "cpu_percent": psutil.cpu_percent(interval=None),
