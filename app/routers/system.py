@@ -161,7 +161,7 @@ def get_status(user: dict = Depends(get_current_user_obj)):
             "total": sys_usage.total, "used": sys_usage.used,
             "percent": (sys_usage.used / sys_usage.total) * 100 if sys_usage.total > 0 else 0,
             "health": "Excellent", "temp": round(cpu_temp - 2)
-        },d
+        },
         "nas_disk": {
             "total": nas_usage.total, "used": nas_usage.used,
             "percent": (nas_usage.used / nas_usage.total) * 100 if nas_usage.total > 0 else 0,

@@ -1,3 +1,6 @@
+### [V39] - 2026-05-17 更新日誌
+- **[修復] 排除 `system.py` 語法錯誤以解決 502 Bad Gateway**：修復了 `app/routers/system.py` 第 164 行結尾多餘的 `d` 字元，該語法錯誤（SyntaxError）導致 FastAPI 服務啟動失敗與 Web 伺服器 502 閘道器錯誤。
+
 ### [V38] - 2026-05-17 更新日誌
 - **[修復] FastAPI 啟動崩潰 502 Bad Gateway 排除**：修復了引進多重宇宙後端模組 `minecraft.py` 時，因缺少 `paramiko` 相依套件導致 Docker 容器啟動失敗的 ModuleNotFoundError。
 - **[相依性] 更新 `requirements.txt`**：在 `requirements.txt` 中新增 `paramiko` 依賴，確保 Docker 容器在啟動指令引導時自動透過 pip 安裝。
