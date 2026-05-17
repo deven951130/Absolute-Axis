@@ -21,9 +21,9 @@ function setTheme(theme) {
 }
 
 function switchView(v) {
-    if (['smart', 'ai'].includes(v)) {
-        const ts = { 'smart': '智慧宅控', 'ai': '核心 AI 助手' };
-        const is = { 'smart': '🏡', 'ai': '🤖' };
+    if (['ai'].includes(v)) {
+        const ts = { 'ai': '核心 AI 助手' };
+        const is = { 'ai': '🤖' };
         document.getElementById('ph-title').innerText = ts[v] + " 系統尚未開放";
         document.getElementById('ph-icon').innerText = is[v];
         v = 'placeholder';
@@ -83,6 +83,7 @@ function switchView(v) {
     if (v === 'metrics') { if (typeof initCharts === 'function') initCharts(); }
     if (v === 'nas-mgnt') { if (typeof refreshNASHardware === 'function') refreshNASHardware(); }
     if (v === 'multiverse') { if (typeof loadMultiverse === 'function') loadMultiverse(); }
+    if (v === 'smart') { if (typeof loadSmart === 'function') loadSmart(); }
 
     // 觸發視圖切換自定義事件
     document.dispatchEvent(new CustomEvent('view-switched', { detail: { view: v } }));
