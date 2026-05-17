@@ -1,3 +1,8 @@
+### [V38] - 2026-05-17 更新日誌
+- **[修復] FastAPI 啟動崩潰 502 Bad Gateway 排除**：修復了引進多重宇宙後端模組 `minecraft.py` 時，因缺少 `paramiko` 相依套件導致 Docker 容器啟動失敗的 ModuleNotFoundError。
+- **[相依性] 更新 `requirements.txt`**：在 `requirements.txt` 中新增 `paramiko` 依賴，確保 Docker 容器在啟動指令引導時自動透過 pip 安裝。
+- **[工具] 更新 `pull_and_restart.py`**：將部署指令碼中的容器重啟等待時間從 8 秒延長至 15 秒，以利容器有充足時間自動下載並完成 `paramiko` 安裝，確保 uvicorn 順利就緒。
+
 ### [V37] - 2026-05-17 更新日誌
 - **[新增] 多重宇宙（Multiverse）Minecraft 管理中樞**：於左側導覽列新增「🌌 多重宇宙」頁面，作為 Minecraft 遊戲伺服器的專屬管理入口，包含伺服器基本資訊、即時線上狀態、連線 IP 資訊與硬體規格顯示。
 - **[新增] 管理員 MC 指令控制台**：管理員限定的終端機風格控制台，支援全指令放行模式，透過 SSH + screen stuff 將指令注入 Minecraft 伺服器，並在前端即時顯示指令送出狀態（含稽核日誌記錄）。

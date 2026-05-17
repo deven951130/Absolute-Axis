@@ -50,8 +50,8 @@ def pull_and_restart():
         )
         out = stdout.read().decode().strip()
         print(f"    {out}")
-        print("    等待容器啟動...")
-        time.sleep(8)
+        print("    等待容器啟動與相依套件安裝...")
+        time.sleep(15)
         
         # Step 4: 確認
         stdin, stdout, stderr = client.exec_command(
