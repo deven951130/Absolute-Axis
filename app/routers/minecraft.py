@@ -1,5 +1,6 @@
 import socket
 import paramiko
+from typing import Tuple
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime
 
@@ -26,7 +27,7 @@ def _check_online() -> bool:
         return False
 
 
-def _ssh_exec(command: str) -> tuple[str, str]:
+def _ssh_exec(command: str) -> Tuple[str, str]:
     """透過 SSH 在 LXC 容器中執行指令，回傳 (stdout, stderr)。"""
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
