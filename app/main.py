@@ -8,7 +8,7 @@ import os
 from app.config import BASE_PATH
 from app.database import engine, Base
 from app.utils import init_db_user
-from app.routers import auth, admin, user, system, docker, nas, proxmox
+from app.routers import auth, admin, user, system, docker, nas, proxmox, minecraft
 
 app = FastAPI(title="Absolute Axis Server")
 
@@ -31,6 +31,7 @@ app.include_router(system.router)
 app.include_router(docker.router)
 app.include_router(nas.router)
 app.include_router(proxmox.router)
+app.include_router(minecraft.router)
 
 
 # ----------------- 靜態與首頁路由 -----------------

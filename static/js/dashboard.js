@@ -107,6 +107,8 @@ async function startPolling() {
             if (d.minecraft) {
                 const mcStatus = document.getElementById('mc-status');
                 const mcIp = document.getElementById('mc-ip');
+                const mcCfg = document.getElementById('mc-config');
+                
                 if (mcStatus) {
                     if (d.minecraft.online) {
                         mcStatus.innerText = '● 連線中 (Online)';
@@ -120,6 +122,9 @@ async function startPolling() {
                 }
                 if (mcIp) {
                     mcIp.innerText = d.minecraft.ip !== 'Unknown' ? `${d.minecraft.ip}:${d.minecraft.port}` : '--';
+                }
+                if (mcCfg && d.minecraft.specs) {
+                    mcCfg.innerText = `配置：${d.minecraft.specs.ram} RAM / ${d.minecraft.specs.cores} Threads`;
                 }
             }
         }

@@ -194,9 +194,11 @@ const NASManager = {
         if (qBar) qBar.style.background = qP > 90 ? 'var(--danger-color)' : 'var(--accent-color)';
         
         if (qLabel) {
-            const usedMB = (data.quota_used / 1024 / 1024).toFixed(0);
-            const totalMB = (data.quota_total / 1024 / 1024).toFixed(0);
-            qLabel.innerText = `${usedMB} MB / ${totalMB} MB`;
+            const formatSize = (bytes) => {
+                if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + ' GB';
+                return (bytes / 1048576).toFixed(0) + ' MB';
+            };
+            qLabel.innerText = `${formatSize(data.quota_used)} / ${formatSize(data.quota_total)}`;
         }
     },
 
@@ -419,6 +421,15 @@ const NASManager = {
         if (!input || !input.files.length) return;
         
         const file = input.files[0];
+        
+        // Cloudflare Free Tier 100MB limit check
+        if (file.size > 100 * 1024 * 1024 && window.location.hostname.includes('dpdns.org')) {
+            if (!confirm('偵測到您正透過 Cloudflare 代理上傳超過 100MB 的檔案。Cloudflare 免費版通常限制單次上傳為 100MB，這可能會導致上傳失敗。是否仍要嘗試？\n\n建議：如需上傳大檔案，請使用 Tailscale 內網 IP。')) {
+                input.value = '';
+                return;
+            }
+        }
+
         const mon = document.getElementById('upload-monitor');
         const bar = document.getElementById('up-bar');
         const speed = document.getElementById('up-speed');

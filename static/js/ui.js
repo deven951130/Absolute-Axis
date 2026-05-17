@@ -57,7 +57,8 @@ function switchView(v) {
         'nas-mgnt': 'NAS 管理中樞',
         'admin': '帳號管理',
         'settings': '系統設定',
-        'metrics': '實時數據分析'
+        'metrics': '實時數據分析',
+        'multiverse': '多重宇宙'
     };
     
     document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').innerText.replace(' 系統尚未開放', '');
@@ -81,6 +82,7 @@ function switchView(v) {
     }
     if (v === 'metrics') { if (typeof initCharts === 'function') initCharts(); }
     if (v === 'nas-mgnt') { if (typeof refreshNASHardware === 'function') refreshNASHardware(); }
+    if (v === 'multiverse') { if (typeof loadMultiverse === 'function') loadMultiverse(); }
 
     // 觸發視圖切換自定義事件
     document.dispatchEvent(new CustomEvent('view-switched', { detail: { view: v } }));

@@ -1,3 +1,25 @@
+### [V37] - 2026-05-17 更新日誌
+- **[新增] 多重宇宙（Multiverse）Minecraft 管理中樞**：於左側導覽列新增「🌌 多重宇宙」頁面，作為 Minecraft 遊戲伺服器的專屬管理入口，包含伺服器基本資訊、即時線上狀態、連線 IP 資訊與硬體規格顯示。
+- **[新增] 管理員 MC 指令控制台**：管理員限定的終端機風格控制台，支援全指令放行模式，透過 SSH + screen stuff 將指令注入 Minecraft 伺服器，並在前端即時顯示指令送出狀態（含稽核日誌記錄）。
+- **[新增] 快速指令面板**：管理員快速執行常用 MC 指令（設定時間、天氣、難度、玩家列表）的一鍵按鈕列。
+- **[後端] 新增 `app/routers/minecraft.py`**：實作 `GET /api/minecraft/status` 與 `POST /api/minecraft/command` 兩支 API，前者提供詳細 MC 伺服器規格與連線資訊，後者執行 SSH 指令注入並強制管理員身分驗證。
+- **[後端] 更新 `app/models.py`**：新增 `MCCommandRequest` Pydantic 模型。
+- **[後端] 更新 `app/main.py`**：注冊 `minecraft` router 至主應用程式。
+- **[前端] 新增 `static/components/views/multiverse.html`**：多重宇宙頁面視圖元件。
+- **[前端] 新增 `static/js/multiverse.js`**：Multiverse 模組邏輯，負責 API 呼叫、DOM 渲染、指令送出與脈搏動畫。
+- **[前端] 更新 `index.html`、`app.js`、`ui.js`**：完成側邊欄導覽、動態載入、頁面標題與路由觸發的完整整合。
+
+### [V36] - 2026-05-17 更新日誌
+- **[診斷] 外部網路連線中斷排除**：針對 Minecraft 伺服器進行全鏈路網路連線診斷，產出完整外部網路（WAN）連線排除方案與風險評估報告。
+- **[工具] 新增網路診斷腳本**：於 `scratch/` 目錄新增 `diag_mc_network.py`，支援自動化透過 SSH 檢測 LXC 容器之埠監聽狀態、閘道器路由、UFW/iptables 防火牆配置與遊戲設定檔參數。
+- **[網路] 遷移 Minecraft 內網 IP 服務**：配合使用者外部埠轉發設定，將 Minecraft LXC 容器（ID 102）之內網 IP 自 `192.168.0.108` 變更至 `192.168.0.130`。
+- **[工具] 新增 IP 變更自動化指令碼**：於 `scratch/` 新增 `change_mc_ip.py`，支援自動透過 SSH 連結 PVE（`192.168.0.138`）執行 `pct set` 修改容器網路，並調用 `pct reboot` 自動安全重啟。
+- **[重構] 更新後端伺服器監測目標**：同步更新 `app/routers/system.py` 之遊戲伺服器連線狀態監控目標 IP 至 `192.168.0.130`。
+- **[自動化] 實現 Minecraft 虛擬化雙層自動啟動機制**：配置 Proxmox VE 宿主機開機自動引導 LXC 容器（ID 102），並於容器內部建置 `minecraft.service` 系統守護服務，實現容器開機自動執行背景 screen 與 Java 處理序。
+- **[強固] 引入服務防崩潰與安全關檔機制**：systemd 服務模組配置 `Restart=always` 確保崩潰自啟，且支援關機時自動發送 `"stop"` 指令 safe 封存世界存檔，防止地圖資料毀損。
+- **[工具] 新增自啟動一鍵配置腳本**：於 `scratch/` 新增 `configure_mc_autostart.py` 自動化 SSH 部署工具。
+- **[工具] 新增網路即時狀態監測腳本**：於 `scratch/` 新增 `check_current_lxc_net.py`，支援一鍵分析 PVE 容器網路配置、運行狀態與 Java 連接埠監聽，協助定位外部連線逾時根因。
+
 ### [V35] - 2026-05-16 更新日誌
 - **[整合] IoT 溫濕度聯動**：介接 Blynk API，將 Absolute-Axis 儀表板首頁的溫度數據，無縫替換為 ESP32 (`power.ino`) DHT 感測器即時回傳的實體房間溫濕度。
 - **[新增] 基礎設施自動化引導**：針對 Proxmox PVE (192.168.0.138) 實作自動化啟動配置。

@@ -31,10 +31,10 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 Days
 
 # PVE Config
-PVE_HOST = os.getenv("PVE_HOST", "100.124.203.61")
+PVE_HOST = os.getenv("PVE_HOST", "192.168.0.138")
 PVE_USER = os.getenv("PVE_USER", "root@pam")
 PVE_PASS = os.getenv("PVE_PASS", "deven951130")
 
-QUOTA_PER_USER = 1 * 1024 * 1024 * 1024  # 1GB 配額
+QUOTA_PER_USER = 100 * 1024 * 1024 * 1024  # 100GB 配額
 ACTIVE_SESSIONS = {}
 SYSTEM_LOGS = []

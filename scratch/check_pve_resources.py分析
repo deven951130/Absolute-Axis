@@ -1,0 +1,22 @@
+import paramiko
+
+def run_pve_cmd(cmd):
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        client.connect('100.124.203.61', username='root', password='deven951130', timeout=10)
+        stdin, stdout, stderr = client.exec_command(cmd)
+        out = stdout.read().decode()
+        err = stderr.read().decode()
+        client.close()
+        return out, err
+    except Exception as e:
+        return "", str(e)
+
+print("--- PVE ISO Files ---")
+out, err = run_pve_cmd("ls -R /var/lib/vz/template/iso")
+print(out)
+
+print("\n--- PVE VM Templates ---")
+out, err = run_pve_cmd("qm list")
+print(out)

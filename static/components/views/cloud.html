@@ -12,7 +12,7 @@
             <div style="height:1px; background:var(--border-color); margin:1.5rem 0;"></div>
             <div style="padding:0 15px;">
                 <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px;">個人儲存配額</div>
-                <div id="quota-label" style="font-size:0.7rem; font-weight:800; margin-bottom:8px;">0 MB / 1024 MB</div>
+                <div id="quota-label" style="font-size:0.7rem; font-weight:800; margin-bottom:8px;">0 GB / 100 GB</div>
                 <div class="progress-bar"><div id="quota-bar" class="progress-fill" style="width:0%"></div></div>
             </div>
         </aside>
@@ -46,6 +46,15 @@
             
             <div id="nas-explorer" class="file-grid" style="margin-top:1.5rem;">
                 <div style="color:var(--text-muted); padding:2rem; width:100%; text-align:center;">正在載入雲端檔案...</div>
+            </div>
+
+            <!-- Upload Hint -->
+            <div style="margin-top:2rem; padding:1.5rem; background:rgba(255,255,255,0.03); border-radius:12px; border:1px dashed var(--border-color); display:flex; align-items:center; gap:15px;">
+                <div style="font-size:1.5rem;">💡</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); line-height:1.6;">
+                    <strong style="color:var(--accent-color);">上傳提示：</strong> 當前透過 Cloudflare 代理連線，單次檔案上傳限制為 <span style="color:var(--danger-color); font-weight:800;">100MB</span>。<br>
+                    若需上傳大型檔案（如 4K 影片、系統映像檔），請切換至 <span style="font-weight:800; color:var(--text-main);">Tailscale 內網 IP</span> 連線以繞過限制。
+                </div>
             </div>
         </div>
     </div>

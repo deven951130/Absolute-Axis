@@ -1,0 +1,212 @@
+<!-- Absolute Axis - Multiverse View Module (MC Server Management) -->
+<div id="view-multiverse" class="view-section">
+
+    <!-- 頂部狀態橫幅 -->
+    <div id="mv-status-banner" style="
+        display: flex; align-items: center; gap: 16px;
+        background: linear-gradient(135deg, rgba(20, 20, 35, 0.9), rgba(13, 17, 23, 0.95));
+        border: 1px solid #30363d; border-left: 4px solid #4CAF50;
+        border-radius: 12px; padding: 1.2rem 1.8rem; margin-bottom: 2rem;
+        position: relative; overflow: hidden;
+    ">
+        <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px;
+            background: radial-gradient(circle, rgba(76,175,80,0.15), transparent);
+            border-radius:50%; pointer-events:none;"></div>
+        <div id="mv-banner-dot" style="width:14px; height:14px; border-radius:50%;
+            background:#666; flex-shrink:0; transition:0.3s;"></div>
+        <div>
+            <div style="font-size:1rem; font-weight:900; letter-spacing:0.5px;" id="mv-banner-title">
+                🌌 Absolute-Axis MC — 狀態偵測中...
+            </div>
+            <div id="mv-banner-sub" style="font-size:0.72rem; color:var(--text-muted); margin-top:3px; font-weight:700;">
+                正在建立連線...
+            </div>
+        </div>
+        <div style="margin-left:auto; font-size:0.75rem; color:var(--text-muted); font-weight:700;">
+            最後更新：<span id="mv-last-update">--:--:--</span>
+        </div>
+        <button class="btn btn-outline" style="padding:6px 14px; font-size:0.78rem; flex-shrink:0;"
+            onclick="loadMultiverse()">↺ 刷新</button>
+    </div>
+
+    <!-- 主要三欄佈局 -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+
+        <!-- 伺服器資訊卡 -->
+        <div class="card" style="border-left:4px solid var(--accent-color);">
+            <div class="card-title" style="font-size:0.9rem; margin-bottom:1.2rem;">
+                🖥️ 伺服器基本資訊
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <div class="mv-info-row">
+                    <span class="mv-label">伺服器名稱</span>
+                    <span id="mv-name" class="mv-value">--</span>
+                </div>
+                <div class="mv-info-row">
+                    <span class="mv-label">版本類型</span>
+                    <span id="mv-version" class="mv-value">--</span>
+                </div>
+                <div class="mv-info-row">
+                    <span class="mv-label">Java 版本</span>
+                    <span id="mv-java" class="mv-value" style="font-size:0.7rem;">--</span>
+                </div>
+                <div class="mv-info-row">
+                    <span class="mv-label">Screen Session</span>
+                    <span id="mv-screen" class="mv-value" style="font-family:monospace; color:#f1c40f;">--</span>
+                </div>
+                <div class="mv-info-row">
+                    <span class="mv-label">執行狀態</span>
+                    <span id="mv-uptime" class="mv-value">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 連線資訊卡 -->
+        <div class="card" style="border-left:4px solid #4CAF50;">
+            <div class="card-title" style="font-size:0.9rem; margin-bottom:1.2rem;">
+                🌐 連線資訊
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+                <div>
+                    <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); margin-bottom:4px;">內網連線（LAN）</div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <code id="mv-lan" style="
+                            background:rgba(255,255,255,0.06); border:1px solid #30363d;
+                            padding:6px 12px; border-radius:6px; font-size:0.85rem;
+                            color:var(--accent-color); flex:1; text-align:center;
+                        ">--</code>
+                        <button class="btn btn-outline" style="padding:5px 10px; font-size:0.72rem; flex-shrink:0;"
+                            onclick="mvCopy('mv-lan')">複製</button>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); margin-bottom:4px;">外網連線（WAN）</div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <code id="mv-wan" style="
+                            background:rgba(255,255,255,0.06); border:1px solid #30363d;
+                            padding:6px 12px; border-radius:6px; font-size:0.85rem;
+                            color:#2ecc71; flex:1; text-align:center;
+                        ">--</code>
+                        <button class="btn btn-outline" style="padding:5px 10px; font-size:0.72rem; flex-shrink:0;"
+                            onclick="mvCopy('mv-wan')">複製</button>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:center; margin-top:4px;">
+                    <div id="mv-port-badge" style="
+                        background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.3);
+                        border-radius:20px; padding:4px 16px; font-size:0.72rem;
+                        color:var(--accent-color); font-weight:800;
+                    ">連接埠：25565</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 硬體規格卡 -->
+        <div class="card" style="border-left:4px solid #bd93f9;">
+            <div class="card-title" style="font-size:0.9rem; margin-bottom:1.2rem;">
+                ⚙️ 硬體規格
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <div class="mv-info-row">
+                    <span class="mv-label">容器記憶體</span>
+                    <span class="mv-value" style="color:#bd93f9;" id="mv-ram">--</span>
+                </div>
+                <div class="mv-info-row">
+                    <span class="mv-label">JVM 堆積</span>
+                    <span class="mv-value" style="font-size:0.75rem;" id="mv-jvm">--</span>
+                </div>
+                <div class="mv-info-row">
+                    <span class="mv-label">CPU 執行緒</span>
+                    <span class="mv-value" id="mv-cpu">--</span>
+                </div>
+                <div class="mv-info-row">
+                    <span class="mv-label">虛擬化容器</span>
+                    <span class="mv-value" style="font-size:0.72rem; color:var(--text-muted);" id="mv-container">--</span>
+                </div>
+            </div>
+            <!-- 微型狀態動畫 -->
+            <div style="margin-top:1.2rem; padding-top:1rem; border-top:1px solid var(--border-color); text-align:center;">
+                <div id="mv-pulse-ring" style="
+                    display:inline-block; width:36px; height:36px; border-radius:50%;
+                    border:3px solid #666; transition:0.3s;
+                "></div>
+                <div id="mv-pulse-label" style="font-size:0.65rem; color:var(--text-muted); margin-top:6px; font-weight:800;">
+                    OFFLINE
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MC 指令控制台（管理員限定，由 JS 控制顯示） -->
+    <div id="mv-console-section" style="display:none;">
+        <div class="card" style="padding:0; overflow:hidden; border-color:#bd93f9;">
+            <div style="padding:1.2rem 1.5rem; border-bottom:1px solid var(--border-color);
+                display:flex; align-items:center; justify-content:space-between;">
+                <div class="card-title" style="margin-bottom:0; font-size:0.9rem;">
+                    🎛️ MC 指令控制台
+                    <span style="font-size:0.65rem; background:rgba(248,81,73,0.15); color:#f85149;
+                        border:1px solid rgba(248,81,73,0.4); border-radius:10px; padding:2px 8px;
+                        margin-left:8px; font-weight:800;">ADMIN ONLY</span>
+                </div>
+                <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">
+                    使用 SSH + screen 注入，全指令放行 · 操作將被稽核記錄
+                </div>
+            </div>
+
+            <!-- 指令紀錄區 -->
+            <div id="mv-cmd-log" style="
+                background:#0a0d11; padding:1rem 1.2rem;
+                font-family:'Courier New', monospace; font-size:0.8rem;
+                color:#7ee787; line-height:1.7; min-height:180px; max-height:280px;
+                overflow-y:auto;
+            ">
+                <div style="color:#8b949e;">[SYSTEM] MC 指令控制台已就緒。輸入 Minecraft 伺服器指令並按下 Enter 或點擊發送。</div>
+                <div style="color:#8b949e;">[SYSTEM] 所有操作均會記錄至稽核日誌。</div>
+            </div>
+
+            <!-- 輸入區 -->
+            <div style="display:flex; gap:10px; padding:12px 15px;
+                background:#0d1117; border-top:1px solid #30363d;">
+                <span style="font-family:monospace; font-size:0.9rem; color:#bd93f9;
+                    line-height:38px; flex-shrink:0;">></span>
+                <input type="text" id="mv-cmd-input"
+                    placeholder="輸入 Minecraft 指令（例如：say Hello / time set day / kick playerName）"
+                    style="
+                        flex:1; background:transparent; border:none; outline:none;
+                        color:#fff; font-family:'Courier New', monospace; font-size:0.85rem;
+                    "
+                    onkeypress="if(event.key==='Enter') sendMCCommand()"
+                >
+                <button class="btn btn-primary" style="padding:8px 20px; font-size:0.82rem; flex-shrink:0;"
+                    onclick="sendMCCommand()">⚡ 發送指令</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快速指令面板（管理員限定） -->
+    <div id="mv-quick-panel" style="display:none; margin-top:1rem;">
+        <div class="card" style="padding:1rem 1.5rem;">
+            <div style="font-size:0.75rem; font-weight:800; color:var(--text-muted); margin-bottom:10px;">
+                ⚡ 快速指令
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;"
+                    onclick="mvQuickCmd('time set day')">☀️ 設為白天</button>
+                <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;"
+                    onclick="mvQuickCmd('time set night')">🌙 設為夜晚</button>
+                <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;"
+                    onclick="mvQuickCmd('weather clear')">🌤️ 晴天</button>
+                <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;"
+                    onclick="mvQuickCmd('weather rain')">🌧️ 下雨</button>
+                <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;"
+                    onclick="mvQuickCmd('difficulty peaceful')">☮️ 和平難度</button>
+                <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;"
+                    onclick="mvQuickCmd('difficulty normal')">⚔️ 普通難度</button>
+                <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;"
+                    onclick="mvQuickCmd('difficulty hard')">💀 困難難度</button>
+                <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;"
+                    onclick="mvQuickCmd('list')">👥 玩家列表</button>
+            </div>
+        </div>
+    </div>
+</div>

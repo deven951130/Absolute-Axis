@@ -145,11 +145,11 @@ def get_status(user: dict = Depends(get_current_user_obj)):
 
     # 檢查 Minecraft 伺服器狀態
     mc_online = False
+    mc_specs = {"ram": "16GB", "cores": 8} # Default or fetch from config
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(0.5)
-            # 檢查獨立 LXC 容器 192.168.0.108 的 25565
-            if s.connect_ex(("192.168.0.108", 25565)) == 0:
+            s.settimeout(0.2) # Faster timeout for UI snappiness
+            if s.connect_ex(("192.168.0.130", 25565)) == 0:
                 mc_online = True
     except:
         pass
@@ -161,7 +161,7 @@ def get_status(user: dict = Depends(get_current_user_obj)):
             "total": sys_usage.total, "used": sys_usage.used,
             "percent": (sys_usage.used / sys_usage.total) * 100 if sys_usage.total > 0 else 0,
             "health": "Excellent", "temp": round(cpu_temp - 2)
-        },
+        },d
         "nas_disk": {
             "total": nas_usage.total, "used": nas_usage.used,
             "percent": (nas_usage.used / nas_usage.total) * 100 if nas_usage.total > 0 else 0,
@@ -175,7 +175,8 @@ def get_status(user: dict = Depends(get_current_user_obj)):
         "minecraft": {
             "online": mc_online,
             "ip": public_ip,
-            "port": 25565
+            "port": 25565,
+            "specs": mc_specs
         },
         "github": check_github_status()
     }

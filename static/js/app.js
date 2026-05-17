@@ -4,7 +4,7 @@
  */
 const App = {
     components: {
-        views: ['dashboard', 'virtual', 'cloud', 'nas-mgnt', 'metrics', 'admin', 'settings', 'placeholder'],
+        views: ['dashboard', 'virtual', 'cloud', 'nas-mgnt', 'metrics', 'admin', 'settings', 'placeholder', 'multiverse'],
         modals: ['profile', 'avatar', 'share', 'preview', 'mkdir', 'deploy-vm', 'admin-edit', 'create-user'],
         overlays: ['popover', 'context-menu']
     },
@@ -31,7 +31,7 @@ const App = {
 
     async loadComponent(url, target) {
         // 強制提升版本號至 v24 以徹底打破組件緩存
-        const res = await fetch(`${url}?v=25`);
+        const res = await fetch(`${url}?v=30`);
         if (!res.ok) throw new Error(`Failed to load component: ${url}`);
         const html = await res.text();
         const container = (target === 'body') ? document.body : document.querySelector(target);

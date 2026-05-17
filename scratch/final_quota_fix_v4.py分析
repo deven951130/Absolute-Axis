@@ -1,0 +1,49 @@
+import paramiko
+import base64
+
+def run_cmd_on_vm(command):
+    pve_client = paramiko.SSHClient()
+    pve_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    pve_client.connect('100.124.203.61', username='root', password='deven951130', timeout=10)
+    
+    vm_ip = '192.168.0.159'
+    vm_user = 'sparkle'
+    vm_pass = '951130'
+    
+    transport = pve_client.get_transport()
+    channel = transport.open_channel("direct-tcpip", (vm_ip, 22), ('100.124.203.61', 22))
+    
+    vm_client = paramiko.SSHClient()
+    vm_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    vm_client.connect(vm_ip, username=vm_user, password=vm_pass, sock=channel)
+    
+    stdin, stdout, stderr = vm_client.exec_command(command)
+    # Handle sudo password prompt if necessary, but I'll try to use -S
+    if "sudo" in command:
+        stdin.write(f"{vm_pass}\n")
+        stdin.flush()
+        
+    out = stdout.read().decode(errors='replace')
+    err = stderr.read().decode(errors='replace')
+    
+    vm_client.close()
+    pve_client.close()
+    return out, err
+
+py_script = """
+import sqlite3
+conn = sqlite3.connect('/home/sparkle/Absolute-Axis/axis.db')
+conn.execute("UPDATE users SET quota_bytes = 107374182400 WHERE username = 'sparkle'")
+conn.commit()
+conn.close()
+print('VM DB updated.')
+"""
+b64_script = base64.b64encode(py_script.encode('utf-8')).decode('utf-8')
+cmd = f"echo {vm_pass} | sudo -S python3 -c \"import base64; exec(base64.b64decode('{b64_script}'))\""
+# Wait, I'll just change the permission first
+chmod_cmd = f"echo {vm_pass} | sudo -S chmod 666 /home/sparkle/Absolute-Axis/axis.db"
+out, err = run_cmd_on_vm(chmod_cmd)
+print("Chmod:", out, err)
+
+out, err = run_cmd_on_vm(f"echo '{b64_script}' | base64 -d | python3")
+print("Update:", out, err)

@@ -1,0 +1,22 @@
+import paramiko
+
+def run_pve_cmd(cmd):
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        client.connect('100.124.203.61', username='root', password='deven951130', timeout=10)
+        stdin, stdout, stderr = client.exec_command(cmd)
+        out = stdout.read().decode()
+        err = stderr.read().decode()
+        client.close()
+        return out, err
+    except Exception as e:
+        return "", str(e)
+
+print("--- PVE Block Devices ---")
+out, err = run_pve_cmd("lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,FSTYPE,MODEL")
+print(out)
+
+print("\n--- PVE Storage List ---")
+out, err = run_pve_cmd("pvesm status")
+print(out)

@@ -48,3 +48,6 @@ class DeployVMRequest(BaseModel):
     container_name: str
     cpu_cores: int = 2
     ram_gb: int = 4
+
+class MCCommandRequest(BaseModel):
+    command: str

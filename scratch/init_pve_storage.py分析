@@ -1,0 +1,40 @@
+import paramiko
+
+def run_pve_cmd(cmd):
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        client.connect('100.124.203.61', username='root', password='deven951130', timeout=10)
+        stdin, stdout, stderr = client.exec_command(cmd)
+        out = stdout.read().decode()
+        err = stderr.read().decode()
+        client.close()
+        return out, err
+    except Exception as e:
+        return "", str(e)
+
+print("--- Initializing 1TB NVMe Disk for PVE Storage ---")
+# 1. Wipe partition table (DANGEROUS)
+print("Wiping /dev/nvme1n1...")
+run_pve_cmd("wipefs -a /dev/nvme1n1")
+run_pve_cmd("sgdisk --zap-all /dev/nvme1n1")
+
+# 2. Create Physical Volume
+print("Creating PV...")
+run_pve_cmd("pvcreate /dev/nvme1n1")
+
+# 3. Create Volume Group
+print("Creating VG Fast_Storage_VG...")
+run_pve_cmd("vgcreate Fast_Storage_VG /dev/nvme1n1")
+
+# 4. Create LVM Thin Pool (Better for VMs)
+print("Creating LVM Thin Pool...")
+run_pve_cmd("lvcreate -L 900G -T Fast_Storage_VG/Fast_Storage_Thin")
+
+# 5. Add to Proxmox
+print("Adding to Proxmox Storage...")
+run_pve_cmd("pvesm add lvmthin Fast-Storage --vgname Fast_Storage_VG --thinpool Fast_Storage_Thin --content rootdir,images")
+
+print("Done. Checking status...")
+out, err = run_pve_cmd("pvesm status")
+print(out)

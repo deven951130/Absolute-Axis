@@ -1,34 +1,25 @@
 import paramiko
 
-def run_cmd_on_vm(command):
-    pve_client = paramiko.SSHClient()
-    pve_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    pve_client.connect('100.124.203.61', username='root', password='deven951130', timeout=10)
-    
-    vm_ip = '192.168.0.159'
-    vm_user = 'sparkle'
-    vm_pass = '951130'
-    
-    transport = pve_client.get_transport()
-    channel = transport.open_channel("direct-tcpip", (vm_ip, 22), ('100.124.203.61', 22))
-    
-    vm_client = paramiko.SSHClient()
-    vm_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    vm_client.connect(vm_ip, username=vm_user, password=vm_pass, sock=channel)
-    
-    stdin, stdout, stderr = vm_client.exec_command(command)
-    out = stdout.read().decode()
-    err = stderr.read().decode()
-    
-    vm_client.close()
-    pve_client.close()
-    return out, err
+def check_logs_v2():
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        client.connect('192.168.0.159', username='sparkle', password='951130')
+        print("Checking docker ps...")
+        # Using -S for password
+        stdin, stdout, stderr = client.exec_command('echo "951130" | sudo -S docker ps')
+        print("PS STDOUT:", stdout.read().decode())
+        print("PS STDERR:", stderr.read().decode())
+        
+        print("\nChecking docker logs for axis-server...")
+        stdin, stdout, stderr = client.exec_command('echo "951130" | sudo -S docker logs axis-server --tail 20')
+        print("LOGS STDOUT:", stdout.read().decode())
+        print("LOGS STDERR:", stderr.read().decode())
+        
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        client.close()
 
-print("--- Cloudflared Logs ---")
-out, err = run_cmd_on_vm("docker logs axis-cloudflared --tail 50")
-print(out)
-if err: print("ERR:", err)
-
-print("\n--- Axis Server Logs ---")
-out, err = run_cmd_on_vm("docker logs axis-server --tail 20")
-print(out)
+if __name__ == "__main__":
+    check_logs_v2()

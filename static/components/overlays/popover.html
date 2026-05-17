@@ -6,7 +6,8 @@
         <small id="pop-role" style="color:var(--accent-color); font-weight:800; text-transform:uppercase; margin-top:4px;">-- Role --</small>
     </div>
     <div style="display:flex; flex-direction:column; gap:5px;">
-        <button class="btn btn-outline" style="width:100%; font-size:0.8rem; padding:8px;" onclick="switchView('settings'); toggleAxisPopover()">⚙️ 個人設定</button>
+        <button class="btn btn-outline" style="width:100%; font-size:0.8rem; padding:8px;" onclick="openProfileEdit(); toggleAxisPopover()">👤 個人檔案</button>
+        <button class="btn btn-outline" style="width:100%; font-size:0.8rem; padding:8px;" onclick="switchView('settings'); toggleAxisPopover()">⚙️ 系統設定</button>
         <button class="btn btn-danger" style="width:100%; font-size:0.8rem; padding:8px;" onclick="doLogout()">🚪 登出系統</button>
     </div>
 </div>

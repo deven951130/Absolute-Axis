@@ -59,3 +59,11 @@ nas_storage/
 .trash/
 logs.json
 axis.db
+
+# Large files & scratch temp archives (prevent GitHub 100MB limit rejection)
+scratch/*.zip
+scratch/*.tar.gz
+scratch/*.tar
+*.zip
+*.gz
+cloudflared.exe
