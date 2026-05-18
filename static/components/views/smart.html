@@ -1,199 +1,307 @@
 <!-- Absolute Axis - Smart Control View Module (Smart Home) -->
 <div id="view-smart" class="view-section">
 
-    <!-- 頂部中樞狀態與連線橫幅 -->
-    <div id="smart-status-banner" style="
-        display: flex; align-items: center; gap: 16px;
-        background: linear-gradient(135deg, rgba(20, 20, 35, 0.9), rgba(13, 17, 23, 0.95));
-        border: 1px solid #30363d; border-left: 4px solid var(--accent-color);
-        border-radius: 12px; padding: 1.2rem 1.8rem; margin-bottom: 2rem;
-        position: relative; overflow: hidden;
-    ">
-        <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px;
-            background: radial-gradient(circle, var(--accent-glow), transparent);
-            border-radius:50%; pointer-events:none;"></div>
-        <div id="smart-blynk-dot" class="status-dot online pulse" style="background:#666; flex-shrink:0; transition:0.3s; width:12px; height:12px;"></div>
-        <div>
-            <div style="font-size:1rem; font-weight:900; letter-spacing:0.5px;">
-                🏡 智慧宅控中樞系統 — 運作中
-            </div>
-            <div style="font-size:0.72rem; color:var(--text-muted); margin-top:3px; font-weight:700;">
-                對接 ESP32 開發板與 Blynk IoT 雲端伺服器
-            </div>
-        </div>
-        <div style="margin-left:auto; font-size:0.75rem; color:var(--text-muted); font-weight:700;">
-            數據同步：<span id="smart-last-update">--:--:--</span>
-        </div>
-        <button class="btn btn-outline" style="padding:6px 14px; font-size:0.78rem; flex-shrink:0;"
-            onclick="loadSmart()">↺ 刷新數據</button>
+    <!-- 頂部頁籤導覽列 (模擬手機 Bottom Nav) -->
+    <div style="display: flex; gap: 10px; margin-bottom: 1.5rem; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 12px; border: 1px solid #30363d;">
+        <button class="btn btn-outline smart-tab-btn active" data-tab="home" onclick="switchSmartTab('home')" style="flex:1; border:none; background:var(--accent-color); color:#fff; font-weight:800;">
+            🏠 首頁 / 模式
+        </button>
+        <button class="btn btn-outline smart-tab-btn" data-tab="data" onclick="switchSmartTab('data')" style="flex:1; border:none; font-weight:800;">
+            📈 歷史數據
+        </button>
+        <button class="btn btn-outline smart-tab-btn" data-tab="devices" onclick="switchSmartTab('devices')" style="flex:1; border:none; font-weight:800;">
+            📱 綁定裝置
+        </button>
     </div>
 
-    <!-- 主要區塊：中樞主機環境數據 (雙欄佈局) -->
-    <div style="display:grid; grid-template-columns: 3fr 2fr; gap:1.8rem; margin-bottom:1.8rem;">
-        
-        <!-- 左欄：中樞主機環境數據 (主要區塊) -->
-        <div class="card" style="border-left:4px solid var(--accent-color); display:flex; flex-direction:column; justify-content:space-between; min-height:300px;">
+    <!-- ============================================== -->
+    <!-- TAB 1: 首頁 / 模式 (保留原本的 Blynk 控制) -->
+    <!-- ============================================== -->
+    <div id="smart-tab-home" class="smart-tab-content active" style="animation: fadeIn 0.3s ease;">
+        <!-- 頂部中樞狀態與連線橫幅 -->
+        <div id="smart-status-banner" style="
+            display: flex; align-items: center; gap: 16px;
+            background: linear-gradient(135deg, rgba(20, 20, 35, 0.9), rgba(13, 17, 23, 0.95));
+            border: 1px solid #30363d; border-left: 4px solid var(--accent-color);
+            border-radius: 12px; padding: 1.2rem 1.8rem; margin-bottom: 2rem;
+            position: relative; overflow: hidden;
+        ">
+            <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px;
+                background: radial-gradient(circle, var(--accent-glow), transparent);
+                border-radius:50%; pointer-events:none;"></div>
+            <div id="smart-blynk-dot" class="status-dot online pulse" style="background:#666; flex-shrink:0; transition:0.3s; width:12px; height:12px;"></div>
             <div>
-                <div class="card-title" style="font-size:1.05rem; margin-bottom:0.5rem; justify-content:space-between;">
-                    <span>🌡️ 中樞主機環境數據</span>
-                    <span style="font-size:0.65rem; background:rgba(88,166,255,0.15); color:var(--accent-color);
-                        border:1px solid rgba(88,166,255,0.4); border-radius:10px; padding:2px 8px; font-weight:800;">ESP32 ACTIVE</span>
+                <div style="font-size:1rem; font-weight:900; letter-spacing:0.5px;">
+                    🏡 智慧宅控中樞系統 — 運作中
                 </div>
-                <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:1.5rem; font-weight:700;">
-                    讀取自實體房間之 DHT11 / DHT22 溫濕度感測器數據
+                <div style="font-size:0.72rem; color:var(--text-muted); margin-top:3px; font-weight:700;">
+                    對接 ESP32 開發板與 Blynk IoT 雲端伺服器
                 </div>
             </div>
-
-            <!-- 環境數據卡片展示格 -->
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; flex:1; align-items:center;">
-                <!-- 溫度卡 -->
-                <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.5rem; display:flex; align-items:center; gap:20px; transition:0.2s;" onmouseover="this.style.borderColor='var(--accent-color)'" onmouseout="this.style.borderColor='#30363d'">
-                    <div style="font-size:2.5rem; filter:drop-shadow(0 0 10px rgba(242,170,31,0.2));">🌡️</div>
-                    <div>
-                        <div style="font-size:0.7rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">實時房間溫度</div>
-                        <div id="smart-sensor-temp" style="font-size:2rem; font-weight:900; color:var(--text-main); margin-top:4px;">--°C</div>
-                    </div>
-                </div>
-
-                <!-- 濕度卡 -->
-                <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.5rem; display:flex; align-items:center; gap:20px; transition:0.2s;" onmouseover="this.style.borderColor='var(--accent-color)'" onmouseout="this.style.borderColor='#30363d'">
-                    <div style="font-size:2.5rem; filter:drop-shadow(0 0 10px rgba(88,166,255,0.2));">💧</div>
-                    <div>
-                        <div style="font-size:0.7rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">相對環境濕度</div>
-                        <div id="smart-sensor-humid" style="font-size:2rem; font-weight:900; color:var(--text-main); margin-top:4px;">--%</div>
-                    </div>
-                </div>
+            <div style="margin-left:auto; font-size:0.75rem; color:var(--text-muted); font-weight:700;">
+                數據同步：<span id="smart-last-update">--:--:--</span>
             </div>
-
-            <!-- 環境分析資訊列 -->
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.15); border:1px solid #30363d; border-radius:8px; padding:12px 18px; margin-top:1.5rem; font-size:0.8rem;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="color:var(--text-muted);">計算體感溫度：</span>
-                    <strong id="smart-feels-temp" style="color:var(--accent-color); font-weight:800;">--°C</strong>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="color:var(--text-muted);">環境舒適評估：</span>
-                    <span id="smart-comfort-status" style="
-                        background:rgba(46,204,113,0.15); color:#2ecc71;
-                        padding:2px 10px; border-radius:12px; font-weight:800; font-size:0.72rem;
-                    ">評估中</span>
-                </div>
-            </div>
+            <button class="btn btn-outline" style="padding:6px 14px; font-size:0.78rem; flex-shrink:0;"
+                onclick="loadSmart()">↺ 刷新數據</button>
         </div>
 
-        <!-- 右欄：Blynk / ESP32 硬體與雲端連線指標 -->
-        <div class="card" style="border-left:4px solid #9b59b6; display:flex; flex-direction:column; justify-content:space-between; min-height:300px;">
-            <div>
-                <div class="card-title" style="font-size:1.05rem; margin-bottom:1.2rem;">
-                    <span>⚙️ Blynk API 硬體雲端對接</span>
-                </div>
-                
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    <div class="smart-info-row">
-                        <span class="smart-label">通訊協定</span>
-                        <span class="smart-value">HTTPS GET API</span>
-                    </div>
-                    <div class="smart-info-row">
-                        <span class="smart-label">硬體單元</span>
-                        <span class="smart-value">ESP-32S 開發板</span>
-                    </div>
-                    <div class="smart-info-row">
-                        <span class="smart-label">雲端平台</span>
-                        <span class="smart-value" style="color:#f1c40f;">Blynk IoT Cloud</span>
-                    </div>
-                    <div class="smart-info-row">
-                        <span class="smart-label">感測核心</span>
-                        <span class="smart-value">DHT11 / DHT22 模組</span>
-                    </div>
-                    <div class="smart-info-row">
-                        <span class="smart-label">數據更新週期</span>
-                        <span class="smart-value">5 秒 / 次</span>
-                    </div>
-                </div>
-            </div>
-
-            <div style="border-top:1px solid var(--border-color); padding-top:1rem; margin-top:1rem; text-align:center;">
-                <div style="font-size:0.65rem; color:var(--text-muted); font-weight:800; margin-bottom:5px; text-transform:uppercase;">
-                    Blynk 伺服器回應狀態
-                </div>
-                <div style="font-size:0.8rem; font-weight:800; color:var(--success-color);" id="smart-blynk-status">
-                    ● 連線正常 (CONNECTED)
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 下方區塊：智慧設備控制面板 (以電腦開機繼電器為背景，輔以家電模擬控制開關) -->
-    <div class="card" style="border-left:4px solid #2ecc71;">
-        <div class="card-title" style="font-size:1.05rem; margin-bottom:1.5rem;">
-            <span>💻 實體與模擬設備控制中心</span>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.5rem;">
+        <!-- 主要區塊：中樞主機環境數據 (雙欄佈局) -->
+        <div style="display:grid; grid-template-columns: 3fr 2fr; gap:1.8rem; margin-bottom:1.8rem;">
             
-            <!-- 實體電腦開機控制 (對應 Relay 實體硬體) -->
-            <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.2rem; display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
+            <!-- 左欄：中樞主機環境數據 (主要區塊) -->
+            <div class="card" style="border-left:4px solid var(--accent-color); display:flex; flex-direction:column; justify-content:space-between; min-height:300px;">
                 <div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <span style="font-size:0.82rem; font-weight:800;">實體電腦電源控制</span>
-                        <span class="status-badge" style="background:rgba(46,204,113,0.15); color:#2ecc71; border:1px solid rgba(46,204,113,0.3); font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800;">ONLINE</span>
+                    <div class="card-title" style="font-size:1.05rem; margin-bottom:0.5rem; justify-content:space-between;">
+                        <span>🌡️ 中樞主機環境數據</span>
+                        <span style="font-size:0.65rem; background:rgba(88,166,255,0.15); color:var(--accent-color);
+                            border:1px solid rgba(88,166,255,0.4); border-radius:10px; padding:2px 8px; font-weight:800;">ESP32 ACTIVE</span>
                     </div>
-                    <div style="font-size:0.65rem; color:var(--text-muted); line-height:1.4;">
-                        透過 ESP32 繼電器點接主機板 PWR 接腳，實現實體電腦開機。
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:1.5rem; font-weight:700;">
+                        讀取自實體房間之 DHT11 / DHT22 溫濕度感測器數據
                     </div>
                 </div>
+
+                <!-- 環境數據卡片展示格 -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; flex:1; align-items:center;">
+                    <!-- 溫度卡 -->
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.5rem; display:flex; align-items:center; gap:20px; transition:0.2s;" onmouseover="this.style.borderColor='var(--accent-color)'" onmouseout="this.style.borderColor='#30363d'">
+                        <div style="font-size:2.5rem; filter:drop-shadow(0 0 10px rgba(242,170,31,0.2));">🌡️</div>
+                        <div>
+                            <div style="font-size:0.7rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">實時房間溫度</div>
+                            <div id="smart-sensor-temp" style="font-size:2rem; font-weight:900; color:var(--text-main); margin-top:4px;">--°C</div>
+                        </div>
+                    </div>
+
+                    <!-- 濕度卡 -->
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.5rem; display:flex; align-items:center; gap:20px; transition:0.2s;" onmouseover="this.style.borderColor='var(--accent-color)'" onmouseout="this.style.borderColor='#30363d'">
+                        <div style="font-size:2.5rem; filter:drop-shadow(0 0 10px rgba(88,166,255,0.2));">💧</div>
+                        <div>
+                            <div style="font-size:0.7rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">相對環境濕度</div>
+                            <div id="smart-sensor-humid" style="font-size:2rem; font-weight:900; color:var(--text-main); margin-top:4px;">--%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 環境分析資訊列 -->
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.15); border:1px solid #30363d; border-radius:8px; padding:12px 18px; margin-top:1.5rem; font-size:0.8rem;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:var(--text-muted);">計算體感溫度：</span>
+                        <strong id="smart-feels-temp" style="color:var(--accent-color); font-weight:800;">--°C</strong>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:var(--text-muted);">環境舒適評估：</span>
+                        <span id="smart-comfort-status" style="
+                            background:rgba(46,204,113,0.15); color:#2ecc71;
+                            padding:2px 10px; border-radius:12px; font-weight:800; font-size:0.72rem;
+                        ">評估中</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右欄：Blynk / ESP32 硬體與雲端連線指標 -->
+            <div class="card" style="border-left:4px solid #9b59b6; display:flex; flex-direction:column; justify-content:space-between; min-height:300px;">
+                <div>
+                    <div class="card-title" style="font-size:1.05rem; margin-bottom:1.2rem;">
+                        <span>⚙️ Blynk API 硬體雲端對接</span>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <div class="smart-info-row">
+                            <span class="smart-label">通訊協定</span>
+                            <span class="smart-value">HTTPS GET API</span>
+                        </div>
+                        <div class="smart-info-row">
+                            <span class="smart-label">硬體單元</span>
+                            <span class="smart-value">ESP-32S 開發板</span>
+                        </div>
+                        <div class="smart-info-row">
+                            <span class="smart-label">雲端平台</span>
+                            <span class="smart-value" style="color:#f1c40f;">Blynk IoT Cloud</span>
+                        </div>
+                        <div class="smart-info-row">
+                            <span class="smart-label">感測核心</span>
+                            <span class="smart-value">DHT11 / DHT22 模組</span>
+                        </div>
+                        <div class="smart-info-row">
+                            <span class="smart-label">偏好模式</span>
+                            <span class="smart-value" style="color:var(--accent-color);">Default Mode</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="border-top:1px solid var(--border-color); padding-top:1rem; margin-top:1rem; text-align:center;">
+                    <div style="font-size:0.65rem; color:var(--text-muted); font-weight:800; margin-bottom:5px; text-transform:uppercase;">
+                        Blynk 伺服器回應狀態
+                    </div>
+                    <div style="font-size:0.8rem; font-weight:800; color:var(--success-color);" id="smart-blynk-status">
+                        ● 連線正常 (CONNECTED)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 下方區塊：智慧設備控制面板 (實體繼電器與模擬) -->
+        <div class="card" style="border-left:4px solid #2ecc71;">
+            <div class="card-title" style="font-size:1.05rem; margin-bottom:1.5rem;">
+                <span>💻 實體與模擬設備控制中心</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.5rem;">
                 
-                <div style="margin-top:1.2rem;">
-                    <button class="btn btn-primary" id="btn-pc-power" style="width:100%; height:45px; font-weight:800; font-size:0.82rem;" onclick="triggerPCPower()">
-                        ⚡ 點擊發送開機脈衝
-                    </button>
+                <!-- 實體電腦開機控制 (對應 Relay 實體硬體) -->
+                <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.2rem; display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.82rem; font-weight:800;">實體電腦電源控制</span>
+                            <span class="status-badge" style="background:rgba(46,204,113,0.15); color:#2ecc71; border:1px solid rgba(46,204,113,0.3); font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800;">ONLINE</span>
+                        </div>
+                        <div style="font-size:0.65rem; color:var(--text-muted); line-height:1.4;">
+                            透過 ESP32 繼電器點接主機板 PWR 接腳，實現實體電腦開機。
+                        </div>
+                    </div>
+                    <div style="margin-top:1.2rem;">
+                        <button class="btn btn-primary" id="btn-pc-power" style="width:100%; height:45px; font-weight:800; font-size:0.82rem;" onclick="triggerPCPower()">
+                            ⚡ 點擊發送開機脈衝
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 智慧照明控制系統 (模擬) -->
+                <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.2rem; display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.82rem; font-weight:800;">照明控制系統</span>
+                            <span id="smart-light-status" class="status-badge" style="background:#444; color:#fff; font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800;">ALL OFF</span>
+                        </div>
+                        <div style="font-size:0.65rem; color:var(--text-muted); line-height:1.4;">主機環境附屬模擬照明設備，可進行開關狀態微切換。</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:1.2rem;">
+                        <button class="btn btn-outline" id="btn-smart-light-1" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="toggleSmartLight(1)">💡 客廳主燈</button>
+                        <button class="btn btn-outline" id="btn-smart-light-2" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="toggleSmartLight(2)">🛋️ 氛圍燈</button>
+                    </div>
+                </div>
+
+                <!-- 自動排風排濕控制 (模擬) -->
+                <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.2rem; display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.82rem; font-weight:800;">中樞自動排風系統</span>
+                            <span id="smart-fan-status" class="status-badge" style="background:rgba(242,170,31,0.15); color:#f2aa1f; border:1px solid rgba(242,170,31,0.3); font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800;">AUTO MODE</span>
+                        </div>
+                        <div style="font-size:0.65rem; color:var(--text-muted); line-height:1.4;">當濕度超過 60% 時，中樞排風系統將自動啟動以保護硬體。</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:1.2rem;">
+                        <button class="btn btn-outline" id="btn-smart-fan-low" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="setSmartFan('LOW')">🌀 低速排風</button>
+                        <button class="btn btn-outline" id="btn-smart-fan-high" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="setSmartFan('HIGH')">🌪️ 強力排風</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 2: 歷史數據 (Chart.js 折線圖) -->
+    <!-- ============================================== -->
+    <div id="smart-tab-data" class="smart-tab-content" style="display:none; animation: fadeIn 0.3s ease;">
+        
+        <!-- 設備與時間選擇器 -->
+        <div class="card" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem;">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <label style="font-weight: 800; font-size: 0.85rem;">設備編號：</label>
+                <select id="smart-device-select" class="t-input" style="width: 250px; padding: 6px 12px; border-radius: 8px;">
+                    <option value="m12345678901">M系列: m12345678901 (主客廳)</option>
+                    <option value="m12345678902">M系列: m12345678902 (機房)</option>
+                    <option value="p12345678901">P系列: p12345678901 (總電源)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" style="padding: 6px 15px; border-radius: 8px; font-weight:800;" onclick="updateSmartCharts('3d')">3 天</button>
+                <button class="btn btn-outline" style="padding: 6px 15px; border-radius: 8px; font-weight:800;" onclick="updateSmartCharts('7d')">7 天</button>
+            </div>
+        </div>
+
+        <!-- 圖表網格佈局 -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="card" style="padding: 1rem;">
+                <div class="card-title" style="font-size:0.9rem; margin-bottom: 10px;">溫度變化 (攝氏)</div>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="chart-temp"></canvas>
+                </div>
+            </div>
+            <div class="card" style="padding: 1rem;">
+                <div class="card-title" style="font-size:0.9rem; margin-bottom: 10px;">濕度變化 (%)</div>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="chart-humid"></canvas>
+                </div>
+            </div>
+            <div class="card" style="padding: 1rem;">
+                <div class="card-title" style="font-size:0.9rem; margin-bottom: 10px;">CO2 二氧化碳 (ppm)</div>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="chart-co2"></canvas>
+                </div>
+            </div>
+            <div class="card" style="padding: 1rem;">
+                <div class="card-title" style="font-size:0.9rem; margin-bottom: 10px;">有害氣體 TVOC (ppm)</div>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="chart-tvoc"></canvas>
+                </div>
+            </div>
+            <div class="card" style="padding: 1rem; grid-column: span 2;">
+                <div class="card-title" style="font-size:0.9rem; margin-bottom: 10px;">總電流負載 (A)</div>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="chart-current"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 3: 綁定裝置 (詳細數據與新增) -->
+    <!-- ============================================== -->
+    <div id="smart-tab-devices" class="smart-tab-content" style="display:none; animation: fadeIn 0.3s ease;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.8rem;">
+            
+            <!-- 左側：已綁定裝置詳細狀態 -->
+            <div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-main);">M 系列環境感測</h3>
+                <div class="card" style="margin-bottom: 1.5rem; border-top: 4px solid var(--accent-color);">
+                    <div style="font-size:1.1rem; font-weight:900; color:var(--accent-color); margin-bottom:1rem;">m12345678901</div>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <div class="smart-info-row"><span class="smart-label">攝氏 (°C)</span><span class="smart-value">27.1</span></div>
+                        <div class="smart-info-row"><span class="smart-label">華氏 (°F)</span><span class="smart-value">80.8</span></div>
+                        <div class="smart-info-row"><span class="smart-label">濕度 (%)</span><span class="smart-value">63.7</span></div>
+                        <div class="smart-info-row"><span class="smart-label">TVOC (ppm)</span><span class="smart-value">183.0</span></div>
+                        <div class="smart-info-row"><span class="smart-label">CO2 (ppm)</span><span class="smart-value">819.0</span></div>
+                        <div class="smart-info-row"><span class="smart-label">有害氣體 (ppm)</span><span class="smart-value">867.0</span></div>
+                        <div class="smart-info-row"><span class="smart-label">天氣</span><span class="smart-value">晴/陰天</span></div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-main); margin-top: 2rem;">P 系列電源感測</h3>
+                <div class="card" style="border-top: 4px solid #e74c3c;">
+                    <div style="font-size:1.1rem; font-weight:900; color:#e74c3c; margin-bottom:1rem;">p12345678901</div>
+                    <div class="smart-info-row"><span class="smart-label">電流負載 (A)</span><span class="smart-value">10636.7</span></div>
                 </div>
             </div>
 
-            <!-- 智慧照明控制系統 (模擬) -->
-            <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.2rem; display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
-                <div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <span style="font-size:0.82rem; font-weight:800;">照明控制系統</span>
-                        <span id="smart-light-status" class="status-badge" style="background:#444; color:#fff; font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800;">ALL OFF</span>
+            <!-- 右側：新增產品編號 -->
+            <div>
+                <div class="card" style="position: sticky; top: 20px;">
+                    <div class="card-title" style="font-size:1.05rem; margin-bottom:1rem;">📝 產品編號綁定</div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+                        <input type="text" class="t-input" placeholder="請輸入產品編號" style="flex:1;">
+                        <button class="btn btn-primary" style="padding: 0 15px;">➤</button>
                     </div>
-                    <div style="font-size:0.65rem; color:var(--text-muted); line-height:1.4;">
-                        主機環境附屬模擬照明設備，可進行開關狀態微切換。
+                    
+                    <div style="font-size:0.8rem; font-weight:800; color:var(--text-muted); margin-bottom:10px;">已新增的產品編號：</div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="padding: 12px; border: 1px solid var(--accent-color); border-radius: 8px; text-align: center; font-weight: 900; background: rgba(88,166,255,0.05);">m12345678901</div>
+                        <div style="padding: 12px; border: 1px solid #30363d; border-radius: 8px; text-align: center; font-weight: 900;">m12345678902</div>
+                        <div style="padding: 12px; border: 1px solid #30363d; border-radius: 8px; text-align: center; font-weight: 900;">p12345678901</div>
                     </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:1.2rem;">
-                    <button class="btn btn-outline" id="btn-smart-light-1" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="toggleSmartLight(1)">
-                        💡 客廳主燈
-                    </button>
-                    <button class="btn btn-outline" id="btn-smart-light-2" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="toggleSmartLight(2)">
-                        🛋️ 氛圍燈
-                    </button>
                 </div>
             </div>
-
-            <!-- 自動排風排濕控制 (模擬，依據濕度提供建議) -->
-            <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.2rem; display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
-                <div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <span style="font-size:0.82rem; font-weight:800;">中樞自動排風系統</span>
-                        <span id="smart-fan-status" class="status-badge" style="background:rgba(242,170,31,0.15); color:#f2aa1f; border:1px solid rgba(242,170,31,0.3); font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800;">AUTO MODE</span>
-                    </div>
-                    <div style="font-size:0.65rem; color:var(--text-muted); line-height:1.4;">
-                        當濕度超過 60% 時，中樞排風系統將自動啟動以保護硬體。
-                    </div>
-                </div>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:1.2rem;">
-                    <button class="btn btn-outline" id="btn-smart-fan-low" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="setSmartFan('LOW')">
-                        🌀 低速排風
-                    </button>
-                    <button class="btn btn-outline" id="btn-smart-fan-high" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="setSmartFan('HIGH')">
-                        🌪️ 強力排風
-                    </button>
-                </div>
-            </div>
-
+            
         </div>
     </div>
 

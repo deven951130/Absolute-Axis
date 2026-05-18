@@ -289,6 +289,136 @@ document.addEventListener('view-switched', (e) => {
     }
 });
 
+// ==========================================
+// 內部頁籤切換邏輯 (首頁 / 數據 / 裝置)
+// ==========================================
+window.switchSmartTab = function(tabId) {
+    // 隱藏所有內容
+    document.querySelectorAll('.smart-tab-content').forEach(el => el.style.display = 'none');
+    // 取消所有按鈕的 active
+    document.querySelectorAll('.smart-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = '';
+        btn.style.color = '';
+    });
+    
+    // 顯示目標內容
+    document.getElementById(`smart-tab-${tabId}`).style.display = 'block';
+    
+    // 設定目標按鈕 active 樣式
+    const activeBtn = document.querySelector(`.smart-tab-btn[data-tab="${tabId}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.background = 'var(--accent-color)';
+        activeBtn.style.color = '#fff';
+    }
+
+    // 若切換到數據頁，初始化圖表
+    if (tabId === 'data' && !window._smartChartsInitialized) {
+        initSmartCharts();
+    }
+};
+
+// ==========================================
+// 圖表繪製與模擬數據邏輯 (Chart.js)
+// ==========================================
+let _smartCharts = {};
+window._smartChartsInitialized = false;
+
+function generateMockData(count, min, max, base) {
+    let data = [];
+    let current = base;
+    for (let i = 0; i < count; i++) {
+        current += (Math.random() - 0.5) * ((max - min) * 0.1);
+        if (current > max) current = max;
+        if (current < min) current = min;
+        data.push(current.toFixed(2));
+    }
+    return data;
+}
+
+function generateLabels(count, intervalMinutes) {
+    let labels = [];
+    let now = new Date();
+    for (let i = count - 1; i >= 0; i--) {
+        let t = new Date(now.getTime() - (i * intervalMinutes * 60000));
+        labels.push(t.toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit'}));
+    }
+    return labels;
+}
+
+window.initSmartCharts = function() {
+    if (typeof Chart === 'undefined') {
+        console.error("Chart.js not loaded!");
+        return;
+    }
+
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'var(--text-muted)' } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'var(--text-muted)' } }
+        },
+        elements: { point: { radius: 0 } },
+        interaction: { intersect: false, mode: 'index' },
+    };
+
+    const count = 30;
+    const labels = generateLabels(count, 30); // 每 30 分鐘一個點
+
+    const createChart = (canvasId, label, color, min, max, base) => {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return null;
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: generateMockData(count, min, max, base),
+                    borderColor: color,
+                    backgroundColor: color + '20',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: commonOptions
+        });
+    };
+
+    _smartCharts['temp'] = createChart('chart-temp', '溫度', '#e74c3c', 20, 35, 27);
+    _smartCharts['humid'] = createChart('chart-humid', '濕度', '#3498db', 40, 80, 60);
+    _smartCharts['co2'] = createChart('chart-co2', 'CO2', '#f1c40f', 400, 1000, 600);
+    _smartCharts['tvoc'] = createChart('chart-tvoc', 'TVOC', '#9b59b6', 50, 500, 150);
+    _smartCharts['current'] = createChart('chart-current', '電流', '#2ecc71', 0, 15000, 10000);
+
+    window._smartChartsInitialized = true;
+};
+
+window.updateSmartCharts = function(days) {
+    if (!window._smartChartsInitialized) return;
+    const count = days === '3d' ? 30 : 50;
+    const interval = days === '3d' ? 30 : 60; // 30 min vs 1 hour
+    const labels = generateLabels(count, interval);
+
+    const updateSingleChart = (key, min, max, base) => {
+        if (_smartCharts[key]) {
+            _smartCharts[key].data.labels = labels;
+            _smartCharts[key].data.datasets[0].data = generateMockData(count, min, max, base);
+            _smartCharts[key].update();
+        }
+    };
+
+    updateSingleChart('temp', 20, 35, 27);
+    updateSingleChart('humid', 40, 80, 60);
+    updateSingleChart('co2', 400, 1000, 600);
+    updateSingleChart('tvoc', 50, 500, 150);
+    updateSingleChart('current', 0, 15000, 10000);
+};
+
 // 注入專用樣式
 if (!document.getElementById('smart-style')) {
     const style = document.createElement('style');

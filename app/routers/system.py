@@ -16,12 +16,32 @@ from app.database import get_db, AuditLog
 
 router = APIRouter(tags=["system"])
 
-# --- 全域流量紀錄器 (用於計算差值速率) ---
-NET_STATE = {
-    "last_recv": psutil.net_io_counters().bytes_recv,
-    "last_sent": psutil.net_io_counters().bytes_sent,
-    "last_time": time.time()
+# --- 網際網路測速器 (每5分鐘更新) ---
+import threading
+import speedtest
+
+SPEEDTEST_STATE = {
+    "last_check": 0,
+    "up_mbps": 0.0,
+    "down_mbps": 0.0,
+    "running": False
 }
+
+def perform_speedtest():
+    global SPEEDTEST_STATE
+    try:
+        SPEEDTEST_STATE["running"] = True
+        st = speedtest.Speedtest()
+        st.get_best_server()
+        down = st.download() / 1000000.0  # 轉換為 Mbps
+        up = st.upload() / 1000000.0      # 轉換為 Mbps
+        SPEEDTEST_STATE["down_mbps"] = round(down, 2)
+        SPEEDTEST_STATE["up_mbps"] = round(up, 2)
+        SPEEDTEST_STATE["last_check"] = time.time()
+    except Exception as e:
+        print(f"Speedtest Error: {e}")
+    finally:
+        SPEEDTEST_STATE["running"] = False
 
 # --- GitHub 智能監聽器 (60秒緩存防止封鎖) ---
 GITHUB_STATE = {
@@ -79,28 +99,18 @@ def check_github_status():
 
 @router.get("/api/system_status")
 def get_status(user: dict = Depends(get_current_user_obj)):
-    global NET_STATE
+    global SPEEDTEST_STATE
     
     # 磁碟真實數據
     sys_usage = shutil.disk_usage(SYS_ROOT)
     nas_usage = shutil.disk_usage(NAS_ROOT)
     
-    # 真實頻寬差值計算 (MB/s)
     now = time.time()
-    counters = psutil.net_io_counters()
-    diff_t = now - NET_STATE["last_time"]
     
-    # 避免除以零或間隔太短
-    if diff_t < 0.1:
-        up_speed = 0
-        down_speed = 0
-    else:
-        up_speed = (counters.bytes_sent - NET_STATE["last_sent"]) / diff_t / (1024 * 1024)
-        down_speed = (counters.bytes_recv - NET_STATE["last_recv"]) / diff_t / (1024 * 1024)
-    
-    # 更新狀態 (只在有合理間隔時更新)
-    if diff_t >= 0.5:
-        NET_STATE.update({"last_recv": counters.bytes_recv, "last_sent": counters.bytes_sent, "last_time": now})
+    # 背景觸發測速 (每 300 秒)
+    if not SPEEDTEST_STATE["running"] and (now - SPEEDTEST_STATE["last_check"] > 300):
+        SPEEDTEST_STATE["running"] = True
+        threading.Thread(target=perform_speedtest, daemon=True).start()
     
     temps = psutil.sensors_temperatures()
     cpu_temp = 0
@@ -168,8 +178,8 @@ def get_status(user: dict = Depends(get_current_user_obj)):
             "health": "Healthy", "temp": round(cpu_temp - 5)
         },
         "bandwidth": {
-            "up": f"{max(0, up_speed):.2f} MB/s",
-            "down": f"{max(0, down_speed):.2f} MB/s"
+            "up": f"{SPEEDTEST_STATE['up_mbps']:.2f} Mbps" if SPEEDTEST_STATE['last_check'] > 0 else "測速中...",
+            "down": f"{SPEEDTEST_STATE['down_mbps']:.2f} Mbps" if SPEEDTEST_STATE['last_check'] > 0 else "測速中..."
         },
         "sensors": {"temp": room_temp, "humid": room_humid}, 
         "minecraft": {

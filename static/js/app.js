@@ -30,8 +30,8 @@ const App = {
     },
 
     async loadComponent(url, target) {
-        // 強制提升版本號至 v40 以徹底打破組件緩存
-        const res = await fetch(`${url}?v=40`);
+        // 強制提升版本號至 v45 以徹底打破組件緩存
+        const res = await fetch(`${url}?v=45`);
         if (!res.ok) throw new Error(`Failed to load component: ${url}`);
         const html = await res.text();
         const container = (target === 'body') ? document.body : document.querySelector(target);
