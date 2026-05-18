@@ -11,4 +11,4 @@ docker==7.0.0
 proxmoxer==2.1.0
 requests==2.32.3
 paramiko
-
+speedtest-cli
