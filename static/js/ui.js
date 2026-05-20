@@ -51,6 +51,7 @@ function switchView(v) {
     if (n) n.classList.add('active');
 
     const titles = {
+        'intro': '服務介紹',
         'dashboard': '戰情總覽',
         'virtual': '虛擬化中心',
         'cloud': '私有雲儲存',
@@ -159,3 +160,18 @@ setInterval(() => {
     const clock = document.getElementById('clock');
     if (clock) clock.innerText = new Date().toLocaleTimeString('en-GB');
 }, 1000);
+
+// Login overlay controls
+window.showLoginOverlay = function() {
+    const loginOverlay = document.getElementById('login-overlay');
+    if (loginOverlay) {
+        loginOverlay.style.display = 'flex';
+        const userField = document.getElementById('login-user');
+        if (userField) userField.focus();
+    }
+};
+
+window.hideLoginOverlay = function() {
+    const loginOverlay = document.getElementById('login-overlay');
+    if (loginOverlay) loginOverlay.style.display = 'none';
+};

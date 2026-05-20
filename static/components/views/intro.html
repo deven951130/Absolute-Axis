@@ -1,0 +1,119 @@
+<div id="view-intro" class="view-section">
+    <!-- 頂部獨立導覽列 -->
+    <header class="intro-navbar">
+        <div class="intro-brand">
+            <div class="intro-logo-box">
+                <img src="/logo.jpg" alt="Absolute Axis Logo">
+            </div>
+            <span>ABSOLUTE AXIS</span>
+        </div>
+        <div class="intro-nav-actions">
+            <button class="btn btn-outline" onclick="toggleTheme()" id="intro-theme-btn" style="width: 45px; height: 45px; border-radius: 50%; padding: 0;">☀️</button>
+            <button class="btn btn-primary" onclick="showLoginOverlay()" style="border-radius: 20px; font-weight: 800; padding: 10px 24px;">系統登入</button>
+        </div>
+    </header>
+
+    <!-- 英雄宣傳區 -->
+    <section class="intro-hero">
+        <div class="hero-content">
+            <div class="hero-tag">NEXT-GEN HOME SERVER CONTROL</div>
+            <h1 class="hero-title">絕對軸心 <span>ABSOLUTE AXIS</span></h1>
+            <p class="hero-desc">
+                打造您專屬的智能伺服器與家庭自動化中樞。整合虛擬化、私有雲、智慧物聯網與多維遊戲伺服器，讓控制與監測盡在彈指之間。
+            </p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary" onclick="showLoginOverlay()" style="padding: 14px 32px; font-size: 1rem; border-radius: 30px; box-shadow: 0 0 20px var(--accent-glow);">
+                    立即進入主控台
+                </button>
+                <a href="#features-anchor" class="btn btn-outline" style="padding: 14px 32px; font-size: 1rem; border-radius: 30px; text-decoration: none;">
+                    了解核心功能
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 錨點 -->
+    <div id="features-anchor"></div>
+
+    <!-- 核心功能介紹區 -->
+    <section class="intro-features">
+        <h2 class="section-title">核心功能模組</h2>
+        <p class="section-subtitle">多元化、模組化設計，提供全方位的系統掌控力</p>
+        
+        <div class="intro-features-grid">
+            <!-- 戰情總覽 -->
+            <div class="intro-feature-card" onclick="showLoginOverlay()">
+                <div class="feature-icon">🏘️</div>
+                <h3>戰情總覽</h3>
+                <p>即時監測硬體狀態、頻寬流量與 Docker 容器狀態，掌握第一手系統脈搏。</p>
+                <div class="feature-link">探索模組 &rarr;</div>
+            </div>
+
+            <!-- 虛擬化中心 -->
+            <div class="intro-feature-card" onclick="showLoginOverlay()">
+                <div class="feature-icon">🖥️</div>
+                <h3>虛擬化中心</h3>
+                <p>深度整合 Proxmox VE 與 Docker，即時查看宿主機資源與虛擬機器狀態。</p>
+                <div class="feature-link">探索模組 &rarr;</div>
+            </div>
+
+            <!-- 智慧宅控 -->
+            <div class="intro-feature-card" onclick="showLoginOverlay()">
+                <div class="feature-icon">🏡</div>
+                <h3>智慧宅控</h3>
+                <p>介接 Blynk IoT 與實體 ESP32，實時讀取溫濕度並支援物理繼電器控制與照明模擬。</p>
+                <div class="feature-link">探索模組 &rarr;</div>
+            </div>
+
+            <!-- 私有雲儲存 -->
+            <div class="intro-feature-card" onclick="showLoginOverlay()">
+                <div class="feature-icon">☁️</div>
+                <h3>私有雲儲存</h3>
+                <p>便捷的個人 NAS 檔案瀏覽、下載、共用與上傳，支援自定義配額上限。</p>
+                <div class="feature-link">探索模組 &rarr;</div>
+            </div>
+
+            <!-- 多重宇宙 -->
+            <div class="intro-feature-card" onclick="showLoginOverlay()">
+                <div class="feature-icon">🌌</div>
+                <h3>多重宇宙</h3>
+                <p>管理專屬 Minecraft 伺服器，查看連線狀態、系統資源，支援即時指令控制台。</p>
+                <div class="feature-link">探索模組 &rarr;</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 伺服器即時資訊預覽 -->
+    <section class="intro-status">
+        <div class="status-box">
+            <div class="status-info">
+                <h2>系統安全與連線狀態</h2>
+                <p>絕對軸心伺服器運作於零信任網路隧道中，保障存取的隱私與安全性。</p>
+                <div class="status-pills">
+                    <div class="status-pill"><span class="status-dot online pulse"></span> Tunnel Active</div>
+                    <div class="status-pill">SSL Encrypted</div>
+                    <div class="status-pill">JWT Authenticated</div>
+                </div>
+            </div>
+            <div class="status-metrics">
+                <div class="metric-item">
+                    <span class="metric-num">99.9%</span>
+                    <span class="metric-label">系統可用性</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-num">256-bit</span>
+                    <span class="metric-label">資料加密度</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-num">&lt; 15 ms</span>
+                    <span class="metric-label">控制通訊延遲</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 頁尾 -->
+    <footer class="intro-footer">
+        <p>&copy; 2026 Absolute Axis Server. All rights reserved.</p>
+    </footer>
+</div>

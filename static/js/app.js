@@ -4,7 +4,7 @@
  */
 const App = {
     components: {
-        views: ['dashboard', 'virtual', 'smart', 'cloud', 'nas-mgnt', 'metrics', 'admin', 'settings', 'placeholder', 'multiverse'],
+        views: ['intro', 'dashboard', 'virtual', 'smart', 'cloud', 'nas-mgnt', 'metrics', 'admin', 'settings', 'placeholder', 'multiverse'],
         modals: ['profile', 'avatar', 'share', 'preview', 'mkdir', 'deploy-vm', 'admin-edit', 'create-user'],
         overlays: ['popover', 'context-menu']
     },
@@ -49,6 +49,7 @@ const App = {
         // Auth & Navigation
         const token = localStorage.getItem('axis_token');
         if (token) {
+            document.body.classList.remove('not-logged-in');
             const loginOverlay = document.getElementById('login-overlay');
             if (loginOverlay) loginOverlay.style.display = 'none';
             
@@ -66,9 +67,10 @@ const App = {
             document.getElementById('pop-role').innerText = localStorage.getItem('axis_role') || "Member";
             
             const savedView = localStorage.getItem('axis_current_view') || 'dashboard';
-            if (typeof switchView === 'function') switchView(savedView);
+            const finalView = (savedView === 'intro') ? 'dashboard' : savedView;
+            if (typeof switchView === 'function') switchView(finalView);
             
-            if (typeof initCharts === 'function' && savedView === 'dashboard') initCharts();
+            if (typeof initCharts === 'function' && finalView === 'dashboard') initCharts();
             
             // Start Metrics Heartbeat (Background)
             if (typeof startPolling === 'function') {
@@ -83,8 +85,11 @@ const App = {
                 if (navA) navA.style.display = 'block';
             }
         } else {
+            document.body.classList.add('not-logged-in');
             const loginOverlay = document.getElementById('login-overlay');
-            if (loginOverlay) loginOverlay.style.display = 'flex';
+            if (loginOverlay) loginOverlay.style.display = 'none';
+            
+            if (typeof switchView === 'function') switchView('intro');
         }
         
         console.log("--- ABSOLUTE AXIS READY ---");

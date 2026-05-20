@@ -12,8 +12,9 @@
 <body>
 
     <!-- 登入驗證層 (核心組件) -->
-    <div id="login-overlay" class="login-overlay">
-        <div style="background:#161b22;width:380px;padding:3.5rem;border-radius:18px;border:1px solid #30363d;text-align:center;">
+    <div id="login-overlay" class="login-overlay" onclick="if(event.target === this) hideLoginOverlay()">
+        <div style="background:#161b22;width:380px;padding:3.5rem;border-radius:18px;border:1px solid #30363d;text-align:center;position:relative;">
+            <span onclick="hideLoginOverlay()" style="position:absolute; top:15px; right:20px; cursor:pointer; color:var(--text-muted); font-size:1.5rem; font-weight:bold; transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
             <h1 style="margin-bottom:2.5rem;font-size:2rem;color:var(--accent-color);font-weight:900;">LOGIN</h1>
             <input type="text" id="login-user" placeholder="User identity" class="t-input">
             <input type="password" id="login-pass" placeholder="Password" class="t-input" style="margin-bottom:2.5rem;">
