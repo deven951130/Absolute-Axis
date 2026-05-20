@@ -14,24 +14,25 @@ const App = {
         
         try {
             // 1. Parallel loading of all components
-            await Promise.all([
+            // 使用 allSettled 避免單一組件 404 導致整體 boot() 不執行
+            await Promise.allSettled([
                 ...this.components.views.map(v => this.loadComponent(`/static/components/views/${v}.html`, 'main')),
                 ...this.components.modals.map(m => this.loadComponent(`/static/components/modals/${m}.html`, 'body')),
                 ...this.components.overlays.map(o => this.loadComponent(`/static/components/overlays/${o}.html`, 'body'))
             ]);
 
             console.log("--- ALL COMPONENTS LOADED SUCCESSFULLY ---");
-            
-            // 2. Execute Bootloader logic
-            this.boot();
         } catch (err) {
-            console.error("Critical error during component initialization:", err);
+            console.error("Component load error (non-fatal):", err);
         }
+
+        // 2. 無論組件載入是否全部成功，都必須執行 boot()
+        this.boot();
     },
 
     async loadComponent(url, target) {
-        // 強制提升版本號至 v46 以徹底打破組件緩存
-        const res = await fetch(`${url}?v=46`);
+        // 強制提升版本號至 v47 以徹底打破組件緩存
+        const res = await fetch(`${url}?v=47`);
         if (!res.ok) throw new Error(`Failed to load component: ${url}`);
         const html = await res.text();
         const container = (target === 'body') ? document.body : document.querySelector(target);
@@ -62,9 +63,11 @@ const App = {
             const popAva = document.getElementById('pop-avatar');
             if (topAva) topAva.src = finalAva;
             if (popAva) popAva.src = finalAva;
-            
-            document.getElementById('pop-name').innerText = localStorage.getItem('axis_user');
-            document.getElementById('pop-role').innerText = localStorage.getItem('axis_role') || "Member";
+
+            const popName = document.getElementById('pop-name');
+            const popRole = document.getElementById('pop-role');
+            if (popName) popName.innerText = localStorage.getItem('axis_user');
+            if (popRole) popRole.innerText = localStorage.getItem('axis_role') || "Member";
             
             const savedView = localStorage.getItem('axis_current_view') || 'dashboard';
             const finalView = (savedView === 'intro') ? 'dashboard' : savedView;
@@ -85,11 +88,19 @@ const App = {
                 if (navA) navA.style.display = 'block';
             }
         } else {
-            document.body.classList.add('not-logged-in');
-            const loginOverlay = document.getElementById('login-overlay');
-            if (loginOverlay) loginOverlay.style.display = 'none';
-            
-            if (typeof switchView === 'function') switchView('intro');
+            // 未登入：嘗試顯示介紹首頁，若組件未載入則 fallback 至原始登入 Overlay
+            const introView = document.getElementById('view-intro');
+            if (introView) {
+                document.body.classList.add('not-logged-in');
+                const loginOverlay = document.getElementById('login-overlay');
+                if (loginOverlay) loginOverlay.style.display = 'none';
+                if (typeof switchView === 'function') switchView('intro');
+            } else {
+                // Fallback：intro.html 尚未載入，回到傳統登入 Overlay
+                document.body.classList.remove('not-logged-in');
+                const loginOverlay = document.getElementById('login-overlay');
+                if (loginOverlay) loginOverlay.style.display = 'flex';
+            }
         }
         
         console.log("--- ABSOLUTE AXIS READY ---");
