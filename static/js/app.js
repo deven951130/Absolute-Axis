@@ -4,7 +4,7 @@
  */
 const App = {
     components: {
-        views: ['intro', 'dashboard', 'virtual', 'smart', 'cloud', 'nas-mgnt', 'metrics', 'admin', 'settings', 'placeholder', 'multiverse'],
+        views: ['intro', 'pricing', 'dashboard', 'virtual', 'smart', 'cloud', 'nas-mgnt', 'metrics', 'admin', 'settings', 'placeholder', 'multiverse'],
         modals: ['profile', 'avatar', 'share', 'preview', 'mkdir', 'deploy-vm', 'admin-edit', 'create-user'],
         overlays: ['popover', 'context-menu']
     },

@@ -627,3 +627,463 @@ body.light-mode .toast {
     background: #fff;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
+
+/* ==================== 定價頁面樣式 ==================== */
+
+/* 導覽列補充：連結樣式 */
+.pricing-nav-links {
+    display: flex;
+    gap: 2.2rem;
+    align-items: center;
+}
+
+.pricing-nav-link {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+    border: none;
+    background: none;
+    padding: 0;
+}
+
+.pricing-nav-link:hover,
+.pricing-nav-link.active {
+    color: var(--accent-color);
+}
+
+/* 評語列 */
+.pricing-reviews {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    padding: 3rem 8% 2rem 8%;
+    background: var(--bg-color);
+    flex-wrap: wrap;
+}
+
+.review-item {
+    flex: 1;
+    min-width: 220px;
+    max-width: 340px;
+    text-align: center;
+    padding: 0 2rem;
+}
+
+.review-stars {
+    font-size: 1.2rem;
+    color: #f5a623;
+    letter-spacing: 3px;
+    margin-bottom: 0.8rem;
+}
+
+.review-text {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    font-style: italic;
+}
+
+.review-divider {
+    width: 1px;
+    height: 60px;
+    background: var(--border-color);
+    flex-shrink: 0;
+}
+
+/* 主標題區 */
+.pricing-hero-title {
+    text-align: center;
+    padding: 2rem 5% 1.5rem 5%;
+}
+
+.pricing-main-title {
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: var(--text-main);
+    line-height: 1.2;
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.5px;
+}
+
+.pricing-title-highlight {
+    color: var(--accent-color);
+}
+
+.pricing-subtitle {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+/* 計費切換 Tab */
+.pricing-tab-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.5rem 5% 0;
+}
+
+.pricing-tab {
+    padding: 10px 28px;
+    border-radius: 30px;
+    border: 1.5px solid var(--border-color);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pricing-tab:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.pricing-tab.active {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #0d1117;
+}
+
+.tab-badge-save {
+    background: rgba(35, 134, 54, 0.2);
+    color: #3fb950;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(35, 134, 54, 0.3);
+}
+
+.pricing-tab.active .tab-badge-save {
+    background: rgba(0, 0, 0, 0.2);
+    color: #0d1117;
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* 方案卡片區 */
+.pricing-cards-section {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 2.5rem 5%;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+/* 基礎方案卡片 */
+.plan-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: 20px;
+    padding: 2rem 2rem 2.5rem 2rem;
+    width: 300px;
+    min-width: 260px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.plan-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.plan-card.selected {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-soft), 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* 最受歡迎卡片 */
+.plan-card-popular {
+    border-color: var(--accent-color);
+}
+
+/* 終身授權卡片 */
+.plan-card-lifetime {
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(88, 166, 255, 0.05) 100%);
+}
+
+/* 最受歡迎 Badge */
+.plan-popular-badge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-color);
+    color: #0d1117;
+    font-size: 0.75rem;
+    font-weight: 900;
+    padding: 4px 18px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+/* 卡片標頭（Radio + 名稱）*/
+.plan-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.plan-radio {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--text-muted);
+    transition: all 0.2s;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.plan-radio.selected {
+    border-color: var(--accent-color);
+    background: var(--accent-color);
+}
+
+.plan-radio.selected::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    background: #0d1117;
+    border-radius: 50%;
+}
+
+.plan-name {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+/* 價格區塊 */
+.plan-price-block {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.plan-price-original {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    margin-right: 6px;
+    align-self: center;
+    display: block;
+    width: 100%;
+}
+
+.plan-price {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--text-main);
+}
+
+.plan-price-lifetime {
+    font-size: 2.2rem;
+    color: var(--accent-color);
+}
+
+.plan-price-num {
+    font-size: 2.6rem;
+}
+
+.plan-price-unit {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    align-self: flex-end;
+    padding-bottom: 4px;
+}
+
+.plan-lifetime-tag {
+    background: var(--accent-soft);
+    color: var(--accent-color);
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 8px;
+    align-self: center;
+    white-space: nowrap;
+    margin-left: 6px;
+}
+
+.plan-price-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: -0.5rem;
+}
+
+/* 功能清單 */
+.plan-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    flex: 1;
+}
+
+.plan-features li {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.plan-features li.feature-extra {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* CTA 按鈕區 */
+.pricing-cta {
+    text-align: center;
+    padding: 1rem 5% 3rem 5%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pricing-cta-btn {
+    background: var(--accent-color);
+    color: #0d1117;
+    font-size: 1.05rem;
+    font-weight: 900;
+    padding: 18px 64px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 0 30px var(--accent-glow);
+    letter-spacing: 0.5px;
+}
+
+.pricing-cta-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 40px var(--accent-glow);
+    filter: brightness(1.1);
+}
+
+.pricing-cta-note {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+/* 功能對照表 */
+.pricing-compare {
+    padding: 3rem 8% 4rem 8%;
+    border-top: 1px solid var(--border-color);
+    background: #090d13;
+}
+
+body.light-mode .pricing-compare {
+    background: #f1f3f5;
+}
+
+.compare-table-wrap {
+    overflow-x: auto;
+}
+
+.compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 560px;
+}
+
+.compare-table th {
+    padding: 16px 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.compare-table th:first-child {
+    text-align: left;
+}
+
+.compare-th-popular {
+    color: var(--accent-color) !important;
+    background: var(--accent-soft);
+    border-radius: 8px 8px 0 0;
+}
+
+.compare-table td {
+    padding: 14px 20px;
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.15s;
+}
+
+.compare-table td:first-child {
+    text-align: left;
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.compare-table tr:hover td {
+    background: var(--accent-soft);
+}
+
+.compare-table td.popular-col {
+    background: var(--accent-soft);
+}
+
+.compare-table .check {
+    color: var(--accent-color);
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.compare-table .cross {
+    color: var(--text-muted);
+    opacity: 0.4;
+    font-size: 1.1rem;
+}
+
+/* RWD 響應式 */
+@media (max-width: 900px) {
+    .pricing-cards-section {
+        flex-direction: column;
+        align-items: center;
+    }
+    .plan-card {
+        width: 100%;
+        max-width: 420px;
+    }
+    .pricing-reviews {
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+    }
+    .review-divider { display: none; }
+    .pricing-main-title { font-size: 2rem; }
+    .pricing-tab-row { flex-wrap: wrap; }
+}

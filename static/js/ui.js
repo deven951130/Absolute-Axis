@@ -52,6 +52,7 @@ function switchView(v) {
 
     const titles = {
         'intro': '服務介紹',
+        'pricing': '方案定價',
         'dashboard': '戰情總覽',
         'virtual': '虛擬化中心',
         'cloud': '私有雲儲存',
@@ -59,7 +60,8 @@ function switchView(v) {
         'admin': '帳號管理',
         'settings': '系統設定',
         'metrics': '實時數據分析',
-        'multiverse': '多重宇宙'
+        'multiverse': '多重宇宙',
+        'smart': '智慧宅控'
     };
     
     document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').innerText.replace(' 系統尚未開放', '');
