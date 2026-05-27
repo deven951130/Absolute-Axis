@@ -22,12 +22,15 @@ SYS_ROOT = os.getenv("AXIS_SYS_ROOT", "/" if os.name != 'nt' else "C:\\")
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{os.path.join(BASE_PATH, 'axis.db')}"
 LOG_DB_PATH = os.path.join(BASE_PATH, "logs.json")
 
-# JWT Security Config - 強制從環境變數讀取，不允許明碼預設值
+# JWT Security Config
+# 優先讀取環境變數；若未設定則自動產生臨時密鑰（不安全，僅用於首次啟動）
 _jwt_secret = os.getenv("AXIS_JWT_SECRET")
 if not _jwt_secret:
-    print("FATAL ERROR: AXIS_JWT_SECRET environment variable is not set.")
-    print("Please copy .env.example to .env and fill in all required values.")
-    sys.exit(1)
+    import secrets as _sec
+    _jwt_secret = _sec.token_hex(32)
+    print("WARNING: AXIS_JWT_SECRET not set. Using a random temporary key.")
+    print("WARNING: All sessions will be invalidated on restart.")
+    print("WARNING: Set AXIS_JWT_SECRET in .env for production use.")
 JWT_SECRET = _jwt_secret
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 Days
