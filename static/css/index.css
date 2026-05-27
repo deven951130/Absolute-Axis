@@ -638,20 +638,27 @@ body.light-mode .toast {
 }
 
 .pricing-nav-link {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 700;
-    color: var(--text-muted);
+    color: var(--text-main);
     text-decoration: none;
     cursor: pointer;
     transition: color 0.2s;
     border: none;
     background: none;
-    padding: 0;
+    padding: 4px 0;
+    opacity: 0.75;
+    letter-spacing: 0.2px;
 }
 
-.pricing-nav-link:hover,
+.pricing-nav-link:hover {
+    color: var(--accent-color);
+    opacity: 1;
+}
+
 .pricing-nav-link.active {
     color: var(--accent-color);
+    opacity: 1;
 }
 
 /* 評語列 */

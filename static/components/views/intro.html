@@ -1,18 +1,22 @@
 <div id="view-intro" class="view-section">
     <!-- 頂部獨立導覽列 -->
     <header class="intro-navbar">
-        <div class="intro-brand">
-            <div class="intro-logo-box">
-                <img src="/logo.jpg" alt="Absolute Axis Logo">
+        <div style="display:flex;align-items:center;gap:3rem;">
+            <div class="intro-brand">
+                <div class="intro-logo-box">
+                    <img src="/logo.jpg" alt="Absolute Axis Logo">
+                </div>
+                <span>ABSOLUTE AXIS</span>
             </div>
-            <span>ABSOLUTE AXIS</span>
+            <nav style="display:flex;gap:2rem;align-items:center;">
+                <a onclick="switchView('pricing')" class="pricing-nav-link">定價</a>
+                <a onclick="switchView('intro')" class="pricing-nav-link">首頁</a>
+            </nav>
         </div>
-        <nav class="pricing-nav-links" style="display:flex;gap:2rem;align-items:center;">
-            <a onclick="switchView('pricing')" class="pricing-nav-link" style="cursor:pointer;">定價</a>
-        </nav>
         <div class="intro-nav-actions">
-            <button class="btn btn-outline" onclick="toggleTheme()" id="intro-theme-btn" style="width: 45px; height: 45px; border-radius: 50%; padding: 0;">☀️</button>
-            <button class="btn btn-primary" onclick="showLoginOverlay()" style="border-radius: 20px; font-weight: 800; padding: 10px 24px;">系統登入</button>
+            <button class="btn btn-outline" onclick="toggleTheme()" id="intro-theme-btn" style="width:42px;height:42px;border-radius:50%;padding:0;font-size:1rem;">☀️</button>
+            <a onclick="showLoginOverlay()" class="btn btn-outline" style="border-radius:20px;font-weight:700;padding:10px 20px;cursor:pointer;text-decoration:none;">登入</a>
+            <button class="btn btn-primary" onclick="showLoginOverlay()" style="border-radius:20px;font-weight:800;padding:10px 22px;display:flex;align-items:center;gap:6px;">開始使用 <span>›</span></button>
         </div>
     </header>
 
