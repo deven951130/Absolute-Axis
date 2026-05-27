@@ -101,15 +101,20 @@ def init_db_user():
     try:
         admin_user = db.query(User).filter(User.username == "sparkle").first()
         if not admin_user:
+            admin_pass = os.getenv("AXIS_ADMIN_PASS")
+            if not admin_pass:
+                print("WARNING: AXIS_ADMIN_PASS not set. Skipping default admin creation.")
+                print("Set AXIS_ADMIN_PASS in .env to initialize the admin account.")
+                return
             new_admin = User(
                 username="sparkle",
-                password_hash=get_password_hash("951130"),
+                password_hash=get_password_hash(admin_pass),
                 role="Administrator",
                 avatar=""
             )
             db.add(new_admin)
             db.commit()
-            print("System DB initialized with default admin 'sparkle'.")
+            print("System DB initialized with admin 'sparkle'.")
     except Exception as e:
         print(f"Init DB error: {e}")
     finally:

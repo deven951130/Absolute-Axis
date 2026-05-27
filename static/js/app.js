@@ -31,8 +31,10 @@ const App = {
     },
 
     async loadComponent(url, target) {
-        // 強制提升版本號至 v47 以徹底打破組件緩存
-        const res = await fetch(`${url}?v=47`);
+        // 從 CSS link 的 href 動態讀取版本號，與後端注入的版本保持一致
+        const cssLink = document.querySelector('link[rel="stylesheet"]');
+        const ver = cssLink ? (new URL(cssLink.href).searchParams.get('v') || 'dev') : 'dev';
+        const res = await fetch(`${url}?v=${ver}`);
         if (!res.ok) throw new Error(`Failed to load component: ${url}`);
         const html = await res.text();
         const container = (target === 'body') ? document.body : document.querySelector(target);
@@ -83,7 +85,7 @@ const App = {
 
             // Role-based UI visibility
             const role = localStorage.getItem('axis_role');
-            if (role === 'admin' || role === 'Administrator') {
+            if (role === 'Administrator') {
                 const navA = document.getElementById('nav-admin');
                 if (navA) navA.style.display = 'block';
             }

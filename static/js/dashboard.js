@@ -10,26 +10,31 @@ function initCharts() {
     const config = (label, color) => ({
         type: 'line',
         data: { labels: Array(30).fill(''), datasets: [{ label: label, data: Array(30).fill(0), borderColor: color, tension: 0.3, fill: true, backgroundColor: color + '11', pointRadius: 0, borderWidth: 2 }] },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            animation: { duration: 0 }, 
-            scales: { y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { display: false } }, 
-            plugins: { legend: { display: false } } 
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 0 },
+            scales: { y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { display: false } },
+            plugins: { legend: { display: false } }
         }
     });
-    
+
     cpuChart = new Chart(ctxCpu.getContext('2d'), config('CPU %', '#00d2ff'));
     ramChart = new Chart(ctxRam.getContext('2d'), config('RAM %', '#00ff88'));
 }
 
-async function startPolling() {
+// ==================== 拆分後的三段獨立輪詢 ====================
+
+/**
+ * pollMetrics - 高頻（每 5 秒）
+ * 取得 CPU、RAM、磁碟、頻寬
+ */
+async function pollMetrics() {
     try {
-        const s = await authFetch('/api/system_status');
+        const s = await authFetch('/api/system/metrics');
         if (s.ok) {
             const d = await s.json();
-            
-            // 儀表盤更新
+
             const cpuVal = document.getElementById('cpu-val');
             const cpuGauge = document.getElementById('cpu-gauge');
             if (cpuVal) cpuVal.innerText = d.cpu_percent.toFixed(1) + '%';
@@ -39,8 +44,7 @@ async function startPolling() {
             const ramGauge = document.getElementById('ram-gauge');
             if (ramVal) ramVal.innerText = d.ram_percent.toFixed(1) + '%';
             if (ramGauge) ramGauge.style.strokeDashoffset = 125.66 - (d.ram_percent / 100 * 125.66);
-            
-            // 磁碟監管
+
             const sLab = document.getElementById('sys-label');
             const sBar = document.getElementById('sys-bar');
             if (sLab) sLab.innerText = `${(d.sys_disk.used/(1024**3)).toFixed(1)}G / ${(d.sys_disk.total/(1024**3)).toFixed(0)}G`;
@@ -51,7 +55,6 @@ async function startPolling() {
             if (nLab) nLab.innerText = `${(d.nas_disk.used/(1024**3)).toFixed(1)}G / ${(d.nas_disk.total/(1024**3)).toFixed(0)}G`;
             if (nBar) nBar.style.width = d.nas_disk.percent + '%';
 
-            // --- NAS Mgnt Page Binding (Added) ---
             const ssdVal = document.getElementById('nas-ssd-val');
             const ssdBar = document.getElementById('nas-ssd-bar');
             if (ssdVal) ssdVal.innerText = d.sys_disk.percent.toFixed(1) + '%';
@@ -61,18 +64,12 @@ async function startPolling() {
             const hddBar = document.getElementById('nas-hdd-bar');
             if (hddVal) hddVal.innerText = d.nas_disk.percent.toFixed(1) + '%';
             if (hddBar) hddBar.style.width = d.nas_disk.percent + '%';
-            
+
             const bwUp = document.getElementById('bw-up');
             const bwDn = document.getElementById('bw-dn');
             if (bwUp) bwUp.innerText = d.bandwidth.up;
             if (bwDn) bwDn.innerText = d.bandwidth.down;
 
-            const temp = document.getElementById('sensor-temp');
-            const humid = document.getElementById('sensor-humid');
-            if (temp) temp.innerText = d.sensors.temp + '°C';
-            if (humid) humid.innerText = d.sensors.humid + '%';
-
-            // 圖表更新
             if (cpuChart) {
                 cpuChart.data.datasets[0].data.push(d.cpu_percent);
                 if (cpuChart.data.datasets[0].data.length > 30) cpuChart.data.datasets[0].data.shift();
@@ -83,32 +80,35 @@ async function startPolling() {
                 if (ramChart.data.datasets[0].data.length > 30) ramChart.data.datasets[0].data.shift();
                 ramChart.update();
             }
+        }
+    } catch (e) {
+        console.error("Metrics polling error:", e);
+    } finally {
+        if (window._metricsTimer) clearTimeout(window._metricsTimer);
+        window._metricsTimer = setTimeout(pollMetrics, 5000);
+    }
+}
 
-            // GitHub Status (Added)
-            if (d.github) {
-                const g = d.github;
-                const dot = document.getElementById('gh-dot');
-                const repo = document.getElementById('gh-repo');
-                const commit = document.getElementById('gh-commit');
-                const sTime = document.getElementById('gh-time');
-                const stars = document.getElementById('gh-stars');
+/**
+ * pollSensors - 中頻（每 30 秒）
+ * 取得溫濕度、Minecraft 狀態
+ */
+async function pollSensors() {
+    try {
+        const s = await authFetch('/api/system/sensors');
+        if (s.ok) {
+            const d = await s.json();
 
-                if (dot) dot.className = `status-dot ${g.online ? 'online pulse' : ''}`;
-                if (repo) repo.innerText = g.repo;
-                if (commit) commit.innerText = g.last_commit;
-                if (sTime) {
-                    const now = new Date();
-                    sTime.innerText = g.online ? `Last Sync: ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}` : 'Last Sync: Offline';
-                }
-                if (stars) stars.innerText = `⭐ ${g.stars}`;
-            }
+            const temp = document.getElementById('sensor-temp');
+            const humid = document.getElementById('sensor-humid');
+            if (temp) temp.innerText = d.sensors.temp + '°C';
+            if (humid) humid.innerText = d.sensors.humid + '%';
 
-            // Minecraft Status (Added)
             if (d.minecraft) {
                 const mcStatus = document.getElementById('mc-status');
                 const mcIp = document.getElementById('mc-ip');
                 const mcCfg = document.getElementById('mc-config');
-                
+
                 if (mcStatus) {
                     if (d.minecraft.online) {
                         mcStatus.innerText = '● 連線中 (Online)';
@@ -120,16 +120,57 @@ async function startPolling() {
                         mcStatus.style.color = '#fff';
                     }
                 }
-                if (mcIp) {
-                    mcIp.innerText = d.minecraft.ip !== 'Unknown' ? `${d.minecraft.ip}:${d.minecraft.port}` : '--';
-                }
-                if (mcCfg && d.minecraft.specs) {
-                    mcCfg.innerText = `配置：${d.minecraft.specs.ram} RAM / ${d.minecraft.specs.cores} Threads`;
-                }
+                if (mcIp) mcIp.innerText = d.minecraft.ip !== 'Unknown' ? `${d.minecraft.ip}:${d.minecraft.port}` : '--';
+                if (mcCfg && d.minecraft.specs) mcCfg.innerText = `配置：${d.minecraft.specs.ram} RAM / ${d.minecraft.specs.cores} Threads`;
             }
         }
+    } catch (e) {
+        console.error("Sensors polling error:", e);
+    } finally {
+        if (window._sensorsTimer) clearTimeout(window._sensorsTimer);
+        window._sensorsTimer = setTimeout(pollSensors, 30000);
+    }
+}
 
-        // 終端紀錄 (修復輪詢與同步)
+/**
+ * pollGithub - 低頻（每 120 秒）
+ * 取得 GitHub 倉庫狀態（後端已有 120 秒快取）
+ */
+async function pollGithub() {
+    try {
+        const s = await authFetch('/api/system/github');
+        if (s.ok) {
+            const g = await s.json();
+            const dot = document.getElementById('gh-dot');
+            const repo = document.getElementById('gh-repo');
+            const commit = document.getElementById('gh-commit');
+            const sTime = document.getElementById('gh-time');
+            const stars = document.getElementById('gh-stars');
+
+            if (dot) dot.className = `status-dot ${g.online ? 'online pulse' : ''}`;
+            if (repo) repo.innerText = g.repo;
+            if (commit) commit.innerText = g.last_commit;
+            if (sTime) {
+                const now = new Date();
+                sTime.innerText = g.online
+                    ? `Last Sync: ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
+                    : 'Last Sync: Offline';
+            }
+            if (stars) stars.innerText = `⭐ ${g.stars}`;
+        }
+    } catch (e) {
+        console.error("GitHub polling error:", e);
+    } finally {
+        if (window._githubTimer) clearTimeout(window._githubTimer);
+        window._githubTimer = setTimeout(pollGithub, 120000);
+    }
+}
+
+/**
+ * 服務狀態與稽核日誌輪詢（每 5 秒）
+ */
+async function pollServices() {
+    try {
         const l = await authFetch('/api/system/logs');
         if (l.ok) {
             const logs = await l.json();
@@ -140,7 +181,6 @@ async function startPolling() {
             }
         }
 
-        // 服務狀態
         const sv = await authFetch('/api/services_status');
         if (sv.ok) {
             const svcs = await sv.json();
@@ -155,12 +195,22 @@ async function startPolling() {
             }
         }
     } catch (e) {
-        console.error("Polling error:", e);
+        console.error("Services polling error:", e);
     } finally {
-        // Ensure only one next poll is scheduled
-        if (window._pollTimer) clearTimeout(window._pollTimer);
-        window._pollTimer = setTimeout(startPolling, 5000); 
+        if (window._servicesTimer) clearTimeout(window._servicesTimer);
+        window._servicesTimer = setTimeout(pollServices, 5000);
     }
+}
+
+/**
+ * startPolling - 統一入口，啟動全部輪詢
+ * 由 app.js 在登入後呼叫
+ */
+function startPolling() {
+    pollMetrics();
+    pollSensors();
+    pollGithub();
+    pollServices();
 }
 
 async function loadSpecs() {

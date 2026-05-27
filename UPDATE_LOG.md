@@ -1,3 +1,27 @@
+### [V42] - 2026-05-27 更新日誌
+
+#### 安全性修補（P0）
+- **[安全] 移除所有明碼 Secret**：`config.py` 全面移除 `JWT_SECRET`、`PVE_PASS` 的 hardcode 預設值，改為強制讀取環境變數；`AXIS_JWT_SECRET` 若未設定則服務直接中止，防止以不安全狀態啟動。
+- **[安全] 移除 Blynk IoT Token 明碼**：將 `system.py` 中的明碼 Token 移至 `config.py` 集中管理，並改由環境變數 `BLYNK_TOKEN` 提供。
+- **[安全] 移除管理員初始密碼明碼**：`utils.py` 的 `init_db_user()` 改由環境變數 `AXIS_ADMIN_PASS` 控制，若未設定則跳過並提示警告。
+- **[安全] CORS 收緊**：`allow_origins` 改由環境變數 `ALLOWED_ORIGINS` 控制，生產環境可限定為 `https://absoluteaxis.dpdns.org`，移除 `allow_origins=["*"]` 全開放設定。
+- **[安全] 統一管理員角色字串**：前端 `app.js` 中的角色判斷移除不一致的 `role === 'admin'` 分支，統一為 `role === 'Administrator'`，與後端保持一致。
+- **[安全] 移除開發機硬編碼路徑**：`config.py` 移除 `/home/sparkle/aiot-master` 路徑偵測邏輯，改為純環境變數 `AXIS_BASE_PATH` 控制。
+- **[配置] 更新 `.env.example`**：補齊所有必要環境變數範本（JWT、管理員密碼、PVE、Blynk、CORS、GitHub、Cloudflare 共 10 個）。
+
+#### 架構優化（P1）
+- **[架構] 拆分 `/api/system_status` 端點**：將原本合併呼叫 4 個外部 API 的重量級端點，拆分為三個獨立端點：`/api/system/metrics`（每 5 秒）、`/api/system/sensors`（每 30 秒）、`/api/system/github`（每 120 秒）；保留原路由作為向下相容 alias。
+- **[架構] 前端輪詢獨立拆分**：`dashboard.js` 的 `startPolling()` 拆分為 `pollMetrics()`、`pollSensors()`、`pollGithub()`、`pollServices()` 四個獨立 setTimeout 鏈，互不阻塞。
+- **[架構] 修正 Docker 啟動流程**：`docker-compose.yml` 移除啟動時執行 `pip install` 的問題，依賴安裝在 Dockerfile build 階段完成，容器重啟速度大幅提升。
+- **[效能] NAS 上傳改為非同步**：`nas.py` 上傳端點改用 `aiofiles` 非同步串流寫入（每次 1MB 分塊），避免大檔案上傳阻塞 FastAPI event loop。
+- **[功能] NAS 分享重複防護**：`/api/nas/share` 加入重複分享判斷，同一 owner/path/target 組合重複分享時回傳 `already_shared` 而非建立重複記錄。
+
+#### 可維護性修補（P2）
+- **[維護] 動態版本號注入**：後端 `main.py` 讀取 `APP_VERSION` 環境變數（預設為啟動時間戳），動態替換 `index.html` 中所有靜態資源的 `?v=AXIS_VER` 佔位符，不再需要手動維護版本號。
+- **[UI] 統一錯誤處理（Toast 通知系統）**：`api.js` 新增全域 `showToast()` 函式，`authFetch` 統一攔截 403（權限不足）、5xx（伺服器錯誤）、網路斷線並以右下角 Toast 通知呈現。
+- **[UI] Toast 元件樣式**：`index.css` 新增 `.toast` / `#toast-container` 樣式，支援 success / error / warning / info 四種類型，含進場動畫與深/淺色主題切換。
+- **[依賴] 鎖定 requirements.txt 版本**：鎖定 `paramiko==3.5.1`、`speedtest-cli==2.1.3`，新增 `aiofiles==23.2.1`。
+
 ### [V41] - 2026-05-20 更新日誌
 - **[新增] 介紹首頁（Landing Page）**：新增 `static/components/views/intro.html` 作為系統的公開對外介紹頁面。頁面採用滿版深色科技風格設計，包含玻璃擬態導覽列、Hero 區塊、五大核心功能模組說明卡片、伺服器安全狀態資訊及頁尾，整體視覺品質大幅提升。
 - **[新增] 右上角登入按鈕**：於介紹首頁導覽列右上角新增「系統登入」按鈕，點擊後以 Modal Overlay 形式彈出原有登入框。

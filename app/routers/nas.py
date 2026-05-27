@@ -1,6 +1,7 @@
 import os
 import shutil
 import socket
+import aiofiles
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
@@ -139,6 +140,14 @@ def list_share_users(user: dict = Depends(get_current_user_obj), db: Session = D
 @router.post("/share")
 def share_file(req: ShareRequest, user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
     u = user["username"]
+    # 重複分享防護：避免對同一目標重複建立記錄
+    existing = db.query(FileShare).filter(
+        FileShare.owner == u,
+        FileShare.path == req.path,
+        FileShare.target == req.target_user
+    ).first()
+    if existing:
+        return {"status": "already_shared"}
     db.add(FileShare(owner=u, path=req.path, target=req.target_user))
     db.commit()
     return {"status": "ok"}
@@ -189,8 +198,10 @@ async def upload_nas(path: str = Form(""), file: UploadFile = File(...), user: d
         limit_gb = round(user["quota_bytes"] / 1073741824, 1)
         raise HTTPException(status_code=400, detail=f"Quota Exceeded (Limit {limit_gb}GB)")
     t = safe_path(os.path.join(path, file.filename), u)
-    with open(t, "wb") as b: 
-        shutil.copyfileobj(file.file, b)
+    # 使用 aiofiles 非同步寫入，避免阻塞 FastAPI event loop
+    async with aiofiles.open(t, "wb") as b:
+        while chunk := await file.read(1024 * 1024):  # 每次讀取 1MB
+            await b.write(chunk)
     log_event(u, f"Cloud storage: Uploaded {file.filename}")
     return {"status": "ok"}
 
