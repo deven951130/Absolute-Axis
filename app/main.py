@@ -59,6 +59,7 @@ _APP_VERSION = os.getenv("APP_VERSION", str(int(_time.time())))
 @app.get("/system")
 @app.get("/idmanage")
 @app.get("/multiverse")
+@app.get("/login")
 def home():
     index_path = os.path.join(BASE_PATH, "static", "index.html")
     if os.path.exists(index_path):

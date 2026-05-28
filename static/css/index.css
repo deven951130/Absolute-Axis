@@ -273,17 +273,17 @@ canvas { width: 100% !important; height: 100% !important; }
     100% { box-shadow: 0 0 0 0 rgba(35, 134, 54, 0); }
 }
 
-/* Not logged in mode overrides */
-body.not-logged-in .sidebar {
+/* Not logged in & Full Screen Mode overrides */
+body.not-logged-in .sidebar, body.full-screen-view .sidebar {
     display: none !important;
 }
-body.not-logged-in .main-content {
+body.not-logged-in .main-content, body.full-screen-view .main-content {
     margin-left: 0 !important;
     padding: 0 !important;
     padding-bottom: 0 !important;
     min-height: 100vh;
 }
-body.not-logged-in .top-header {
+body.not-logged-in .top-header, body.full-screen-view .top-header {
     display: none !important;
 }
 

@@ -29,11 +29,12 @@ const ROUTE_MAP = {
     '/iot': 'smart',
     '/axcloud': 'cloud',
     '/nas': 'nas-mgnt',
-    '/axai': 'placeholder',
+    '/axai': 'ai',
     '/livedata': 'metrics',
     '/system': 'settings',
     '/idmanage': 'admin',
-    '/multiverse': 'multiverse'
+    '/multiverse': 'multiverse',
+    '/login': 'login'
 };
 
 const VIEW_TO_ROUTE = {
@@ -49,7 +50,8 @@ const VIEW_TO_ROUTE = {
     'metrics': '/livedata',
     'settings': '/system',
     'admin': '/idmanage',
-    'multiverse': '/multiverse'
+    'multiverse': '/multiverse',
+    'login': '/login'
 };
 
 // 暴露至全域供外部存取
@@ -57,9 +59,15 @@ window.ROUTE_MAP = ROUTE_MAP;
 window.VIEW_TO_ROUTE = VIEW_TO_ROUTE;
 
 function switchView(v, pushHistory = true) {
-    // 前端 Route Guard 強化
     const token = localStorage.getItem('axis_token');
-    if (!token && !['intro', 'pricing'].includes(v)) {
+    
+    // 已登入狀態下訪問登入路徑，自動重導向至後台主頁
+    if (token && v === 'login') {
+        v = 'dashboard';
+    }
+
+    // 前端 Route Guard 強化，加入 login 虛擬視圖至免驗證白名單
+    if (!token && !['intro', 'pricing', 'login'].includes(v)) {
         console.warn(`Unauthorized attempt to view: ${v}. Redirecting to intro.`);
         v = 'intro';
         setTimeout(() => {
@@ -74,12 +82,27 @@ function switchView(v, pushHistory = true) {
         }
     }
 
+    // 處理 login 虛擬視圖的底層轉換與彈窗開啟
+    if (v === 'login') {
+        v = 'intro';
+        setTimeout(() => {
+            if (typeof showLoginOverlay === 'function') showLoginOverlay(false);
+        }, 100);
+    }
+
     if (['ai'].includes(v)) {
         const ts = { 'ai': '核心 AI 助手' };
         const is = { 'ai': '🤖' };
         document.getElementById('ph-title').innerText = ts[v] + " 系統尚未開放";
         document.getElementById('ph-icon').innerText = is[v];
         v = 'placeholder';
+    }
+
+    // 獨立前台頁面樣式控制（介紹頁與定價頁隱藏側邊欄及 Header）
+    if (['intro', 'pricing'].includes(v)) {
+        document.body.classList.add('full-screen-view');
+    } else {
+        document.body.classList.remove('full-screen-view');
     }
     
     // 如果已經在該視圖且已載入完成，則跳過重複載入（除非是手動重新啟動）
@@ -97,7 +120,7 @@ function switchView(v, pushHistory = true) {
     
     let nId = 'nav-' + v;
     if (v === 'placeholder') {
-        nId = (document.getElementById('ph-icon').innerText === '🏡' ? 'nav-smart' : 'nav-ai');
+        nId = 'nav-ai';
     }
     
     const n = document.getElementById(nId);
@@ -227,12 +250,23 @@ setInterval(() => {
 }, 1000);
 
 // Login overlay controls
-window.showLoginOverlay = function() {
+window.showLoginOverlay = function(pushHistory = true) {
+    // 若使用者已登入，點擊登入相關按鈕直接跳轉至後台
+    if (localStorage.getItem('axis_token')) {
+        if (typeof switchView === 'function') {
+            switchView('dashboard', true);
+        }
+        return;
+    }
+
     const loginOverlay = document.getElementById('login-overlay');
     if (loginOverlay) {
         loginOverlay.style.display = 'flex';
         const userField = document.getElementById('login-user');
         if (userField) userField.focus();
+    }
+    if (pushHistory && window.location.pathname !== '/login') {
+        history.pushState(null, '', '/login');
     }
 };
 
@@ -240,11 +274,19 @@ window.hideLoginOverlay = function() {
     const loginOverlay = document.getElementById('login-overlay');
     if (loginOverlay) loginOverlay.style.display = 'none';
     
-    // 如果未登入且關閉了登入框，強制導向 intro 頁面
+    // 如果未登入且關閉了登入框
     if (!localStorage.getItem('axis_token')) {
         document.body.classList.add('not-logged-in');
-        if (typeof switchView === 'function') {
-            switchView('intro');
+        
+        // 若當前路徑是 /login，關閉時退回 /introduce 頁面，否則保持當前網址
+        if (window.location.pathname === '/login') {
+            if (typeof switchView === 'function') {
+                switchView('intro', true);
+            }
+        } else {
+            if (typeof switchView === 'function') {
+                switchView('intro', false);
+            }
         }
     }
 };
