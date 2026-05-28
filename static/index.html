@@ -50,10 +50,13 @@
     <!-- 主要內容區 (動態注入容器) -->
     <main class="main-content">
         <header class="top-header">
-            <div>
-                <h2 id="page-title-text" style="font-size:1.5rem; font-weight:900; letter-spacing:0.5px;">戰情總覽</h2>
-                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-top:5px; text-transform:uppercase;">
-                    Network Control Center / <span id="clock" style="color:var(--accent-color);">--:--:--</span>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <button id="menu-btn" class="menu-btn" onclick="toggleSidebar(event)">☰</button>
+                <div>
+                    <h2 id="page-title-text" style="font-size:1.5rem; font-weight:900; letter-spacing:0.5px; margin:0;">戰情總覽</h2>
+                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-top:5px; text-transform:uppercase;">
+                        Network Control Center / <span id="clock" style="color:var(--accent-color);">--:--:--</span>
+                    </div>
                 </div>
             </div>
             <div style="display:flex; gap:18px; align-items:center;">

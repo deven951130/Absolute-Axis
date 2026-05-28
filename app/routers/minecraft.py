@@ -41,6 +41,15 @@ def _ssh_exec(command: str) -> Tuple[str, str]:
         client.close()
 
 
+def mask_ip(ip: str) -> str:
+    if not ip or ip == "Unknown":
+        return ip
+    parts = ip.split(".")
+    if len(parts) == 4:
+        return f"{parts[0]}.{parts[1]}.**.***"
+    return ip
+
+
 @router.get("/status")
 def get_mc_status(user: dict = Depends(get_current_user_obj)):
     """
@@ -76,6 +85,10 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
     except Exception:
         pass
 
+    is_admin = user.get("role") in ("admin", "Administrator")
+    display_wan_ip = public_ip if is_admin else mask_ip(public_ip)
+    display_address_wan = f"{display_wan_ip}:{MC_LXC_PORT}" if display_wan_ip != "Unknown" else "--"
+
     return {
         "online": online,
         "server": {
@@ -88,9 +101,9 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
         "connection": {
             "lan_ip": MC_LXC_IP,
             "port": MC_LXC_PORT,
-            "wan_ip": public_ip,
+            "wan_ip": display_wan_ip,
             "address_lan": f"{MC_LXC_IP}:{MC_LXC_PORT}",
-            "address_wan": f"{public_ip}:{MC_LXC_PORT}",
+            "address_wan": display_address_wan,
         },
         "specs": {
             "ram": "16 GB",

@@ -1094,3 +1094,129 @@ body.light-mode .pricing-compare {
     .pricing-main-title { font-size: 2rem; }
     .pricing-tab-row { flex-wrap: wrap; }
 }
+
+/* ==================== 漢堡選單與行動端 RWD 響應式佈局 ==================== */
+.menu-btn {
+    display: none;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    outline: none;
+}
+.menu-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+@media (max-width: 768px) {
+    .menu-btn {
+        display: inline-flex;
+    }
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.8);
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    .main-content {
+        margin-left: 0 !important;
+        padding: 1.5rem !important;
+        padding-bottom: 8rem !important;
+    }
+    .stat-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem !important;
+    }
+    /* 戰情總覽網格 */
+    #view-dashboard > div[style*="display:grid"],
+    #view-dashboard > div[style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+    /* 實時數據分析 */
+    .metrics-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.2rem !important;
+    }
+    /* NAS 管理中樞 */
+    #view-nas-mgnt > div[style*="display:grid"],
+    #view-nas-mgnt > div[style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+    /* 虛擬化中心 */
+    #view-virtual > div[style*="display:grid"],
+    #view-virtual > div[style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+    /* 智慧宅控 */
+    #view-smart > div[style*="display:grid"],
+    #view-smart > div[style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+    /* 多重宇宙 */
+    #view-multiverse > div[style*="display:grid"],
+    #view-multiverse > div[style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ==================== 系統日誌事件彩色標籤 ==================== */
+.log-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    margin-right: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+}
+.log-badge-security {
+    background: rgba(248, 81, 73, 0.15);
+    color: #f85149;
+    border: 1px solid rgba(248, 81, 73, 0.3);
+}
+.log-badge-broadcast {
+    background: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+.log-badge-mc {
+    background: rgba(189, 147, 249, 0.15);
+    color: #bd93f9;
+    border: 1px solid rgba(189, 147, 249, 0.3);
+}
+.log-badge-admin {
+    background: rgba(242, 170, 31, 0.15);
+    color: #f2aa1f;
+    border: 1px solid rgba(242, 170, 31, 0.3);
+}
+.log-badge-cloud {
+    background: rgba(88, 166, 255, 0.15);
+    color: #58a6ff;
+    border: 1px solid rgba(88, 166, 255, 0.3);
+}
+.log-badge-system {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}

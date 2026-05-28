@@ -167,6 +167,58 @@ async function pollGithub() {
 }
 
 /**
+ * renderLogs - 渲染與過濾日誌
+ */
+function renderLogs(logs) {
+    const logBox = document.getElementById('terminal-logs');
+    if (!logBox) return;
+
+    const filterText = (document.getElementById('log-search-input')?.value || '').toLowerCase().trim();
+    const filtered = logs.filter(x => x.toLowerCase().includes(filterText));
+
+    logBox.innerHTML = filtered.map(x => {
+        let content = x;
+        let badgeClass = '';
+        let typeLabel = '';
+
+        if (x.includes('SECURITY:')) {
+            badgeClass = 'log-badge-security';
+            typeLabel = '安全警報';
+        } else if (x.includes('BROADCAST:')) {
+            badgeClass = 'log-badge-broadcast';
+            typeLabel = '廣播';
+        } else if (x.includes('MC_COMMAND:')) {
+            badgeClass = 'log-badge-mc';
+            typeLabel = 'MC 指令';
+        } else if (x.includes('Admin:')) {
+            badgeClass = 'log-badge-admin';
+            typeLabel = '管理';
+        } else if (x.includes('Cloud storage:')) {
+            badgeClass = 'log-badge-cloud';
+            typeLabel = '私有雲';
+        } else if (x.includes('SYSTEM:')) {
+            badgeClass = 'log-badge-system';
+            typeLabel = '系統';
+        }
+
+        if (badgeClass) {
+            content = content.replace(/(SECURITY:|BROADCAST:|MC_COMMAND:|Admin:|Cloud storage:|SYSTEM:)/, `<span class="log-badge ${badgeClass}">${typeLabel}</span>`);
+        }
+
+        return `<div style="margin-bottom:6px; line-height:1.6; word-break:break-all;">${content}</div>`;
+    }).join('');
+
+    if (document.activeElement !== document.getElementById('log-search-input')) {
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+}
+
+function filterLogs() {
+    renderLogs(window._cachedLogs || []);
+}
+window.filterLogs = filterLogs;
+
+/**
  * 服務狀態與稽核日誌輪詢（每 5 秒）
  */
 async function pollServices() {
@@ -174,11 +226,8 @@ async function pollServices() {
         const l = await authFetch('/api/system/logs');
         if (l.ok) {
             const logs = await l.json();
-            const logBox = document.getElementById('terminal-logs');
-            if (logBox) {
-                logBox.innerHTML = logs.map(x => `<div>${x}</div>`).join('');
-                logBox.scrollTop = logBox.scrollHeight;
-            }
+            window._cachedLogs = logs;
+            renderLogs(logs);
         }
 
         const sv = await authFetch('/api/services_status');
@@ -211,6 +260,13 @@ function startPolling() {
     pollSensors();
     pollGithub();
     pollServices();
+
+    // 根據登入者身份顯示或隱藏系統廣播區塊
+    const role = localStorage.getItem('axis_role');
+    const broadSec = document.getElementById('broadcast-sec');
+    if (broadSec) {
+        broadSec.style.display = (role === 'Administrator') ? 'flex' : 'none';
+    }
 }
 
 async function loadSpecs() {
@@ -232,6 +288,8 @@ async function loadSpecs() {
 async function broadCast() {
     const m = document.getElementById('msg-input');
     if (m && m.value) {
+        const ok = confirm("您確定要發送此系統廣播訊息嗎？");
+        if (!ok) return;
         await authFetch('/api/system/message', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: m.value }) });
         m.value = '';
     }

@@ -21,6 +21,16 @@ function setTheme(theme) {
 }
 
 function switchView(v) {
+    // 前端 Route Guard 強化
+    const token = localStorage.getItem('axis_token');
+    if (!token && !['intro', 'pricing'].includes(v)) {
+        console.warn(`Unauthorized attempt to view: ${v}. Redirecting to intro.`);
+        v = 'intro';
+        setTimeout(() => {
+            if (typeof showLoginOverlay === 'function') showLoginOverlay();
+        }, 200);
+    }
+
     if (['ai'].includes(v)) {
         const ts = { 'ai': '核心 AI 助手' };
         const is = { 'ai': '🤖' };
@@ -88,6 +98,9 @@ function switchView(v) {
     if (v === 'multiverse') { if (typeof loadMultiverse === 'function') loadMultiverse(); }
     if (v === 'smart') { if (typeof loadSmart === 'function') loadSmart(); }
 
+    // 收合行動端側邊欄
+    if (typeof closeSidebar === 'function') closeSidebar();
+
     // 觸發視圖切換自定義事件
     document.dispatchEvent(new CustomEvent('view-switched', { detail: { view: v } }));
 }
@@ -126,6 +139,13 @@ window.addEventListener('click', (e) => {
     const newMenu = document.getElementById('new-menu');
     if (newMenu && !newMenu.contains(e.target) && (!newMenuBtn || !newMenuBtn.contains(e.target))) {
         newMenu.style.display = 'none';
+    }
+
+    // 行動端側邊欄點擊外部收合
+    const sidebar = document.querySelector('.sidebar');
+    const menuBtn = document.getElementById('menu-btn');
+    if (sidebar && sidebar.classList.contains('active') && !sidebar.contains(e.target) && (!menuBtn || !menuBtn.contains(e.target))) {
+        sidebar.classList.remove('active');
     }
 });
 
@@ -184,4 +204,15 @@ window.hideLoginOverlay = function() {
             switchView('intro');
         }
     }
+};
+
+window.toggleSidebar = function(e) {
+    if (e) e.stopPropagation();
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) sidebar.classList.toggle('active');
+};
+
+window.closeSidebar = function() {
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) sidebar.classList.remove('active');
 };

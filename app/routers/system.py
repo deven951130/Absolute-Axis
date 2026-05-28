@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.models import MessageRequest
-from app.utils import get_current_user_obj, log_event
+from app.utils import get_current_user_obj, log_event, get_dir_size
 from app.config import SYS_ROOT, NAS_ROOT, BLYNK_TOKEN
 from app.database import get_db, AuditLog
 
@@ -104,7 +104,8 @@ def get_metrics(user: dict = Depends(get_current_user_obj)):
     global SPEEDTEST_STATE
 
     sys_usage = shutil.disk_usage(SYS_ROOT)
-    nas_usage = shutil.disk_usage(NAS_ROOT)
+    nas_used_bytes = get_dir_size(NAS_ROOT)
+    nas_total_bytes = shutil.disk_usage(NAS_ROOT).total
 
     now = time.time()
     if not SPEEDTEST_STATE["running"] and (now - SPEEDTEST_STATE["last_check"] > 300):
@@ -129,8 +130,8 @@ def get_metrics(user: dict = Depends(get_current_user_obj)):
             "health": "Excellent", "temp": round(cpu_temp - 2)
         },
         "nas_disk": {
-            "total": nas_usage.total, "used": nas_usage.used,
-            "percent": (nas_usage.used / nas_usage.total) * 100 if nas_usage.total > 0 else 0,
+            "total": nas_total_bytes, "used": nas_used_bytes,
+            "percent": (nas_used_bytes / nas_total_bytes) * 100 if nas_total_bytes > 0 else 0,
             "health": "Healthy", "temp": round(cpu_temp - 5)
         },
         "bandwidth": {
@@ -138,6 +139,15 @@ def get_metrics(user: dict = Depends(get_current_user_obj)):
             "down": f"{SPEEDTEST_STATE['down_mbps']:.2f} Mbps" if SPEEDTEST_STATE['last_check'] > 0 else "測速中..."
         }
     }
+
+
+def mask_ip(ip: str) -> str:
+    if not ip or ip == "Unknown":
+        return ip
+    parts = ip.split(".")
+    if len(parts) == 4:
+        return f"{parts[0]}.{parts[1]}.**.***"
+    return ip
 
 
 @router.get("/api/system/sensors")
@@ -190,11 +200,14 @@ def get_sensors(user: dict = Depends(get_current_user_obj)):
     except:
         pass
 
+    is_admin = user.get("role") in ("admin", "Administrator")
+    display_ip = public_ip if is_admin else mask_ip(public_ip)
+
     return {
         "sensors": {"temp": room_temp, "humid": room_humid},
         "minecraft": {
             "online": mc_online,
-            "ip": public_ip,
+            "ip": display_ip,
             "port": 25565,
             "specs": mc_specs
         }
@@ -351,24 +364,81 @@ def get_hardware_info(user: dict = Depends(get_current_user_obj)):
             "count": len(disks),
             "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "core": f"{round(shutil.disk_usage('/').used / (1024**3), 1)}G",
-            "user": f"{round(shutil.disk_usage(NAS_ROOT).used / (1024**3), 1)}G",
+            "user": f"{round(get_dir_size(NAS_ROOT) / (1024**3), 1)}G",
             "docker": "Detected"
         }
     }
+
+
+def mask_name(name: str) -> str:
+    if not name:
+        return ""
+    is_ascii = all(ord(c) < 128 for c in name)
+    if is_ascii:
+        if len(name) <= 2:
+            return "*" * len(name)
+        return name[0] + "*" * (len(name) - 2) + name[-1]
+    else:
+        if len(name) <= 1:
+            return name
+        elif len(name) == 2:
+            return name[0] + "*"
+        elif len(name) == 3:
+            return name[0] + "*" + name[2]
+        else:
+            return name[0] + "*" * (len(name) - 2) + name[-1]
+
+
+def mask_filename(filename: str) -> str:
+    if not filename:
+        return ""
+    if "." in filename:
+        base, ext = os.path.splitext(filename)
+    else:
+        base, ext = filename, ""
+    if len(base) <= 3:
+        base = "*" * len(base)
+    else:
+        keep = max(1, len(base) // 3)
+        base = base[:keep] + "***" + base[-keep:]
+    return base + ext
 
 
 @router.get("/api/system/logs")
 def get_logs(user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
     logs = db.query(AuditLog).order_by(AuditLog.id.desc()).limit(50).all()
     res = []
+    is_admin = user.get("role") in ("admin", "Administrator")
+
     for log in reversed(logs):
         ts = log.timestamp.strftime("%H:%M:%S")
-        res.append(f"[{ts}] [{log.username}] {log.action}")
+        username = log.username
+        action = log.action
+
+        if not is_admin:
+            username = mask_name(username)
+            if "Cloud storage: Uploaded " in action:
+                fn = action.replace("Cloud storage: Uploaded ", "")
+                action = f"Cloud storage: Uploaded {mask_filename(fn)}"
+            elif "Cloud storage: Downloaded " in action:
+                fn = action.replace("Cloud storage: Downloaded ", "")
+                action = f"Cloud storage: Downloaded {mask_filename(fn)}"
+            elif "Cloud storage: Permanently deleted " in action:
+                fn = action.replace("Cloud storage: Permanently deleted ", "")
+                action = f"Cloud storage: Permanently deleted {mask_filename(fn)}"
+            elif "Cloud storage: Created folder " in action:
+                fn = action.replace("Cloud storage: Created folder ", "")
+                action = f"Cloud storage: Created folder {mask_filename(fn)}"
+
+        res.append(f"[{ts}] [{username}] {action}")
     return res
 
 
 @router.post("/api/system/message")
 def post_msg(req: MessageRequest, user: dict = Depends(get_current_user_obj)):
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員發送廣播訊息")
     log_event(user["username"], f"BROADCAST: {req.message}")
     return {"status": "ok"}
 
