@@ -1,3 +1,9 @@
+### [V48] - 2026-05-28 更新日誌
+
+#### Proxmox 連線修復與 Docker 環境變數對位（P0）
+- **[修復] Proxmox Host 連線失敗**：解決進入「虛擬化中心」時出現 `Could not connect to Proxmox host` 的 Bug。原因為 VM 的 `.env` 檔案缺失了 PVE、Blynk IoT 及 JWT Secret 等變數的宣告，且 `docker-compose.yml` 亦缺少將這些變數從宿主機轉入容器內部的 environment 對應。
+- **[新增] Docker Compose 環境變數轉送**：於 `docker-compose.yml` 中補齊 PVE、Blynk、JWT、ADMIN 等變數的環境傳遞配置，透過 `docker compose --force-recreate` 重新載入，徹底解決容器因缺少密鑰導致外部連線中斷之問題。
+
 ### [V47] - 2026-05-28 更新日誌
 
 #### 實體硬碟溫度隱藏與系統空間數據修正（P0）
