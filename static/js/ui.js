@@ -176,4 +176,12 @@ window.showLoginOverlay = function() {
 window.hideLoginOverlay = function() {
     const loginOverlay = document.getElementById('login-overlay');
     if (loginOverlay) loginOverlay.style.display = 'none';
+    
+    // 如果未登入且關閉了登入框，強制導向 intro 頁面
+    if (!localStorage.getItem('axis_token')) {
+        document.body.classList.add('not-logged-in');
+        if (typeof switchView === 'function') {
+            switchView('intro');
+        }
+    }
 };
