@@ -35,10 +35,11 @@ async function refreshNASHardware() {
                 barEl.style.background = disk.used_pct > 90 ? 'var(--danger-color)' : 'var(--accent-color)';
             }
             if (valEl) valEl.innerText = disk.used_pct.toFixed(1) + '%';
-            if (tempEl) {
-                tempEl.innerText = `溫度: ${disk.temp}°C`;
-                tempEl.style.color = disk.temp > 50 ? 'var(--danger-color)' : 'var(--text-muted)';
-            }
+            // 溫度欄位已在 HTML 中被設定為 display:none 隱藏
+            // if (tempEl) {
+            //     tempEl.innerText = `溫度: ${disk.temp}°C`;
+            //     tempEl.style.color = disk.temp > 50 ? 'var(--danger-color)' : 'var(--text-muted)';
+            // }
         });
 
         // 2. Update Storage Pool / RAID Status
