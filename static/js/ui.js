@@ -20,7 +20,41 @@ function setTheme(theme) {
     localStorage.setItem('axis-accent-theme', theme);
 }
 
-function switchView(v) {
+// 路由路徑與視圖映射字典
+const ROUTE_MAP = {
+    '/introduce': 'intro',
+    '/price': 'pricing',
+    '/main': 'dashboard',
+    '/virtal': 'virtual',
+    '/iot': 'smart',
+    '/axcloud': 'cloud',
+    '/nas': 'nas-mgnt',
+    '/axai': 'placeholder',
+    '/livedata': 'metrics',
+    '/system': 'settings',
+    '/idmanage': 'admin'
+};
+
+const VIEW_TO_ROUTE = {
+    'intro': '/introduce',
+    'pricing': '/price',
+    'dashboard': '/main',
+    'virtual': '/virtal',
+    'smart': '/iot',
+    'cloud': '/axcloud',
+    'nas-mgnt': '/nas',
+    'ai': '/axai',
+    'placeholder': '/axai',
+    'metrics': '/livedata',
+    'settings': '/system',
+    'admin': '/idmanage'
+};
+
+// 暴露至全域供外部存取
+window.ROUTE_MAP = ROUTE_MAP;
+window.VIEW_TO_ROUTE = VIEW_TO_ROUTE;
+
+function switchView(v, pushHistory = true) {
     // 前端 Route Guard 強化
     const token = localStorage.getItem('axis_token');
     if (!token && !['intro', 'pricing'].includes(v)) {
@@ -29,6 +63,13 @@ function switchView(v) {
         setTimeout(() => {
             if (typeof showLoginOverlay === 'function') showLoginOverlay();
         }, 200);
+    }
+
+    if (pushHistory) {
+        const route = VIEW_TO_ROUTE[v];
+        if (route && window.location.pathname !== route) {
+            history.pushState(null, '', route);
+        }
     }
 
     if (['ai'].includes(v)) {
@@ -216,3 +257,11 @@ window.closeSidebar = function() {
     const sidebar = document.querySelector('.sidebar');
     if (sidebar) sidebar.classList.remove('active');
 };
+
+// 監聽瀏覽器上一頁與下一頁導覽事件
+window.addEventListener('popstate', () => {
+    const matchedView = ROUTE_MAP[window.location.pathname];
+    if (matchedView) {
+        switchView(matchedView, false);
+    }
+});

@@ -47,6 +47,17 @@ import time as _time
 _APP_VERSION = os.getenv("APP_VERSION", str(int(_time.time())))
 
 @app.get("/")
+@app.get("/introduce")
+@app.get("/price")
+@app.get("/main")
+@app.get("/virtal")
+@app.get("/iot")
+@app.get("/axcloud")
+@app.get("/nas")
+@app.get("/axai")
+@app.get("/livedata")
+@app.get("/system")
+@app.get("/idmanage")
 def home():
     index_path = os.path.join(BASE_PATH, "static", "index.html")
     if os.path.exists(index_path):

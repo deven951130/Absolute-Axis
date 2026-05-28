@@ -71,37 +71,56 @@ const App = {
             if (popName) popName.innerText = localStorage.getItem('axis_user');
             if (popRole) popRole.innerText = localStorage.getItem('axis_role') || "Member";
             
-            const savedView = localStorage.getItem('axis_current_view') || 'dashboard';
-            const finalView = (savedView === 'intro') ? 'dashboard' : savedView;
-            if (typeof switchView === 'function') switchView(finalView);
+            // 路由解析：優先使用當前網址列的路徑 (window.location.pathname)
+            const currentPath = window.location.pathname;
+            let finalView = window.ROUTE_MAP ? window.ROUTE_MAP[currentPath] : null;
+            
+            if (!finalView) {
+                // 若無效或為 '/'，預設導向 /main (dashboard 視圖)
+                finalView = 'dashboard';
+            }
+            
+            // 權限防禦：限制普通成員存取 idmanage (admin) 視圖
+            const role = localStorage.getItem('axis_role');
+            if (finalView === 'admin' && role !== 'Administrator') {
+                finalView = 'dashboard';
+            }
+            
+            if (typeof switchView === 'function') switchView(finalView, true);
             
             if (typeof initCharts === 'function' && finalView === 'dashboard') initCharts();
             
             // Start Metrics Heartbeat (Background)
             if (typeof startPolling === 'function') {
                 startPolling();
-                // setInterval removed, dashboard.js handles self-scheduling
             }
 
             // Role-based UI visibility
-            const role = localStorage.getItem('axis_role');
             if (role === 'Administrator') {
                 const navA = document.getElementById('nav-admin');
                 if (navA) navA.style.display = 'block';
             }
         } else {
-            // 未登入：嘗試顯示介紹首頁，若組件未載入則 fallback 至原始登入 Overlay
-            const introView = document.getElementById('view-intro');
-            if (introView) {
-                document.body.classList.add('not-logged-in');
-                const loginOverlay = document.getElementById('login-overlay');
-                if (loginOverlay) loginOverlay.style.display = 'none';
-                if (typeof switchView === 'function') switchView('intro');
-            } else {
-                // Fallback：intro.html 尚未載入，回到傳統登入 Overlay
-                document.body.classList.remove('not-logged-in');
-                const loginOverlay = document.getElementById('login-overlay');
-                if (loginOverlay) loginOverlay.style.display = 'flex';
+            // 未登入：只允許訪問 /introduce 與 /price 頁面，其餘強制跳轉
+            const currentPath = window.location.pathname;
+            let finalView = window.ROUTE_MAP ? window.ROUTE_MAP[currentPath] : null;
+            
+            if (finalView !== 'intro' && finalView !== 'pricing') {
+                finalView = 'intro';
+            }
+            
+            document.body.classList.add('not-logged-in');
+            const loginOverlay = document.getElementById('login-overlay');
+            if (loginOverlay) loginOverlay.style.display = 'none';
+            
+            if (typeof switchView === 'function') switchView(finalView, false);
+            
+            // 若為未登入狀態且嘗試開啟後台，重導向至 /introduce 並開啟登入遮罩
+            if (currentPath !== '/introduce' && currentPath !== '/price') {
+                history.replaceState(null, '', '/introduce');
+                setTimeout(() => {
+                    if (typeof showLoginOverlay === 'function') showLoginOverlay();
+                }, 300);
             }
         }
         
