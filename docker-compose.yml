@@ -11,6 +11,15 @@ services:
       - TZ=Asia/Taipei
       # 綁定至 Tailscale IP (從 .env 讀取，預設為全監聽)
       - HOST_IP=${HOST_IP:-0.0.0.0}
+      - PVE_HOST=${PVE_HOST:-192.168.0.138}
+      - PVE_USER=${PVE_USER:-root@pam}
+      - PVE_PASS=${PVE_PASS}
+      - BLYNK_TOKEN=${BLYNK_TOKEN}
+      - AXIS_JWT_SECRET=${AXIS_JWT_SECRET:-axis_jwt_secret_key_deven951130}
+      - AXIS_ADMIN_PASS=${AXIS_ADMIN_PASS:-951130}
+      - AXIS_BASE_PATH=/app
+      - AXIS_SYS_ROOT=/
+      - AXIS_NAS_PATH=/app/nas
     volumes:
       - .:/app
       - ./nas:/app/nas
