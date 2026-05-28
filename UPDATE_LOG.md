@@ -3,7 +3,7 @@
 #### 巢狀網頁路徑路由與 History API 整合（P0）
 - **[新增] HTML5 History API 巢狀路徑路由**：捨棄傳統的本機純狀態視圖切換，將全站改為標準路徑路由。支援路徑如下：
   - 未登入：`/introduce`（介紹頁）、`/price`（定價頁）。
-  - 已登入：`/main`（主頁）、`/virtal`（虛擬化中心）、`/iot`（智慧）、`/axcloud`（私有雲）、`/nas`（NAS 管理中樞）、`/axai`（核心助手）、`/livedata`（實時數據）、`/system`（系統設定）。
+  - 已登入：`/main`（主頁）、`/virtal`（虛擬化中心）、`/iot`（智慧）、`/axcloud`（私有雲）、`/nas`（NAS 管理中樞）、`/axai`（核心助手）、`/livedata`（實時數據）、`/system`（系統設定）、`/multiverse`（多重宇宙）。
   - 管理員：`/idmanage`（帳號管理）。
 - **[新增] 後端多路徑重定向映射**：於 `app/main.py` 將上述所有前端 SPA 視圖路徑全部映射至同一個 `home()` 端點，回傳 `index.html` 模版，確保使用者在各子路徑下重新整理網頁時（Refresh）不發生 HTTP 404 錯誤。
 - **[新增] 瀏覽器歷史歷程同步（popstate）**：於 `static/js/ui.js` 實作網址與視圖同步機制。點擊選單切換時利用 `history.pushState` 自動修改瀏覽器網址列；監聽 `popstate` 事件，使瀏覽器的「上一頁」與「下一頁」前進後退能無縫切換對應視圖。

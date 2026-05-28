@@ -32,7 +32,8 @@ const ROUTE_MAP = {
     '/axai': 'placeholder',
     '/livedata': 'metrics',
     '/system': 'settings',
-    '/idmanage': 'admin'
+    '/idmanage': 'admin',
+    '/multiverse': 'multiverse'
 };
 
 const VIEW_TO_ROUTE = {
@@ -47,7 +48,8 @@ const VIEW_TO_ROUTE = {
     'placeholder': '/axai',
     'metrics': '/livedata',
     'settings': '/system',
-    'admin': '/idmanage'
+    'admin': '/idmanage',
+    'multiverse': '/multiverse'
 };
 
 // 暴露至全域供外部存取
