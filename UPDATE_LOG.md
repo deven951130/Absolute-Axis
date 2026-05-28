@@ -1,3 +1,9 @@
+### [V49] - 2026-05-28 更新日誌
+
+#### 瀏覽器快取控制防禦與 SPA 版本同步（P0）
+- **[修復] 登入後白屏與快取未更新 Bug**：解決使用者於登入後或更新部署後需手動刷新快取才能正常顯示頁面的問題。
+- **[新增] 全功能 HTTP 快取控制標頭**：於後端 `main.py` 之 `home()` 回傳 `index.html` 時，注入 `Cache-Control: no-cache, no-store, must-revalidate`、`Pragma: no-cache`、`Expires: 0` 標頭，強制瀏覽器每次均請求最新的 HTML 範本，自動使舊版 JS/CSS 快取失效。
+
 ### [V48] - 2026-05-28 更新日誌
 
 #### Proxmox 連線修復與 Docker 環境變數對位（P0）

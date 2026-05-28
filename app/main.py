@@ -67,7 +67,12 @@ def home():
             html = f.read()
         # 注入版本號，替換靜態資源的 ?v= 佔位符
         html = html.replace("?v=AXIS_VER", f"?v={_APP_VERSION}")
-        return HTMLResponse(content=html)
+        headers = {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+        return HTMLResponse(content=html, headers=headers)
     return HTMLResponse(content="<h1>Index.html not found in static/</h1>", status_code=404)
 
 @app.get("/logo.jpg")
