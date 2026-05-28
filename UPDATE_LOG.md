@@ -1,3 +1,8 @@
+### [V50] - 2026-05-28 更新日誌
+
+#### 登入狀態下產品介紹頁面空白修復（P0）
+- **[修復] /introduce 頁面全黑異常**：為 `app.js` 中的 `loadComponent` 版本號解析機制加上 `try-catch` 保護並傳入 `window.location.origin` 作為 `base` URL，防止瀏覽器在處理相對路徑時拋出 `TypeError: Invalid URL` 錯誤導致應用程式加載中斷、`App.boot()` 無法執行而卡在全黑遮罩狀態。
+
 ### [V49] - 2026-05-28 更新日誌
 
 #### 瀏覽器快取控制防禦與 SPA 版本同步（P0）

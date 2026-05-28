@@ -31,9 +31,18 @@ const App = {
     },
 
     async loadComponent(url, target) {
-        // 從 CSS link 的 href 動態讀取版本號，與後端注入的版本保持一致
-        const cssLink = document.querySelector('link[rel="stylesheet"]');
-        const ver = cssLink ? (new URL(cssLink.href).searchParams.get('v') || 'dev') : 'dev';
+        let ver = 'dev';
+        try {
+            const cssLink = document.querySelector('link[rel="stylesheet"]');
+            if (cssLink && cssLink.href) {
+                // 使用 window.location.origin 作為 base URL 避免相對路徑拋錯
+                const urlObj = new URL(cssLink.href, window.location.origin);
+                ver = urlObj.searchParams.get('v') || 'dev';
+            }
+        } catch (e) {
+            console.warn("Failed to parse CSS version, falling back to 'dev':", e);
+        }
+
         const res = await fetch(`${url}?v=${ver}`);
         if (!res.ok) throw new Error(`Failed to load component: ${url}`);
         const html = await res.text();
