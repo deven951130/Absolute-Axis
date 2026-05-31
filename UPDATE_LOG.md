@@ -2,6 +2,7 @@
 
 #### 系統修復與資源擴充（P0）
 - **[修復] Tailscale Funnel 連線失效問題**：排查發現 PVE 宿主機上的 socat 連接埠轉發進程未運行，導致外部存取中斷。已重新啟動 socat 背景轉發進程並重啟 Funnel，恢復存取。
+- **[修復] 靜態 JavaScript 快取導致介面未更新問題**：於後端 `main.py` 新增專屬 `/static/js/gigs.js` 的無快取路由並注入 `Cache-Control: no-cache, no-store, must-revalidate` 標頭，強制瀏覽器載入最新版接案中樞邏輯，徹底解決客戶端載入舊版快取而未顯示「拒絕承接」紅鈕的異常。
 - **[新增] 伺服器 RAM 記憶體擴充**：將 Docker 虛擬機（VM 100）的分配記憶體從 8 GB 擴充至 16 GB，並完成硬重啟以套用配置，解決硬體資源不足問題。
 - **[新增] Minecraft DDNS 自動更新**：後端實作背景更新線程，定時偵測公網 WAN IP。當 IP 變更時，自動向 Dynu DNS API 發送同步請求以更新網域記錄。
 
