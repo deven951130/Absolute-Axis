@@ -10,7 +10,7 @@ from app.utils import get_current_user_obj, log_event
 router = APIRouter(prefix="/api/gigs", tags=["gigs"])
 
 @router.get("")
-def list_gigs(user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
+def list_gigs(db: Session = Depends(get_db)):
     gigs = db.query(Gig).order_by(Gig.id.desc()).all()
     res = []
     for g in gigs:

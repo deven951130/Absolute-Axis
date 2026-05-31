@@ -3,6 +3,12 @@ async function loadGigs() {
     const container = document.getElementById('gigs-list-container');
     if (!container) return;
 
+    const token = localStorage.getItem('axis_token');
+    const gigsNav = document.getElementById('gigs-intro-navbar');
+    if (gigsNav) {
+        gigsNav.style.display = !token ? 'flex' : 'none';
+    }
+
     try {
         const res = await authFetch('/api/gigs');
         if (!res.ok) {
@@ -82,6 +88,12 @@ async function loadGigs() {
 }
 
 async function submitGig() {
+    const token = localStorage.getItem('axis_token');
+    if (!token) {
+        if (typeof showLoginOverlay === 'function') showLoginOverlay();
+        return;
+    }
+
     const titleVal = document.getElementById('gig-title-input').value.strip ? document.getElementById('gig-title-input').value.strip() : document.getElementById('gig-title-input').value.trim();
     const descVal = document.getElementById('gig-desc-input').value.strip ? document.getElementById('gig-desc-input').value.strip() : document.getElementById('gig-desc-input').value.trim();
     const budgetVal = parseInt(document.getElementById('gig-budget-input').value);
@@ -122,6 +134,11 @@ async function submitGig() {
 }
 
 async function acceptGig(id) {
+    const token = localStorage.getItem('axis_token');
+    if (!token) {
+        if (typeof showLoginOverlay === 'function') showLoginOverlay();
+        return;
+    }
     try {
         const res = await authFetch(`/api/gigs/${id}/accept`, { method: 'POST' });
         if (res.ok) {
@@ -137,6 +154,11 @@ async function acceptGig(id) {
 }
 
 async function completeGig(id) {
+    const token = localStorage.getItem('axis_token');
+    if (!token) {
+        if (typeof showLoginOverlay === 'function') showLoginOverlay();
+        return;
+    }
     try {
         const res = await authFetch(`/api/gigs/${id}/complete`, { method: 'POST' });
         if (res.ok) {
@@ -152,6 +174,11 @@ async function completeGig(id) {
 }
 
 async function deleteGig(id) {
+    const token = localStorage.getItem('axis_token');
+    if (!token) {
+        if (typeof showLoginOverlay === 'function') showLoginOverlay();
+        return;
+    }
     if (!confirm("確定要撤回該案件嗎？")) return;
     try {
         const res = await authFetch(`/api/gigs/${id}`, { method: 'DELETE' });

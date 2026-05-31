@@ -72,8 +72,8 @@ function switchView(v, pushHistory = true) {
         v = 'dashboard';
     }
 
-    // 前端 Route Guard 強化，加入 login 虛擬視圖至免驗證白名單
-    if (!token && !['intro', 'pricing', 'login'].includes(v)) {
+    // 前端 Route Guard 強化，加入 login 與 gigs 虛擬視圖至免驗證白名單
+    if (!token && !['intro', 'pricing', 'login', 'gigs'].includes(v)) {
         console.warn(`Unauthorized attempt to view: ${v}. Redirecting to intro.`);
         v = 'intro';
         setTimeout(() => {
@@ -104,8 +104,8 @@ function switchView(v, pushHistory = true) {
         v = 'placeholder';
     }
 
-    // 獨立前台頁面樣式控制（介紹頁與定價頁隱藏側邊欄及 Header）
-    if (['intro', 'pricing'].includes(v)) {
+    // 獨立前台頁面樣式控制（介紹頁、定價頁與未登入接案平台隱藏側邊欄及 Header）
+    if (['intro', 'pricing'].includes(v) || (v === 'gigs' && !token)) {
         document.body.classList.add('full-screen-view');
     } else {
         document.body.classList.remove('full-screen-view');
