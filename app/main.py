@@ -59,7 +59,6 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_PATH, "static")), n
 
 # 擺放首頁入口之動態注入與路由映射
 import time as _time
-_APP_VERSION = os.getenv("APP_VERSION", str(int(_time.time())))
 
 @app.get("/")
 @app.get("/introduce")
@@ -83,8 +82,8 @@ def home():
     if os.path.exists(index_path):
         with open(index_path, "r", encoding="utf-8") as f:
             html = f.read()
-        # 注入版本號，替換靜態資源的 ?v= 佔位符
-        html = html.replace("?v=AXIS_VER", f"?v={_APP_VERSION}")
+        # 注入版本號，使用即時時間戳確保每次請求均破除瀏覽器快取
+        html = html.replace("?v=AXIS_VER", f"?v={int(_time.time())}")
         headers = {
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "Pragma": "no-cache",
@@ -93,17 +92,7 @@ def home():
         return HTMLResponse(content=html, headers=headers)
     return HTMLResponse(content="<h1>Index.html not found in static/</h1>", status_code=404)
 
-@app.get("/static/js/gigs.js")
-def get_gigs_js():
-    js_path = os.path.join(BASE_PATH, "static", "js", "gigs.js")
-    if os.path.exists(js_path):
-        headers = {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0"
-        }
-        return FileResponse(js_path, media_type="application/javascript", headers=headers)
-    return HTMLResponse(status_code=404)
+
 
 @app.get("/logo.jpg")
 def logo():
