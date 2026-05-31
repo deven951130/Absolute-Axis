@@ -93,6 +93,18 @@ def home():
         return HTMLResponse(content=html, headers=headers)
     return HTMLResponse(content="<h1>Index.html not found in static/</h1>", status_code=404)
 
+@app.get("/static/js/gigs.js")
+def get_gigs_js():
+    js_path = os.path.join(BASE_PATH, "static", "js", "gigs.js")
+    if os.path.exists(js_path):
+        headers = {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+        return FileResponse(js_path, media_type="application/javascript", headers=headers)
+    return HTMLResponse(status_code=404)
+
 @app.get("/logo.jpg")
 def logo():
     logo_path = os.path.join(BASE_PATH, "static", "logo.jpg")
