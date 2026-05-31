@@ -1,6 +1,6 @@
 import paramiko
 
-def cat_run_sh():
+def check_dns_config():
     pve_ip = "100.124.203.61"
     pve_user = "root"
     pve_pass = "deven951130"
@@ -10,8 +10,12 @@ def cat_run_sh():
     try:
         client.connect(pve_ip, username=pve_user, password=pve_pass, timeout=10)
         
-        print("=== run.sh ===")
-        stdin, stdout, stderr = client.exec_command("pct exec 102 -- cat /root/minecraft/run.sh")
+        print("=== LXC 102 /etc/resolv.conf ===")
+        stdin, stdout, stderr = client.exec_command("pct exec 102 -- cat /etc/resolv.conf")
+        print(stdout.read().decode())
+        
+        print("=== PVE Host /etc/resolv.conf ===")
+        stdin, stdout, stderr = client.exec_command("cat /etc/resolv.conf")
         print(stdout.read().decode())
         
     except Exception as e:
@@ -20,4 +24,4 @@ def cat_run_sh():
         client.close()
 
 if __name__ == "__main__":
-    cat_run_sh()
+    check_dns_config()

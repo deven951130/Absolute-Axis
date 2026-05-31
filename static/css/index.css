@@ -1298,10 +1298,100 @@ body.light-mode .sidebar {
 }
 
 /* 頂部導覽列玻璃質感 */
+/* 頂部導覽列玻璃質感 */
 .top-header {
     background: transparent !important;
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
+
+/* ==================== 科技背景圖與環境浮光特效 ==================== */
+body {
+    background-image: url('/static/tech_bg.png') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+}
+
+body.light-mode {
+    background-image: none !important;
+}
+
+/* 背景慢速漂浮光暈 (Ambient Floating Glow) */
+body::before {
+    content: "" !important;
+    position: fixed !important;
+    top: -15% !important; left: -15% !important;
+    width: 60% !important; height: 60% !important;
+    background: radial-gradient(circle, rgba(88, 166, 255, 0.08), transparent 70%) !important;
+    z-index: -1 !important;
+    pointer-events: none !important;
+    animation: floatGlow 25s infinite alternate ease-in-out !important;
+}
+
+body::after {
+    content: "" !important;
+    position: fixed !important;
+    bottom: -15% !important; right: -15% !important;
+    width: 70% !important; height: 70% !important;
+    background: radial-gradient(circle, rgba(189, 147, 249, 0.06), transparent 70%) !important;
+    z-index: -1 !important;
+    pointer-events: none !important;
+    animation: floatGlow 30s infinite alternate-reverse ease-in-out !important;
+}
+
+body.light-mode::before, body.light-mode::after {
+    display: none !important;
+}
+
+@keyframes floatGlow {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(12%, 10%) scale(1.15); }
+}
+
+/* ==================== 瀑布式階梯進場動畫 ==================== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.99);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 對所有 active 視圖底下的 card 與 stat-card 啟用瀑布式進場 */
+.view-section.active .card, 
+.view-section.active .stat-card, 
+.view-section.active .metric-chart-card,
+.view-section.active .file-list-item,
+.view-section.active .stat-grid > div {
+    animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+}
+
+/* 階梯式動畫延遲 (Staggered Animation Delay) */
+.view-section.active .card:nth-child(1), .view-section.active .stat-card:nth-child(1) { animation-delay: 0.04s !important; }
+.view-section.active .card:nth-child(2), .view-section.active .stat-card:nth-child(2) { animation-delay: 0.08s !important; }
+.view-section.active .card:nth-child(3), .view-section.active .stat-card:nth-child(3) { animation-delay: 0.12s !important; }
+.view-section.active .card:nth-child(4), .view-section.active .stat-card:nth-child(4) { animation-delay: 0.16s !important; }
+.view-section.active .card:nth-child(5) { animation-delay: 0.2s !important; }
+
+/* ==================== 側邊欄導覽項目微動畫 ==================== */
+.nav-item {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.nav-item:hover {
+    padding-left: 36px !important;
+    text-shadow: 0 0 10px var(--accent-glow) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+body.light-mode .nav-item:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
 

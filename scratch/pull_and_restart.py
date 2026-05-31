@@ -2,7 +2,7 @@ import paramiko
 import time
 
 def pull_and_restart():
-    VM_IP = '192.168.0.159'
+    VM_IP = '100.118.53.34'
     VM_USER = 'sparkle'
     VM_PASS = '951130'
     REPO_PATH = '/home/sparkle/Absolute-Axis'
@@ -37,7 +37,7 @@ def pull_and_restart():
                 count = int(count_str)
             except ValueError:
                 count = 0
-            status = "✓" if count > 0 else "✗ 未找到（代表 git pull 尚未含此檔案）"
+            status = "OK" if count > 0 else "FAIL (Not Found)"
             print(f"    {f}: {status}")
 
         

@@ -1,6 +1,7 @@
 import paramiko
+import time
 
-def cat_run_sh():
+def verify_isolation():
     pve_ip = "100.124.203.61"
     pve_user = "root"
     pve_pass = "deven951130"
@@ -10,8 +11,12 @@ def cat_run_sh():
     try:
         client.connect(pve_ip, username=pve_user, password=pve_pass, timeout=10)
         
-        print("=== run.sh ===")
-        stdin, stdout, stderr = client.exec_command("pct exec 102 -- cat /root/minecraft/run.sh")
+        print("=== Checking if Minecraft is listening on 25565 ===")
+        stdin, stdout, stderr = client.exec_command("pct exec 102 -- ss -tuln | grep 25565")
+        print(stdout.read().decode())
+        
+        print("=== Minecraft logs (latest 40 lines) ===")
+        stdin, stdout, stderr = client.exec_command("pct exec 102 -- tail -n 40 /root/minecraft/logs/latest.log")
         print(stdout.read().decode())
         
     except Exception as e:
@@ -20,4 +25,4 @@ def cat_run_sh():
         client.close()
 
 if __name__ == "__main__":
-    cat_run_sh()
+    verify_isolation()

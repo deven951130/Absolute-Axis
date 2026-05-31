@@ -1,6 +1,6 @@
 import paramiko
 
-def cat_run_sh():
+def list_backups():
     pve_ip = "100.124.203.61"
     pve_user = "root"
     pve_pass = "deven951130"
@@ -10,8 +10,8 @@ def cat_run_sh():
     try:
         client.connect(pve_ip, username=pve_user, password=pve_pass, timeout=10)
         
-        print("=== run.sh ===")
-        stdin, stdout, stderr = client.exec_command("pct exec 102 -- cat /root/minecraft/run.sh")
+        print("=== Remaining Backups in LXC 102 ===")
+        stdin, stdout, stderr = client.exec_command("pct exec 102 -- ls -la /root/minecraft/simplebackups")
         print(stdout.read().decode())
         
     except Exception as e:
@@ -20,4 +20,4 @@ def cat_run_sh():
         client.close()
 
 if __name__ == "__main__":
-    cat_run_sh()
+    list_backups()
