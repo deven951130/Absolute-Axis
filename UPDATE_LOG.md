@@ -18,6 +18,7 @@
 #### 視覺與 UI 體驗高級化（P2）
 - **[新增] 深色科技背景圖片與動態環境浮光**：生成高畫質幾何科技深色背景 `tech_bg.png`，並於 `index.css` 引入作為 Dark Mode 背景；設計 `::before` / `::after` 環境雙色慢速漂浮光暈（Radial-gradient 與 floatGlow 動畫），營造沉浸式科技質感，並於 Light Mode 自動重置/隱藏以維持可讀性。
 - **[新增] 階梯瀑布式淡入與選單微動效**：實作 `fadeInUp` 關鍵影格與階梯式延遲動畫（Staggered Delay），使各功能頁面的卡片與統計圖表在切換時呈現自然流暢的瀑布進場效果；同時為側邊欄導覽項目（`nav-item`）新增 Hover 右滑與發光微動效。
+- **[修復] 深色背景圖片遭不透明容器遮擋**：修復 `.main-content` 及介紹/定價頁子區塊（如 `.pricing-reviews`、`.intro-features` 等）因帶有不透明背景色而遮蔽底層 `body` 背景圖的問題。已於 `index.css` 追加覆寫，在深色模式下將此類容器背景設為 `transparent !important`，使背景圖案與浮光順利顯現。
 - **[優化] 公司介紹頁面框架**：重構 intro.html，將 Landing Page 擴充為結構完整的公司介紹框架，拔除所有 Emoji 以符合排版規範。
 - **[優化] 視覺設計高級化**：於 index.css 全局追加毛玻璃玻璃擬態（glassmorphism）樣式，優化按鈕縮放與輸入框聚焦外發光等微動畫，提升系統的視覺質感。
 
