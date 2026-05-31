@@ -44,6 +44,37 @@ class FileShare(Base):
     target = Column(String, index=True)
     path = Column(String, index=True)
 
+class VMAccount(Base):
+    __tablename__ = "vm_accounts"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    password = Column(String, nullable=False)
+    vmid = Column(Integer, nullable=True)
+    description = Column(String, nullable=True)
+
+class Gig(Base):
+    __tablename__ = "gigs"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    budget = Column(Integer, nullable=False)
+    creator = Column(String, nullable=False)
+    worker = Column(String, nullable=True)
+    status = Column(String, default="Open")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class Feedback(Base):
+    __tablename__ = "feedbacks"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    content = Column(String, nullable=False)
+    creator = Column(String, nullable=False)
+    category = Column(String, nullable=False)
+    status = Column(String, default="Pending")
+    response = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 # Dependency to get DB session
 def get_db():
     db = SessionLocal()

@@ -1,0 +1,42 @@
+<div id="view-feedback" class="view-section">
+    <div style="display:grid; grid-template-columns: 1fr 2fr; gap:2rem;">
+        <!-- 提交意見反饋 -->
+        <div>
+            <div class="card" style="position: sticky; top: 2rem;">
+                <h3 style="margin-top: 0; margin-bottom: 1.5rem; color: var(--accent-color); font-weight: 900; letter-spacing: 0.5px;">提交意見反饋</h3>
+                <div style="display:flex; flex-direction:column; gap:1.2rem;">
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">反饋類別</label>
+                        <select id="feedback-category-input" class="t-input" style="appearance:none; -webkit-appearance:none; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%238b949e%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/><path d=%22M0 0h24v24H0z%22 fill=%22none%22/></svg>'); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;">
+                            <option value="Bug">系統錯誤 (Bug)</option>
+                            <option value="Suggestion">功能建議</option>
+                            <option value="Other">其他問題</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">反饋標題</label>
+                        <input type="text" id="feedback-title-input" placeholder="請簡述您的意見主題" class="t-input">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">詳細描述</label>
+                        <textarea id="feedback-content-input" placeholder="請詳細說明您的問題或具體改進建議" class="t-input" style="height:140px; resize:none; font-family:inherit;"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="submitFeedback()" style="height:48px; width:100%; font-weight:800; margin-top:0.5rem;">送出意見反饋</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 歷史反饋 -->
+        <div>
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h3 style="margin:0; color:var(--text-main); font-weight:900; letter-spacing:0.5px;">意見反饋紀錄</h3>
+                    <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;" onclick="loadFeedbacks()">重新整理</button>
+                </div>
+                <div id="feedbacks-list-container" style="display:flex; flex-direction:column; gap:1.2rem;">
+                    <div style="color:var(--text-muted); padding:2rem; text-align:center;">載入中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

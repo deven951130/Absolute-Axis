@@ -64,9 +64,9 @@
         <!-- 連線資訊卡 -->
         <div class="card" style="border-left:4px solid #4CAF50;">
             <div class="card-title" style="font-size:0.9rem; margin-bottom:1.2rem;">
-                🌐 連線資訊
+                連線資訊
             </div>
-            <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; flex-direction:column; gap:10px;">
                 <div>
                     <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); margin-bottom:4px;">內網連線（LAN）</div>
                     <div style="display:flex; align-items:center; gap:8px;">
@@ -80,7 +80,7 @@
                     </div>
                 </div>
                 <div>
-                    <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); margin-bottom:4px;">外網連線（WAN）</div>
+                    <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); margin-bottom:4px;">動態外網（WAN）</div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <code id="mv-wan" style="
                             background:rgba(255,255,255,0.06); border:1px solid #30363d;
@@ -91,12 +91,17 @@
                             onclick="mvCopy('mv-wan')">複製</button>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:center; margin-top:4px;">
-                    <div id="mv-port-badge" style="
-                        background:rgba(88,166,255,0.1); border:1px solid rgba(88,166,255,0.3);
-                        border-radius:20px; padding:4px 16px; font-size:0.72rem;
-                        color:var(--accent-color); font-weight:800;
-                    ">連接埠：25565</div>
+                <div>
+                    <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); margin-bottom:4px;">固定域名連線（DDNS）</div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <code id="mv-ddns" style="
+                            background:rgba(255,255,255,0.06); border:1px solid #30363d;
+                            padding:6px 12px; border-radius:6px; font-size:0.85rem;
+                            color:#e67e22; flex:1; text-align:center;
+                        ">--</code>
+                        <button class="btn btn-outline" style="padding:5px 10px; font-size:0.72rem; flex-shrink:0;"
+                            onclick="mvCopy('mv-ddns')">複製</button>
+                    </div>
                 </div>
             </div>
         </div>

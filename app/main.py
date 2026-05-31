@@ -8,7 +8,7 @@ import os
 from app.config import BASE_PATH, ALLOWED_ORIGINS
 from app.database import engine, Base
 from app.utils import init_db_user
-from app.routers import auth, admin, user, system, docker, nas, proxmox, minecraft, smart_home
+from app.routers import auth, admin, user, system, docker, nas, proxmox, minecraft, smart_home, vm_user, gigs, feedback, github_repos
 
 app = FastAPI(title="Absolute Axis Server")
 
@@ -36,13 +36,17 @@ app.include_router(nas.router)
 app.include_router(proxmox.router)
 app.include_router(minecraft.router)
 app.include_router(smart_home.router)
+app.include_router(vm_user.router)
+app.include_router(gigs.router)
+app.include_router(feedback.router)
+app.include_router(github_repos.router)
 
 
 # ----------------- 靜態與首頁路由 -----------------
 # 注意：這行必須放在所有 API 路由之後，以免遮蔽 API
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_PATH, "static")), name="static")
 
-# 動態版本號注入，讀取 APP_VERSION 環境變數（預設為當前時間戳）
+# 擺放首頁入口之動態注入與路由映射
 import time as _time
 _APP_VERSION = os.getenv("APP_VERSION", str(int(_time.time())))
 
@@ -60,6 +64,9 @@ _APP_VERSION = os.getenv("APP_VERSION", str(int(_time.time())))
 @app.get("/idmanage")
 @app.get("/multiverse")
 @app.get("/login")
+@app.get("/gigs")
+@app.get("/code-share")
+@app.get("/feedback-hub")
 def home():
     index_path = os.path.join(BASE_PATH, "static", "index.html")
     if os.path.exists(index_path):

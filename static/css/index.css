@@ -1220,3 +1220,88 @@ body.light-mode .pricing-compare {
     color: var(--text-main);
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
+
+/* ==================== 高級視覺美化覆寫與補強 ==================== */
+/* 升級全局卡片樣式為現代毛玻璃玻璃擬態 */
+.card, .stat-card, .file-card, .metric-chart-card, .pricing-tab, .plan-card {
+    background: rgba(22, 27, 34, 0.45) !important;
+    backdrop-filter: blur(16px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35) !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+body.light-mode .card, body.light-mode .stat-card, body.light-mode .file-card, body.light-mode .pricing-tab, body.light-mode .plan-card {
+    background: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(16px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
+}
+
+/* 懸停動態微動畫補強 */
+.card:hover, .stat-card:hover, .file-card:hover, .plan-card:hover {
+    transform: translateY(-4px) !important;
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.55), 0 0 15px var(--accent-soft) !important;
+}
+
+body.light-mode .card:hover, body.light-mode .stat-card:hover, body.light-mode .file-card:hover, body.light-mode .plan-card:hover {
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15) !important;
+}
+
+/* 輸入框高級感升級 */
+.t-input {
+    background: rgba(0, 0, 0, 0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 8px !important;
+    color: var(--text-main) !important;
+    transition: all 0.2s ease !important;
+}
+
+.t-input:focus {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 3px var(--accent-soft) !important;
+}
+
+body.light-mode .t-input {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+/* 按鈕美化 */
+.btn {
+    border-radius: 8px !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn:hover {
+    transform: scale(1.02) !important;
+    filter: brightness(1.1) !important;
+}
+
+.btn:active {
+    transform: scale(0.98) !important;
+}
+
+/* 左側導覽列高級玻璃感 */
+.sidebar {
+    background: rgba(22, 27, 34, 0.8) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+}
+
+body.light-mode .sidebar {
+    background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 頂部導覽列玻璃質感 */
+.top-header {
+    background: transparent !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+

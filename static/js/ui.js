@@ -34,7 +34,10 @@ const ROUTE_MAP = {
     '/system': 'settings',
     '/idmanage': 'admin',
     '/multiverse': 'multiverse',
-    '/login': 'login'
+    '/login': 'login',
+    '/gigs': 'gigs',
+    '/code-share': 'opensource',
+    '/feedback-hub': 'feedback'
 };
 
 const VIEW_TO_ROUTE = {
@@ -51,7 +54,10 @@ const VIEW_TO_ROUTE = {
     'settings': '/system',
     'admin': '/idmanage',
     'multiverse': '/multiverse',
-    'login': '/login'
+    'login': '/login',
+    'gigs': '/gigs',
+    'opensource': '/code-share',
+    'feedback': '/feedback-hub'
 };
 
 // 暴露至全域供外部存取
@@ -137,7 +143,10 @@ function switchView(v, pushHistory = true) {
         'settings': '系統設定',
         'metrics': '實時數據分析',
         'multiverse': '多重宇宙',
-        'smart': '智慧宅控'
+        'smart': '智慧宅控',
+        'gigs': '接案中樞',
+        'opensource': '開源代碼分享',
+        'feedback': '意見反饋'
     };
     
     document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').innerText.replace(' 系統尚未開放', '');
@@ -163,6 +172,9 @@ function switchView(v, pushHistory = true) {
     if (v === 'nas-mgnt') { if (typeof refreshNASHardware === 'function') refreshNASHardware(); }
     if (v === 'multiverse') { if (typeof loadMultiverse === 'function') loadMultiverse(); }
     if (v === 'smart') { if (typeof loadSmart === 'function') loadSmart(); }
+    if (v === 'gigs') { if (typeof loadGigs === 'function') loadGigs(); }
+    if (v === 'opensource') { if (typeof loadGitHubRepos === 'function') loadGitHubRepos(); }
+    if (v === 'feedback') { if (typeof loadFeedbacks === 'function') loadFeedbacks(); }
 
     // 收合行動端側邊欄
     if (typeof closeSidebar === 'function') closeSidebar();

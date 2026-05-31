@@ -104,6 +104,7 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
             "wan_ip": display_wan_ip,
             "address_lan": f"{MC_LXC_IP}:{MC_LXC_PORT}",
             "address_wan": display_address_wan,
+            "address_ddns": f"absoluteaxis.dpdns.org:{MC_LXC_PORT}"
         },
         "specs": {
             "ram": "16 GB",
@@ -112,6 +113,41 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
             "container": "Proxmox LXC #102",
         },
     }
+
+# Dynu DDNS 自動更新背景背景程序
+import os
+import time
+import threading
+
+def run_ddns_updater():
+    last_ip = None
+    dynu_user = os.getenv("DYNU_USER", "deven951130")
+    dynu_pass = os.getenv("DYNU_PASS")
+    
+    if not dynu_pass:
+        print("[DDNS] DYNU_PASS not configured. Skipping background updates.")
+        return
+        
+    print("[DDNS] Starting background DDNS updater for absoluteaxis.dpdns.org")
+    while True:
+        try:
+            r = requests.get("https://api.ipify.org?format=json", timeout=5)
+            if r.status_code == 200:
+                current_ip = r.json().get("ip")
+                if current_ip and current_ip != last_ip:
+                    # 更新 Dynu DNS IP 記錄
+                    update_url = f"https://api.dynu.com/nic/update?hostname=absoluteaxis.dpdns.org&myip={current_ip}&username={dynu_user}&password={dynu_pass}"
+                    resp = requests.get(update_url, timeout=5)
+                    if resp.status_code == 200:
+                        last_ip = current_ip
+                        print(f"[DDNS] Successfully synchronized absoluteaxis.dpdns.org to {current_ip}")
+        except Exception as e:
+            print(f"[DDNS] Synchronization failed: {e}")
+        time.sleep(300)
+
+if os.getenv("DYNU_PASS"):
+    threading.Thread(target=run_ddns_updater, daemon=True).start()
+
 
 
 @router.post("/command")

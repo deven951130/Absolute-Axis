@@ -51,3 +51,23 @@ class DeployVMRequest(BaseModel):
 
 class MCCommandRequest(BaseModel):
     command: str
+
+class VMAccountCreate(BaseModel):
+    username: str
+    password: str
+    vmid: Optional[int] = None
+    description: Optional[str] = None
+
+class GigCreate(BaseModel):
+    title: str
+    description: str
+    budget: int
+
+class FeedbackCreate(BaseModel):
+    title: str
+    content: str
+    category: str
+
+class FeedbackResolve(BaseModel):
+    response: str
+

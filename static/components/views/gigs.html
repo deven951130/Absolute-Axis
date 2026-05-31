@@ -1,0 +1,38 @@
+<div id="view-gigs" class="view-section">
+    <div style="display:grid; grid-template-columns: 1fr 2fr; gap:2rem;">
+        <!-- 發佈新案件 -->
+        <div>
+            <div class="card" style="position: sticky; top: 2rem;">
+                <h3 style="margin-top: 0; margin-bottom: 1.5rem; color: var(--accent-color); font-weight: 900; letter-spacing: 0.5px;">發佈案件需求</h3>
+                <div style="display:flex; flex-direction:column; gap:1.2rem;">
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">案件名稱</label>
+                        <input type="text" id="gig-title-input" placeholder="請輸入案件名稱" class="t-input">
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">需求詳細描述</label>
+                        <textarea id="gig-desc-input" placeholder="請詳細說明案件需求與驗證標準" class="t-input" style="height:120px; resize:none; font-family:inherit;"></textarea>
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">專案預算 (TWD)</label>
+                        <input type="number" id="gig-budget-input" placeholder="例如 5000" class="t-input">
+                    </div>
+                    <button class="btn btn-primary" onclick="submitGig()" style="height:48px; width:100%; font-weight:800; margin-top:0.5rem;">確認發佈案件</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 案件列表 -->
+        <div>
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h3 style="margin:0; color:var(--text-main); font-weight:900; letter-spacing:0.5px;">當前委託案件清單</h3>
+                    <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;" onclick="loadGigs()">重新整理</button>
+                </div>
+                <div id="gigs-list-container" style="display:flex; flex-direction:column; gap:1rem;">
+                    <div style="color:var(--text-muted); padding:2rem; text-align:center;">載入中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

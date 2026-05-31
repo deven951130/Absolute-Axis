@@ -40,13 +40,16 @@
                 <li class="nav-item" id="nav-metrics" onclick="switchView('metrics')">📊 實時數據分析</li>
                 <li class="nav-item" id="nav-ai" onclick="switchView('ai')">🤖 核心助手</li>
                 <li class="nav-item" id="nav-multiverse" onclick="switchView('multiverse')">🌌 多重宇宙</li>
+                <li class="nav-item" id="nav-gigs" onclick="switchView('gigs')">接案中樞</li>
+                <li class="nav-item" id="nav-opensource" onclick="switchView('opensource')">開源代碼分享</li>
+                <li class="nav-item" id="nav-feedback" onclick="switchView('feedback')">意見反饋</li>
                 <div class="nav-separator"></div>
                 <li class="nav-item" id="nav-admin" onclick="switchView('admin')" style="display:none">👥 帳號管理</li>
                 <li class="nav-item" id="nav-settings" onclick="switchView('settings')">⚙️ 系統設定</li>
             </ul>
         </div>
     </aside>
-
+ 
     <!-- 主要內容區 (動態注入容器) -->
     <main class="main-content">
         <header class="top-header">
@@ -66,13 +69,13 @@
                 </div>
             </div>
         </header>
-
+ 
         <!-- Components (Views) will be injected here by app.js -->
     </main>
-
+ 
     <!-- Toast 通知容器 -->
     <div id="toast-container"></div>
-
+ 
     <!-- Project Logic Modules -->
     <script src="/static/js/api.js?v=AXIS_VER"></script>
     <script src="/static/js/ui.js?v=AXIS_VER"></script>
@@ -84,7 +87,10 @@
     <script src="/static/js/admin.js?v=AXIS_VER"></script>
     <script src="/static/js/multiverse.js?v=AXIS_VER"></script>
     <script src="/static/js/smart.js?v=AXIS_VER"></script>
-
+    <script src="/static/js/gigs.js?v=AXIS_VER"></script>
+    <script src="/static/js/opensource.js?v=AXIS_VER"></script>
+    <script src="/static/js/feedback.js?v=AXIS_VER"></script>
+ 
     <!-- Application Entry Point (Modular Core) -->
     <script src="/static/js/app.js?v=AXIS_VER"></script>
 </body>

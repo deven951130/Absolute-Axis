@@ -64,6 +64,7 @@ function _mvRenderStatus(data) {
     // --- 連線資訊 ---
     _mvSet('mv-lan', data.connection?.address_lan || '--');
     _mvSet('mv-wan', data.connection?.address_wan || '--');
+    _mvSet('mv-ddns', data.connection?.address_ddns || '--');
 
     // --- 硬體規格 ---
     _mvSet('mv-ram', data.specs?.ram || '--');
