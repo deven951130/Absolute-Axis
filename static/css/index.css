@@ -1394,4 +1394,13 @@ body.light-mode .nav-item:hover {
     background: rgba(0, 0, 0, 0.04) !important;
 }
 
+/* ==================== 解決主內容區與子區塊背景遮擋問題 ==================== */
+body:not(.light-mode) .main-content,
+body:not(.light-mode) .pricing-reviews,
+body:not(.light-mode) .intro-features,
+body:not(.light-mode) .intro-status,
+body:not(.light-mode) .intro-footer {
+    background: transparent !important;
+}
+
 
