@@ -1403,4 +1403,202 @@ body:not(.light-mode) .intro-footer {
     background: transparent !important;
 }
 
+/* ==================== 高級科技美感升級與細節精緻化 ==================== */
+
+/* 全局字體高級化 */
+* {
+    font-family: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+/* 定價切換 Tab 膠囊化 */
+.pricing-tab-row {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 4px !important;
+    border-radius: 30px !important;
+    max-width: fit-content !important;
+    margin: 1.5rem auto 0 auto !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+}
+
+body.light-mode .pricing-tab-row {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.pricing-tab {
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-muted) !important;
+    border-radius: 25px !important;
+    padding: 8px 24px !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.pricing-tab:hover {
+    color: var(--accent-color) !important;
+}
+
+.pricing-tab.active {
+    background: var(--accent-color) !important;
+    color: #0d1117 !important;
+    box-shadow: 0 4px 12px var(--accent-glow) !important;
+}
+
+/* 按鈕流光 Shimmer 特效 */
+.btn-primary, .pricing-cta-btn {
+    position: relative !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 15px var(--accent-soft) !important;
+}
+
+.btn-primary::after, .pricing-cta-btn::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important; left: -50% !important;
+    width: 200% !important; height: 100% !important;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.25) 50%,
+        rgba(255, 255, 255, 0) 100%
+    ) !important;
+    transform: skewX(-25deg) translateX(-100%) !important;
+    transition: none !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+}
+
+.btn-primary:hover::after, .pricing-cta-btn:hover::after {
+    transform: skewX(-25deg) translateX(120%) !important;
+    transition: transform 0.85s ease-in-out !important;
+}
+
+/* 方案卡片精緻彩虹頂線與選取發光 */
+.plan-card {
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.plan-card::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important; height: 3px !important;
+    background: linear-gradient(to right, var(--accent-color), #bd93f9) !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+.plan-card:hover::before, .plan-card.selected::before {
+    opacity: 1 !important;
+}
+
+.plan-card.selected {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px var(--accent-soft) !important;
+    transform: translateY(-4px) !important;
+}
+
+body.light-mode .plan-card.selected {
+    box-shadow: 0 12px 40px rgba(31, 38, 135, 0.12), 0 0 20px var(--accent-soft) !important;
+}
+
+/* 評價區塊精緻毛玻璃氣泡 */
+.review-item {
+    background: rgba(255, 255, 255, 0.015) !important;
+    border: 1px solid rgba(255, 255, 255, 0.03) !important;
+    border-radius: 16px !important;
+    padding: 1.8rem !important;
+    margin: 0 10px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    transition: all 0.3s ease !important;
+}
+
+body.light-mode .review-item {
+    background: rgba(0, 0, 0, 0.01) !important;
+    border-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.review-item:hover {
+    transform: translateY(-2px) !important;
+    border-color: rgba(88, 166, 255, 0.15) !important;
+    background: rgba(255, 255, 255, 0.025) !important;
+}
+
+.review-divider {
+    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent) !important;
+    width: 1px !important;
+    height: 80px !important;
+}
+
+body.light-mode .review-divider {
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.08), transparent) !important;
+}
+
+/* 對照表高級美化 */
+.compare-table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    background: rgba(22, 27, 34, 0.3) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+
+body.light-mode .compare-table {
+    border-color: rgba(0, 0, 0, 0.06) !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+}
+
+.compare-table th {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+}
+
+body.light-mode .compare-table th {
+    background: rgba(0, 0, 0, 0.02) !important;
+    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.compare-table td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+    padding: 18px 20px !important;
+}
+
+body.light-mode .compare-table td {
+    border-bottom-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.compare-table tr:last-child td {
+    border-bottom: none !important;
+}
+
+.compare-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.015) !important;
+}
+
+body.light-mode .compare-table tbody tr:hover {
+    background: rgba(0, 0, 0, 0.01) !important;
+}
+
+.compare-table .popular-col {
+    background: rgba(88, 166, 255, 0.03) !important;
+    font-weight: 700 !important;
+}
+
+.compare-th-popular {
+    border-bottom: 2px solid var(--accent-color) !important;
+    color: var(--accent-color) !important;
+}
+
 
