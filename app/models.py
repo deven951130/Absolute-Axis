@@ -71,3 +71,6 @@ class FeedbackCreate(BaseModel):
 class FeedbackResolve(BaseModel):
     response: str
 
+class GigReject(BaseModel):
+    reason: str
+

@@ -38,6 +38,8 @@ async function loadGigs() {
                 statusBadge = '<span style="background:rgba(210, 153, 34, 0.15); color:#d29922; border:1px solid rgba(210, 153, 34, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">進行中</span>';
             } else if (g.status === 'Completed') {
                 statusBadge = '<span style="background:rgba(46, 160, 67, 0.15); color:#3fb950; border:1px solid rgba(46, 160, 67, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已完成</span>';
+            } else if (g.status === 'Rejected') {
+                statusBadge = '<span style="background:rgba(248, 81, 73, 0.15); color:#f85149; border:1px solid rgba(248, 81, 73, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已拒絕</span>';
             }
 
             // 按鈕與操作控制
@@ -46,7 +48,10 @@ async function loadGigs() {
                 if (g.creator === currentUser) {
                     actionHtml = `<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem;" onclick="deleteGig(${g.id})">撤回案件</button>`;
                 } else {
-                    actionHtml = `<button class="btn btn-primary" style="padding:6px 16px; font-size:0.75rem;" onclick="acceptGig(${g.id})">承接委託</button>`;
+                    actionHtml = `
+                        <button class="btn btn-primary" style="padding:6px 16px; font-size:0.75rem;" onclick="acceptGig(${g.id})">承接委託</button>
+                        <button class="btn btn-danger" style="padding:6px 16px; font-size:0.75rem; margin-left:8px;" onclick="rejectGigPrompt(${g.id})">拒絕承接</button>
+                    `;
                 }
             } else if (g.status === 'Assigned') {
                 if (currentUser === g.creator || currentUser === g.worker || localStorage.getItem('axis_role') === 'Administrator') {
@@ -56,6 +61,14 @@ async function loadGigs() {
                 }
             } else if (g.status === 'Completed') {
                 actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">承接人: ${g.worker} (已驗收)</span>`;
+            } else if (g.status === 'Rejected') {
+                actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">已拒絕承接</span>`;
+            }
+
+            // 拒絕理由區塊
+            let rejectReasonHtml = '';
+            if (g.status === 'Rejected') {
+                rejectReasonHtml = `<div style="font-size:0.85rem; color:#f85149; margin-top:8px; font-weight:700; border-top:1px dashed rgba(248, 81, 73, 0.2); padding-top:8px;">拒絕原因：${g.reject_reason || '未提供理由'}</div>`;
             }
 
             item.innerHTML = `
@@ -69,6 +82,7 @@ async function loadGigs() {
                 <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.6; word-break:break-all;">
                     ${g.description.replace(/\n/g, '<br>')}
                 </div>
+                ${rejectReasonHtml}
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:0.72rem; color:var(--text-muted); font-weight:800;">
                     <div>
                         <span>發佈者: ${g.creator}</span>
@@ -188,6 +202,45 @@ async function deleteGig(id) {
         } else {
             const data = await res.json();
             if (typeof showToast === 'function') showToast(data.detail || "撤回失敗", "error");
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function rejectGigPrompt(id) {
+    const token = localStorage.getItem('axis_token');
+    if (!token) {
+        if (typeof showLoginOverlay === 'function') showLoginOverlay();
+        return;
+    }
+    
+    const reason = prompt("請輸入拒絕承接理由：");
+    if (reason === null) return; // 使用者點選取消
+    
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+        if (typeof showToast === 'function') {
+            showToast("拒絕理由不能為空", "error");
+        } else {
+            alert("拒絕理由不能為空");
+        }
+        return;
+    }
+    
+    try {
+        const res = await authFetch(`/api/gigs/${id}/reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: trimmedReason })
+        });
+        
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast("已成功拒絕承接該案件", "success");
+            loadGigs();
+        } else {
+            const data = await res.json();
+            if (typeof showToast === 'function') showToast(data.detail || "操作失敗", "error");
         }
     } catch (e) {
         console.error(e);

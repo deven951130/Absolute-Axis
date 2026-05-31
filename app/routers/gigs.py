@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List
 
 from app.database import get_db, Gig
-from app.models import GigCreate
+from app.models import GigCreate, GigReject
 from app.utils import get_current_user_obj, log_event
 
 router = APIRouter(prefix="/api/gigs", tags=["gigs"])
@@ -22,6 +22,7 @@ def list_gigs(db: Session = Depends(get_db)):
             "creator": g.creator,
             "worker": g.worker,
             "status": g.status,
+            "reject_reason": g.reject_reason,
             "created_at": g.created_at.isoformat()
         })
     return res
@@ -93,4 +94,23 @@ def delete_gig(id: int, user: dict = Depends(get_current_user_obj), db: Session 
     db.commit()
     
     log_event(user["username"], f"GIG: Deleted gig [{gig.title}]")
+    return {"status": "ok"}
+
+@router.post("/{id}/reject")
+def reject_gig(id: int, req: GigReject, user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
+    gig = db.query(Gig).filter(Gig.id == id).first()
+    if not gig:
+        raise HTTPException(status_code=404, detail="找不到該案件")
+    
+    if gig.status != "Open":
+        raise HTTPException(status_code=400, detail="只能拒絕開放承接的案件")
+        
+    if gig.creator == user["username"]:
+        raise HTTPException(status_code=400, detail="發案人無法拒絕自己發佈的案件")
+        
+    gig.status = "Rejected"
+    gig.reject_reason = req.reason
+    db.commit()
+    
+    log_event(user["username"], f"GIG: Rejected gig [{gig.title}] published by {gig.creator} for reason: {req.reason}")
     return {"status": "ok"}

@@ -16,6 +16,17 @@ app = FastAPI(title="Absolute Axis Server")
 Base.metadata.create_all(bind=engine)
 init_db_user()
 
+# 自動升級資料庫欄位 (為 gigs 資料表在舊庫中新增 reject_reason 欄位)
+try:
+    with engine.connect() as conn:
+        res = conn.execute("PRAGMA table_info(gigs);").fetchall()
+        cols = [r[1] for r in res]
+        if "reject_reason" not in cols:
+            conn.execute("ALTER TABLE gigs ADD COLUMN reject_reason VARCHAR;")
+            print("[DB_UPGRADE] Column 'reject_reason' added to table 'gigs' successfully.")
+except Exception as e:
+    print(f"[DB_UPGRADE] Warning: failed to auto-upgrade gigs table schema: {e}")
+
 # CORS - 讀取環境變數 ALLOWED_ORIGINS，預設值為 * 向下相容
 # 生產環境請在 .env 中設定 ALLOWED_ORIGINS=https://absoluteaxis.dpdns.org
 app.add_middleware(
