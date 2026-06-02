@@ -109,6 +109,11 @@ const App = {
                 const navA = document.getElementById('nav-admin');
                 if (navA) navA.style.display = 'block';
             }
+
+            // 更新介紹頁面/定價頁面/接案平台導覽列已登入狀態
+            document.querySelectorAll('.intro-logged-out-actions').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.intro-logged-in-actions').forEach(el => el.style.display = 'flex');
+            document.querySelectorAll('.intro-avatar-img').forEach(el => el.src = finalAva);
         } else {
             // 未登入：只允許訪問 /introduce 與 /price 頁面，其餘強制跳轉
             const currentPath = window.location.pathname;
@@ -121,6 +126,10 @@ const App = {
             document.body.classList.add('not-logged-in');
             const loginOverlay = document.getElementById('login-overlay');
             if (loginOverlay) loginOverlay.style.display = 'none';
+
+            // 更新介紹頁面/定價頁面/接案平台導覽列未登入狀態
+            document.querySelectorAll('.intro-logged-out-actions').forEach(el => el.style.display = 'flex');
+            document.querySelectorAll('.intro-logged-in-actions').forEach(el => el.style.display = 'none');
             
             if (typeof switchView === 'function') switchView(finalView, false);
             
