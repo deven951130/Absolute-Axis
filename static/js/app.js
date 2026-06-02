@@ -111,9 +111,9 @@ const App = {
             }
 
             // 更新介紹頁面/定價頁面/接案平台導覽列已登入狀態
-            document.querySelectorAll('.intro-logged-out-actions').forEach(el => el.style.display = 'none');
-            document.querySelectorAll('.intro-logged-in-actions').forEach(el => el.style.display = 'flex');
-            document.querySelectorAll('.intro-avatar-img').forEach(el => el.src = finalAva);
+            if (typeof updateNavActionsState === 'function') {
+                updateNavActionsState();
+            }
         } else {
             // 未登入：只允許訪問 intro, pricing, gigs, login 頁面，其餘強制跳轉
             const currentPath = window.location.pathname;
@@ -135,8 +135,9 @@ const App = {
             if (loginOverlay) loginOverlay.style.display = 'none';
 
             // 更新介紹頁面/定價頁面/接案平台導覽列未登入狀態
-            document.querySelectorAll('.intro-logged-out-actions').forEach(el => el.style.display = 'flex');
-            document.querySelectorAll('.intro-logged-in-actions').forEach(el => el.style.display = 'none');
+            if (typeof updateNavActionsState === 'function') {
+                updateNavActionsState();
+            }
             
             // 執行視圖切換
             if (typeof switchView === 'function') switchView(finalView, false);

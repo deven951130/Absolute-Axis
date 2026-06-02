@@ -179,9 +179,31 @@ function switchView(v, pushHistory = true) {
     // 收合行動端側邊欄
     if (typeof closeSidebar === 'function') closeSidebar();
 
+    // 更新前台宣傳頁面與接案中樞導覽列之登入狀態顯示
+    if (typeof updateNavActionsState === 'function') {
+        updateNavActionsState();
+    }
+
     // 觸發視圖切換自定義事件
     document.dispatchEvent(new CustomEvent('view-switched', { detail: { view: v } }));
 }
+
+function updateNavActionsState() {
+    const token = localStorage.getItem('axis_token');
+    if (token) {
+        const savedAva = localStorage.getItem('axis_avatar');
+        const fallbackAva = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + localStorage.getItem('axis_user');
+        const finalAva = (savedAva && savedAva.trim() !== "") ? savedAva : fallbackAva;
+        
+        document.querySelectorAll('.intro-logged-out-actions').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.intro-logged-in-actions').forEach(el => el.style.display = 'flex');
+        document.querySelectorAll('.intro-avatar-img').forEach(el => el.src = finalAva);
+    } else {
+        document.querySelectorAll('.intro-logged-out-actions').forEach(el => el.style.display = 'flex');
+        document.querySelectorAll('.intro-logged-in-actions').forEach(el => el.style.display = 'none');
+    }
+}
+window.updateNavActionsState = updateNavActionsState;
 
 function openSettingPanel(id) {
     document.getElementById('settings-main').style.display = 'none';
