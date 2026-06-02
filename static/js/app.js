@@ -115,11 +115,18 @@ const App = {
             document.querySelectorAll('.intro-logged-in-actions').forEach(el => el.style.display = 'flex');
             document.querySelectorAll('.intro-avatar-img').forEach(el => el.src = finalAva);
         } else {
-            // 未登入：只允許訪問 /introduce 與 /price 頁面，其餘強制跳轉
+            // 未登入：只允許訪問 intro, pricing, gigs, login 頁面，其餘強制跳轉
             const currentPath = window.location.pathname;
             let finalView = window.ROUTE_MAP ? window.ROUTE_MAP[currentPath] : null;
             
-            if (finalView !== 'intro' && finalView !== 'pricing') {
+            // 決定預設視圖
+            if (!finalView) {
+                finalView = 'intro';
+            }
+            
+            const whitelist = ['intro', 'pricing', 'gigs', 'login'];
+            if (!whitelist.includes(finalView)) {
+                // 嘗試存取受保護頁面，強制變更為 'intro'
                 finalView = 'intro';
             }
             
@@ -131,13 +138,22 @@ const App = {
             document.querySelectorAll('.intro-logged-out-actions').forEach(el => el.style.display = 'flex');
             document.querySelectorAll('.intro-logged-in-actions').forEach(el => el.style.display = 'none');
             
+            // 執行視圖切換
             if (typeof switchView === 'function') switchView(finalView, false);
             
-            // 若為未登入狀態且嘗試開啟後台，重導向至 /introduce 並開啟登入遮罩
-            if (currentPath !== '/introduce' && currentPath !== '/price') {
+            // 統一路由與網址列重定向邏輯
+            if (currentPath === '/' || currentPath === '/login') {
+                history.replaceState(null, '', '/introduce');
+                if (currentPath === '/login') {
+                    setTimeout(() => {
+                        if (typeof showLoginOverlay === 'function') showLoginOverlay(false);
+                    }, 300);
+                }
+            } else if (!['/introduce', '/price', '/gigs'].includes(currentPath)) {
+                // 存取其他受保護的後台路徑，重導向至 /introduce 並開啟登入遮罩
                 history.replaceState(null, '', '/introduce');
                 setTimeout(() => {
-                    if (typeof showLoginOverlay === 'function') showLoginOverlay();
+                    if (typeof showLoginOverlay === 'function') showLoginOverlay(false);
                 }, 300);
             }
         }
