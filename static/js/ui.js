@@ -295,6 +295,9 @@ window.showLoginOverlay = function(pushHistory = true) {
 
     const loginOverlay = document.getElementById('login-overlay');
     if (loginOverlay) {
+        if (typeof toggleAuthMode === 'function') {
+            toggleAuthMode('login');
+        }
         loginOverlay.style.display = 'flex';
         const userField = document.getElementById('login-user');
         if (userField) userField.focus();

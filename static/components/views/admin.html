@@ -5,6 +5,14 @@
             <h2 class="card-title" style="margin-bottom:0;">👥 系統用戶權限管理</h2>
             <button class="btn btn-primary" style="padding:8px 16px;" onclick="document.getElementById('modal-create-user').style.display='flex'">+ 新增核心成員</button>
         </div>
+        <!-- 狀態篩選標籤列 -->
+        <div class="admin-tab-row" style="display:flex; gap:1.5rem; align-items:center; margin-bottom:1.8rem; background:#1b2028; padding:10px 20px; border-radius:10px; border:1px solid var(--border-color);">
+            <span style="color:var(--text-muted); font-size:1.2rem; cursor:default;">•</span>
+            <button class="admin-tab active" onclick="filterUsers('all', this)" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:6px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s; outline:none;">所有成員</button>
+            <button class="admin-tab" onclick="filterUsers('Pending', this)" style="background:transparent; border:none; color:var(--text-muted); padding:6px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s; outline:none;" onmouseover="this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')) this.style.color='var(--text-muted)'">等待中</button>
+            <button class="admin-tab" onclick="filterUsers('Rejected', this)" style="background:transparent; border:none; color:var(--text-muted); padding:6px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s; outline:none;" onmouseover="this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')) this.style.color='var(--text-muted)'">已拒絕</button>
+            <button class="admin-tab" onclick="filterUsers('Approved', this)" style="background:transparent; border:none; color:var(--text-muted); padding:6px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s; outline:none;" onmouseover="this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')) this.style.color='var(--text-muted)'">已核准</button>
+        </div>
         <div style="overflow-x:auto;">
             <table class="admin-table">
                 <thead>

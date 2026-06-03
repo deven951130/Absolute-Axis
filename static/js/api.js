@@ -72,7 +72,70 @@ async function authFetch(url, opts = {}) {
     return r;
 }
 
-// ==================== 登入 / 登出 ====================
+// ==================== 登入 / 註冊 / 登出 ====================
+
+let currentAuthMode = 'login';
+
+function toggleAuthMode(mode) {
+    currentAuthMode = mode;
+    const loginTab = document.getElementById('tab-login-btn');
+    const registerTab = document.getElementById('tab-register-btn');
+    const actionBtn = document.getElementById('auth-action-btn');
+    const msgDiv = document.getElementById('auth-msg');
+
+    if (loginTab && registerTab && actionBtn && msgDiv) {
+        if (mode === 'login') {
+            loginTab.style.color = 'var(--accent-color)';
+            registerTab.style.color = 'var(--text-muted)';
+            actionBtn.innerText = 'Authorize Access';
+            msgDiv.style.display = 'none';
+        } else {
+            loginTab.style.color = 'var(--text-muted)';
+            registerTab.style.color = 'var(--accent-color)';
+            actionBtn.innerText = '提交註冊申請';
+            msgDiv.style.display = 'block';
+        }
+    }
+}
+window.toggleAuthMode = toggleAuthMode;
+
+async function handleAuthSubmit() {
+    const u = document.getElementById('login-user').value.trim();
+    const p = document.getElementById('login-pass').value.trim();
+    if (!u || !p) return alert('請填寫帳號密碼');
+
+    if (currentAuthMode === 'login') {
+        await doLogin();
+    } else {
+        await doRegister(u, p);
+    }
+}
+window.handleAuthSubmit = handleAuthSubmit;
+
+async function doRegister(u, p) {
+    try {
+        const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, password: p })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            alert(data.message || '註冊成功，請等待管理員審核！');
+            toggleAuthMode('login');
+            document.getElementById('login-user').value = '';
+            document.getElementById('login-pass').value = '';
+        } else {
+            const errData = await res.json().catch(() => ({}));
+            alert(`註冊失敗 [${res.status}]：${errData.detail || '未知錯誤'}`);
+        }
+    } catch (e) {
+        console.error(e);
+        alert(`連線至伺服器失敗：${e.message}`);
+    }
+}
+window.doRegister = doRegister;
 
 async function doLogin() {
     const u = document.getElementById('login-user').value;
@@ -102,8 +165,10 @@ async function doLogin() {
         alert(`連線至伺服器失敗：${e.message}`);
     }
 }
+window.doLogin = doLogin;
 
 function doLogout() {
     localStorage.clear();
     location.reload();
 }
+

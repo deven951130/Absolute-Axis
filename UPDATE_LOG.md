@@ -1,4 +1,17 @@
+### [V53] - 2026-06-03 更新日誌
+
+#### 自助註冊與管理員審核系統（P0）
+- **[新增] 使用者自助註冊系統**：於 `/api/auth/register` 端點開放新帳號註冊，新註冊帳號預設為「等待中 (Pending)」狀態。
+- **[新增] 登入安全審核驗證**：於 `/api/auth/login` 端點加入狀態篩選。若狀態非 `Approved`，登入將回傳 403 並顯示適當的繁體中文提示訊息，防止未核准用戶登入。
+- **[新增] 資料庫 Schema 自動遷移與相容性**：修改 `database.py` 在 `User` 模型中追加 `status` 欄位（預設為 `Approved`），並在 `main.py` 的啟動程序中實作 SQLite 自動欄位遷移。保證不影響或重置原有 `admin` 等帳號。
+- **[重構] 前端登入/註冊切換與 API 串接**：重構 `index.html` 登入彈窗，使其支援在「登入系統」與「申請註冊」頁籤間切換，並於 `api.js` 中實現 `toggleAuthMode`、`handleAuthSubmit` 及 `doRegister` 註冊提交與相應提示；在 `ui.js` 的 `showLoginOverlay` 中加入重置邏輯，每次點擊開啟登入彈窗時，自動將頁籤重設回「登入」狀態。
+- **[新增] 管理員審核與狀態過濾控制台**：
+  - 修改 `admin.html` 與 `admin.js` 新增「所有成員」、「等待中」、「已拒絕」、「已核准」的狀態篩選標籤列。
+  - 於 `admin.js` 中引入 `window.allUsersCache` 作為快取，實作 `filterUsers` 與 `renderUsers` 進行前端過濾展示。
+  - 實作 `approveUser` 與 `rejectUser` 快捷 API 呼叫，管理員可在列表內點擊綠色「核准」或紅色「拒絕」按鈕一鍵更新帳號狀態，並重新載入列表與顯示 Toast 通知。
+
 ### [V52] - 2026-06-02 更新日誌
+
 
 #### 登入狀態下導覽列視覺優化（P1）
 - **[優化] 獨立宣傳頁面與接案中樞導覽列**：在 `intro.html`、`pricing.html` 與 `gigs.html` 中引入登入狀態切換容器（`intro-logged-out-actions` 與 `intro-logged-in-actions`）。

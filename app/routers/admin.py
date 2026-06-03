@@ -14,7 +14,7 @@ def list_users(user: dict = Depends(get_current_user_obj), db: Session = Depends
     if user["role"] != "Administrator": 
         raise HTTPException(status_code=403)
     users = db.query(User).all()
-    return [{"username": u.username, "role": u.role, "avatar": u.avatar, "quota_bytes": u.quota_bytes} for u in users]
+    return [{"username": u.username, "role": u.role, "avatar": u.avatar, "quota_bytes": u.quota_bytes, "status": getattr(u, "status", "Approved")} for u in users]
 
 @router.post("/create_user")
 def create_user(req: CreateUserRequest, user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
@@ -36,7 +36,8 @@ def create_user(req: CreateUserRequest, user: dict = Depends(get_current_user_ob
         username=req.username,
         password_hash=get_password_hash(req.password),
         role=req.role,
-        quota_bytes=requested_quota
+        quota_bytes=requested_quota,
+        status="Approved"
     )
     db.add(new_user)
     db.commit()
@@ -59,6 +60,8 @@ def admin_update_user(req: AdminUserUpdate, user: dict = Depends(get_current_use
         target_user_obj.role = req.new_role
     if req.quota_gb:
         target_user_obj.quota_bytes = req.quota_gb * 1073741824
+    if req.status:
+        target_user_obj.status = req.status
         
     db.commit()
     log_event(user["username"], f"Admin: Modified user {req.target_user}")

@@ -19,10 +19,18 @@
     <div id="login-overlay" class="login-overlay" onclick="if(event.target === this) hideLoginOverlay()">
         <div style="background:#161b22;width:380px;padding:3.5rem;border-radius:18px;border:1px solid #30363d;text-align:center;position:relative;">
             <span onclick="hideLoginOverlay()" style="position:absolute; top:15px; right:20px; cursor:pointer; color:var(--text-muted); font-size:1.5rem; font-weight:bold; transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
-            <h1 style="margin-bottom:2.5rem;font-size:2rem;color:var(--accent-color);font-weight:900;">LOGIN</h1>
+            
+            <!-- 登入/註冊分頁選單 -->
+            <div style="display:flex; justify-content:center; gap:24px; margin-bottom:2.5rem; border-bottom:1px solid var(--border-color); padding-bottom:12px;">
+                <span id="tab-login-btn" onclick="toggleAuthMode('login')" style="font-size:1.3rem; font-weight:900; color:var(--accent-color); cursor:pointer; user-select:none; transition:0.2s;">登入系統</span>
+                <span id="tab-register-btn" onclick="toggleAuthMode('register')" style="font-size:1.3rem; font-weight:900; color:var(--text-muted); cursor:pointer; user-select:none; transition:0.2s;">申請註冊</span>
+            </div>
+
             <input type="text" id="login-user" placeholder="User identity" class="t-input">
-            <input type="password" id="login-pass" placeholder="Password" class="t-input" style="margin-bottom:2.5rem;">
-            <button class="btn btn-primary" style="width:100%;height:52px;" onclick="doLogin()">Authorize Access</button>
+            <input type="password" id="login-pass" placeholder="Password" class="t-input" style="margin-bottom:2rem;">
+            
+            <button id="auth-action-btn" class="btn btn-primary" style="width:100%;height:52px;" onclick="handleAuthSubmit()">Authorize Access</button>
+            <div id="auth-msg" style="margin-top:15px; font-size:0.75rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; display:none;">* 註冊帳號需經由管理員審核核准</div>
         </div>
     </div>
 

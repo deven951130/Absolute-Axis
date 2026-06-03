@@ -1,21 +1,123 @@
 // Absolute Axis - Administration Module
+window.allUsersCache = [];
+let currentFilter = 'all';
+
 async function loadUsers() {
     const res = await authFetch('/api/admin/users');
     if (!res.ok) return;
-    const users = await res.json();
+    window.allUsersCache = await res.json();
+    renderUsers();
+}
+window.loadUsers = loadUsers;
+
+function renderUsers() {
     const table = document.getElementById('user-table-body');
     if (!table) return;
-    
-    table.innerHTML = users.map(u => `
-        <tr style="border-bottom:1px solid var(--border-color);">
-            <td style="padding:15px;"><b>${u.username}</b></td>
-            <td style="padding:15px;"><span class="role-badge ${u.role === 'Administrator' ? 'role-admin' : 'role-member'}">${u.role}</span></td>
-            <td style="padding:15px;"><img src="${u.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + u.username}" style="width:28px;height:28px;border-radius:50%;"></td>
-            <td style="padding:15px; font-size:0.85rem; color:var(--text-muted);">${(u.quota_bytes / 1073741824).toFixed(1)} GB</td>
-            <td style="padding:15px;"><button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;" onclick="editUser('${u.username}','${u.role}', ${(u.quota_bytes / 1073741824).toFixed(0)})">編輯</button></td>
-        </tr>
-    `).join('');
+
+    const filtered = window.allUsersCache.filter(u => {
+        if (currentFilter === 'all') return true;
+        const uStatus = u.status || 'Approved';
+        return uStatus.toLowerCase() === currentFilter.toLowerCase();
+    });
+
+    const statusBadges = {
+        'Approved': '<span class="status-badge" style="background:rgba(46, 204, 113, 0.15); color:#2ecc71; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; border:1px solid rgba(46, 204, 113, 0.3); text-transform:uppercase; margin-left:8px;">已核准</span>',
+        'Pending': '<span class="status-badge" style="background:rgba(241, 196, 15, 0.15); color:#f1c40f; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; border:1px solid rgba(241, 196, 15, 0.3); text-transform:uppercase; margin-left:8px;">等待中</span>',
+        'Rejected': '<span class="status-badge" style="background:rgba(231, 76, 60, 0.15); color:#e74c3c; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; border:1px solid rgba(231, 76, 60, 0.3); text-transform:uppercase; margin-left:8px;">已拒絕</span>'
+    };
+
+    table.innerHTML = filtered.map(u => {
+        const uStatus = u.status || 'Approved';
+        const badgeHtml = statusBadges[uStatus] || `<span class="status-badge" style="background:rgba(255,255,255,0.15); color:#fff; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; margin-left:8px;">${uStatus}</span>`;
+
+        let actionButtons = '';
+        if (uStatus === 'Pending') {
+            actionButtons = `
+                <button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;border-color:#2ecc71;color:#2ecc71;margin-right:5px;" onclick="approveUser('${u.username}')">核准</button>
+                <button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;border-color:#e74c3c;color:#e74c3c;margin-right:5px;" onclick="rejectUser('${u.username}')">拒絕</button>
+            `;
+        }
+
+        actionButtons += `<button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;" onclick="editUser('${u.username}','${u.role}', ${(u.quota_bytes / 1073741824).toFixed(0)})">編輯</button>`;
+
+        return `
+            <tr style="border-bottom:1px solid var(--border-color);">
+                <td style="padding:15px;"><b>${u.username}</b></td>
+                <td style="padding:15px; display:flex; align-items:center; gap:8px;">
+                    <span class="role-badge ${u.role === 'Administrator' ? 'role-admin' : 'role-member'}">${u.role}</span>
+                    ${badgeHtml}
+                </td>
+                <td style="padding:15px;"><img src="${u.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + u.username}" style="width:28px;height:28px;border-radius:50%;"></td>
+                <td style="padding:15px; font-size:0.85rem; color:var(--text-muted);">${(u.quota_bytes / 1073741824).toFixed(1)} GB</td>
+                <td style="padding:15px;">${actionButtons}</td>
+            </tr>
+        `;
+    }).join('');
 }
+window.renderUsers = renderUsers;
+
+function filterUsers(status, btn) {
+    currentFilter = status;
+
+    const tabs = document.querySelectorAll('.admin-tab');
+    tabs.forEach(t => {
+        t.classList.remove('active');
+        t.style.background = 'transparent';
+        t.style.color = 'var(--text-muted)';
+    });
+
+    if (btn) {
+        btn.classList.add('active');
+        btn.style.background = 'rgba(255,255,255,0.1)';
+        btn.style.color = '#fff';
+    }
+
+    renderUsers();
+}
+window.filterUsers = filterUsers;
+
+async function approveUser(username) {
+    if (!confirm(`確定要核准使用者 ${username} 的註冊申請嗎？`)) return;
+    const res = await authFetch('/api/admin/update_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_user: username, status: 'Approved' })
+    });
+    if (res.ok) {
+        if (typeof showToast === 'function') {
+            showToast(`已核准使用者 ${username}`, 'success');
+        } else {
+            alert(`已核准使用者 ${username}`);
+        }
+        loadUsers();
+    } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`操作失敗：${err.detail || '未知錯誤'}`);
+    }
+}
+window.approveUser = approveUser;
+
+async function rejectUser(username) {
+    if (!confirm(`確定要拒絕使用者 ${username} 的註冊申請嗎？`)) return;
+    const res = await authFetch('/api/admin/update_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_user: username, status: 'Rejected' })
+    });
+    if (res.ok) {
+        if (typeof showToast === 'function') {
+            showToast(`已拒絕使用者 ${username}`, 'warning');
+        } else {
+            alert(`已拒絕使用者 ${username}`);
+        }
+        loadUsers();
+    } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`操作失敗：${err.detail || '未知錯誤'}`);
+    }
+}
+window.rejectUser = rejectUser;
+
 
 async function confirmCreateUser() {
     const u = document.getElementById('new-user-name').value;

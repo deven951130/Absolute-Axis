@@ -22,6 +22,7 @@ class User(Base):
     role = Column(String, default="Member")
     avatar = Column(String, default="")
     quota_bytes = Column(Integer, default=1073741824) # Default 1GB
+    status = Column(String, default="Approved")
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

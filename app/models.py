@@ -35,6 +35,7 @@ class AdminUserUpdate(BaseModel):
     new_pass: Optional[str] = None
     new_role: Optional[str] = None
     quota_gb: Optional[int] = None
+    status: Optional[str] = None
 
 class ShareRequest(BaseModel):
     path: str

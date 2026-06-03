@@ -27,6 +27,17 @@ try:
 except Exception as e:
     print(f"[DB_UPGRADE] Warning: failed to auto-upgrade gigs table schema: {e}")
 
+# 自動升級資料庫欄位 (為 users 資料表在舊庫中新增 status 欄位)
+try:
+    with engine.connect() as conn:
+        res = conn.execute("PRAGMA table_info(users);").fetchall()
+        cols = [r[1] for r in res]
+        if "status" not in cols:
+            conn.execute("ALTER TABLE users ADD COLUMN status VARCHAR DEFAULT 'Approved';")
+            print("[DB_UPGRADE] Column 'status' added to table 'users' successfully.")
+except Exception as e:
+    print(f"[DB_UPGRADE] Warning: failed to auto-upgrade users table schema: {e}")
+
 # CORS - 讀取環境變數 ALLOWED_ORIGINS，預設值為 * 向下相容
 # 生產環境請在 .env 中設定 ALLOWED_ORIGINS=https://absoluteaxis.dpdns.org
 app.add_middleware(
