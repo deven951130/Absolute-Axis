@@ -12,7 +12,7 @@
 - **[修復] 拒絕案件直接刪除與隱藏**：修改後端 `gigs.py` 的 `/api/gigs/{id}/reject` 端點，將原先拒絕案件時變更狀態為 `Rejected` 的邏輯改為直接從資料庫物理刪除（`db.delete(gig)`）；同時修改前端 `gigs.js`，將 `Rejected` 狀態從進行中清單中過濾隱藏，避免歷史殘留的已拒絕舊資料干擾呈現。
 
 #### 戰情總覽日誌樣式修復與系統廣播權限放寬（P1）
-- **[修復] 動作紀錄空白異常**：修改 `dashboard.html`，移除 `#terminal-logs` 的 `max-height: 380px` 限制，使日誌框在右側資訊長度較大被拉伸時，會自適應 `flex: 1` 填滿卡片高度，解決底部留白問題。
+- **[修復] 動作紀錄空白與高度對齊**：修改 `dashboard.html`，為 System Logs 卡片設定 `height: 100%`，並為 `#terminal-logs` 日誌盒設定 `height: 0; min-height: 220px;`。使日誌卡片完美對齊右側 GitHub 卡片之底部邊界，並確保溢出內容正確啟用滾動條而不撐開佈局，徹底解決底部不對齊或空白的問題。
 - **[優化] 廣播權限放寬**：
   - 修改 `system.py` 之 `/api/system/message` POST 端點，移除僅限管理員發送的權限檢查。
   - 修改 `dashboard.js`，將系統廣播輸入與發送區塊之顯隱判斷移除，使一般 Member 登入後亦可進行廣播。
