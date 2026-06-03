@@ -436,9 +436,6 @@ def get_logs(user: dict = Depends(get_current_user_obj), db: Session = Depends(g
 
 @router.post("/api/system/message")
 def post_msg(req: MessageRequest, user: dict = Depends(get_current_user_obj)):
-    role = user.get("role", "")
-    if role not in ("admin", "Administrator"):
-        raise HTTPException(status_code=403, detail="僅限管理員發送廣播訊息")
     log_event(user["username"], f"BROADCAST: {req.message}")
     return {"status": "ok"}
 

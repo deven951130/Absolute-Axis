@@ -261,11 +261,10 @@ function startPolling() {
     pollGithub();
     pollServices();
 
-    // 根據登入者身份顯示或隱藏系統廣播區塊
-    const role = localStorage.getItem('axis_role');
+    // 所有已登入使用者皆顯示系統廣播區塊
     const broadSec = document.getElementById('broadcast-sec');
     if (broadSec) {
-        broadSec.style.display = (role === 'Administrator') ? 'flex' : 'none';
+        broadSec.style.display = 'flex';
     }
 }
 
