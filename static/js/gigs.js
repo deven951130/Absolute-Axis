@@ -59,7 +59,7 @@ function renderGigsList() {
         if (currentGigTab === 'completed') {
             return g.status === 'Completed';
         } else {
-            return g.status !== 'Completed'; // Open, Assigned, Rejected
+            return g.status === 'Open' || g.status === 'Assigned'; // 排除 Completed 與 Rejected
         }
     });
 
