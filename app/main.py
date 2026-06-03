@@ -14,7 +14,6 @@ app = FastAPI(title="Absolute Axis Server")
 
 # Initialize Database Tables
 Base.metadata.create_all(bind=engine)
-init_db_user()
 
 # 自動升級資料庫欄位 (為 gigs 資料表在舊庫中新增 reject_reason 欄位)
 try:
@@ -37,6 +36,9 @@ try:
             print("[DB_UPGRADE] Column 'status' added to table 'users' successfully.")
 except Exception as e:
     print(f"[DB_UPGRADE] Warning: failed to auto-upgrade users table schema: {e}")
+
+init_db_user()
+
 
 # CORS - 讀取環境變數 ALLOWED_ORIGINS，預設值為 * 向下相容
 # 生產環境請在 .env 中設定 ALLOWED_ORIGINS=https://absoluteaxis.dpdns.org
