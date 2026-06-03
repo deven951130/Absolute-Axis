@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from sqlalchemy import text
 
 # Config mapping & Routers
 from app.config import BASE_PATH, ALLOWED_ORIGINS
@@ -17,27 +18,28 @@ Base.metadata.create_all(bind=engine)
 
 # 自動升級資料庫欄位 (為 gigs 資料表在舊庫中新增 reject_reason 欄位)
 try:
-    with engine.connect() as conn:
-        res = conn.execute("PRAGMA table_info(gigs);").fetchall()
+    with engine.begin() as conn:
+        res = conn.execute(text("PRAGMA table_info(gigs);")).fetchall()
         cols = [r[1] for r in res]
         if "reject_reason" not in cols:
-            conn.execute("ALTER TABLE gigs ADD COLUMN reject_reason VARCHAR;")
+            conn.execute(text("ALTER TABLE gigs ADD COLUMN reject_reason VARCHAR;"))
             print("[DB_UPGRADE] Column 'reject_reason' added to table 'gigs' successfully.")
 except Exception as e:
     print(f"[DB_UPGRADE] Warning: failed to auto-upgrade gigs table schema: {e}")
 
 # 自動升級資料庫欄位 (為 users 資料表在舊庫中新增 status 欄位)
 try:
-    with engine.connect() as conn:
-        res = conn.execute("PRAGMA table_info(users);").fetchall()
+    with engine.begin() as conn:
+        res = conn.execute(text("PRAGMA table_info(users);")).fetchall()
         cols = [r[1] for r in res]
         if "status" not in cols:
-            conn.execute("ALTER TABLE users ADD COLUMN status VARCHAR DEFAULT 'Approved';")
+            conn.execute(text("ALTER TABLE users ADD COLUMN status VARCHAR DEFAULT 'Approved';"))
             print("[DB_UPGRADE] Column 'status' added to table 'users' successfully.")
 except Exception as e:
     print(f"[DB_UPGRADE] Warning: failed to auto-upgrade users table schema: {e}")
 
 init_db_user()
+
 
 
 # CORS - 讀取環境變數 ALLOWED_ORIGINS，預設值為 * 向下相容
