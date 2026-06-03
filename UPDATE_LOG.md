@@ -1,5 +1,8 @@
 ### [V53] - 2026-06-03 更新日誌
 
+#### 方案定價頁面 UI 修復（P2）
+- **[修復] 年計費卡片「最受歡迎」徽章遮擋異常**：修改 `index.css`，將 `.plan-card` 樣式覆寫中的 `overflow: hidden` 改為 `overflow: visible`，徹底解決年計費卡片上方「最受歡迎」徽章被容器裁切的問題；同時為 `.plan-card::before` 漸變彩虹頂線注入繼承圓角 `border-radius: inherit`，保證移除 overflow 限制後頂部邊緣邊角依然平滑。
+
 #### 系統帳號管理模組（P0）
 - **[新增] 管理員刪除用戶帳號**：於 `admin.py` 新增 `DELETE /api/admin/users/{username}` API 端點。管理員可於帳號管理面板直接對非當前登入之用戶執行刪除操作。
 - **[新增] 關聯資料與檔案清理**：刪除用戶時，系統會自動在資料庫中清除其 `FileStar` 與 `FileShare` 之所有記錄，並在 NAS 實體硬碟中遞迴移除該用戶的個人 NAS 資料夾與垃圾桶目錄，以維持系統乾淨並釋放硬碟空間。

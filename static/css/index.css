@@ -1481,7 +1481,7 @@ body.light-mode .pricing-tab-row {
 
 /* 方案卡片精緻彩虹頂線與選取發光 */
 .plan-card {
-    overflow: hidden !important;
+    overflow: visible !important;
     position: relative !important;
 }
 
@@ -1493,6 +1493,8 @@ body.light-mode .pricing-tab-row {
     background: linear-gradient(to right, var(--accent-color), #bd93f9) !important;
     opacity: 0 !important;
     transition: opacity 0.3s ease !important;
+    border-top-left-radius: inherit !important;
+    border-top-right-radius: inherit !important;
 }
 
 .plan-card:hover::before, .plan-card.selected::before {
