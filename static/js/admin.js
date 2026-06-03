@@ -40,6 +40,11 @@ function renderUsers() {
 
         actionButtons += `<button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;" onclick="editUser('${u.username}','${u.role}', ${(u.quota_bytes / 1073741824).toFixed(0)})">編輯</button>`;
 
+        const currentUser = localStorage.getItem('axis_user');
+        if (u.username !== currentUser) {
+            actionButtons += `<button class="btn btn-danger" style="padding:4px 10px;font-size:0.75rem;margin-left:5px;" onclick="deleteUser('${u.username}')">刪除</button>`;
+        }
+
         return `
             <tr style="border-bottom:1px solid var(--border-color);">
                 <td style="padding:15px;"><b>${u.username}</b></td>
@@ -204,3 +209,23 @@ window.saveAvatar = async function() {
         alert("更新失敗，請檢查聯網狀態或圖片網址。");
     }
 }
+
+async function deleteUser(username) {
+    if (!confirm(`警告：確定要永久刪除使用者 ${username} 嗎？此操作將會清除該用戶所有資料與 NAS 儲存空間且無法復原！`)) return;
+    const res = await authFetch(`/api/admin/users/${username}`, {
+        method: 'DELETE'
+    });
+    if (res.ok) {
+        if (typeof showToast === 'function') {
+            showToast(`已成功刪除使用者 ${username}`, 'error');
+        } else {
+            alert(`已成功刪除使用者 ${username}`);
+        }
+        loadUsers();
+    } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`刪除失敗：${err.detail || '未知錯誤'}`);
+    }
+}
+window.deleteUser = deleteUser;
+
