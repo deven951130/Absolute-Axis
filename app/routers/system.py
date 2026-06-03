@@ -373,6 +373,8 @@ def get_hardware_info(user: dict = Depends(get_current_user_obj)):
 def mask_name(name: str) -> str:
     if not name:
         return ""
+    if name.startswith("Guest"):
+        return name
     is_ascii = all(ord(c) < 128 for c in name)
     if is_ascii:
         if len(name) <= 2:
