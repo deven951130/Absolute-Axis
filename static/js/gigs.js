@@ -1,4 +1,7 @@
 // Absolute Axis - Gig Platform Module
+let currentGigTab = 'active';
+window.allGigsCache = [];
+
 async function loadGigs() {
     const container = document.getElementById('gigs-list-container');
     if (!container) return;
@@ -20,93 +23,130 @@ async function loadGigs() {
             return;
         }
         const gigs = await res.json();
-        
-        container.innerHTML = '';
-        if (gigs.length === 0) {
-            container.innerHTML = '<div style="color:var(--text-muted); padding:3rem; text-align:center; font-weight:800;">目前沒有任何委託案件</div>';
-            return;
-        }
-
-        const currentUser = localStorage.getItem('axis_user');
-
-        gigs.forEach(g => {
-            const item = document.createElement('div');
-            item.className = 'file-list-item';
-            item.style = 'display:flex; flex-direction:column; padding:1.5rem; gap:12px; margin-bottom:12px; border-radius:12px; border:1px solid var(--border-color); background:rgba(22, 27, 34, 0.4);';
-            
-            // 狀態與顏色標籤
-            let statusBadge = '';
-            if (g.status === 'Open') {
-                statusBadge = '<span style="background:rgba(56, 139, 253, 0.15); color:#58a6ff; border:1px solid rgba(56, 139, 253, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">開放承接</span>';
-            } else if (g.status === 'Assigned') {
-                statusBadge = '<span style="background:rgba(210, 153, 34, 0.15); color:#d29922; border:1px solid rgba(210, 153, 34, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">進行中</span>';
-            } else if (g.status === 'Completed') {
-                statusBadge = '<span style="background:rgba(46, 160, 67, 0.15); color:#3fb950; border:1px solid rgba(46, 160, 67, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已完成</span>';
-            } else if (g.status === 'Rejected') {
-                statusBadge = '<span style="background:rgba(248, 81, 73, 0.15); color:#f85149; border:1px solid rgba(248, 81, 73, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已拒絕</span>';
-            }
-
-            // 按鈕與操作控制
-            let actionHtml = '';
-            if (g.status === 'Open') {
-                if (!token) {
-                    actionHtml = `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;" onclick="showLoginOverlay()">登入以承接案件</button>`;
-                } else if (g.creator === currentUser) {
-                    actionHtml = `<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem;" onclick="deleteGig(${g.id})">撤回案件</button>`;
-                } else {
-                    actionHtml = `
-                        <button class="btn btn-primary" style="padding:6px 16px; font-size:0.75rem;" onclick="acceptGig(${g.id})">承接委託</button>
-                        <button class="btn btn-danger" style="padding:6px 16px; font-size:0.75rem; margin-left:8px;" onclick="rejectGigPrompt(${g.id})">拒絕承接</button>
-                    `;
-                }
-            } else if (g.status === 'Assigned') {
-                if (currentUser === g.creator || currentUser === g.worker || localStorage.getItem('axis_role') === 'Administrator') {
-                    actionHtml = `<button class="btn btn-outline" style="color:#2ecc71; padding:6px 16px; font-size:0.75rem;" onclick="completeGig(${g.id})">標記為已完成</button>`;
-                } else {
-                    actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">承接人: ${g.worker}</span>`;
-                }
-            } else if (g.status === 'Completed') {
-                actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">承接人: ${g.worker} (已驗收)</span>`;
-            } else if (g.status === 'Rejected') {
-                actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">已拒絕承接</span>`;
-            }
-
-            // 拒絕理由區塊
-            let rejectReasonHtml = '';
-            if (g.status === 'Rejected') {
-                rejectReasonHtml = `<div style="font-size:0.85rem; color:#f85149; margin-top:8px; font-weight:700; border-top:1px dashed rgba(248, 81, 73, 0.2); padding-top:8px;">拒絕原因：${g.reject_reason || '未提供理由'}</div>`;
-            }
-
-            const creatorText = g.creator === 'Guest' && g.contact ? `Guest (聯絡方式: ${g.contact})` : g.creator;
-
-            item.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
-                    <div style="font-weight:900; font-size:1.1rem; color:var(--text-main);">${g.title}</div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        ${statusBadge}
-                        <span style="font-weight:900; color:var(--accent-color); font-size:1rem;">$ ${g.budget} TWD</span>
-                    </div>
-                </div>
-                <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.6; word-break:break-all;">
-                    ${g.description.replace(/\n/g, '<br>')}
-                </div>
-                ${rejectReasonHtml}
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:0.72rem; color:var(--text-muted); font-weight:800;">
-                    <div>
-                        <span>發佈者: ${creatorText}</span>
-                        <span style="margin: 0 10px;">|</span>
-                        <span>時間: ${g.created_at.replace('T', ' ').substring(0, 19)}</span>
-                    </div>
-                    <div>
-                        ${actionHtml}
-                    </div>
-                </div>
-            `;
-            container.appendChild(item);
-        });
+        window.allGigsCache = gigs;
+        renderGigsList();
     } catch (e) {
+        container.innerHTML = '<div style="color:var(--text-muted); padding:2rem; text-align:center;">載入案件發生錯誤</div>';
         console.error("Failed to load gigs:", e);
     }
+}
+
+function switchGigTab(tab) {
+    currentGigTab = tab;
+    const tabActive = document.getElementById('tab-gig-active');
+    const tabCompleted = document.getElementById('tab-gig-completed');
+    if (tabActive && tabCompleted) {
+        if (tab === 'active') {
+            tabActive.classList.add('active');
+            tabCompleted.classList.remove('active');
+        } else {
+            tabActive.classList.remove('active');
+            tabCompleted.classList.add('active');
+        }
+    }
+    renderGigsList();
+}
+window.switchGigTab = switchGigTab;
+
+function renderGigsList() {
+    const container = document.getElementById('gigs-list-container');
+    if (!container || !window.allGigsCache) return;
+
+    container.innerHTML = '';
+
+    // 依據頁籤狀態過濾案件
+    const filteredGigs = window.allGigsCache.filter(g => {
+        if (currentGigTab === 'completed') {
+            return g.status === 'Completed';
+        } else {
+            return g.status !== 'Completed'; // Open, Assigned, Rejected
+        }
+    });
+
+    if (filteredGigs.length === 0) {
+        const emptyMsg = currentGigTab === 'completed' ? '目前沒有已完成的委託案件' : '目前沒有進行中的委託案件';
+        container.innerHTML = `<div style="color:var(--text-muted); padding:3rem; text-align:center; font-weight:800;">${emptyMsg}</div>`;
+        return;
+    }
+
+    const token = localStorage.getItem('axis_token');
+    const currentUser = localStorage.getItem('axis_user');
+
+    filteredGigs.forEach(g => {
+        const item = document.createElement('div');
+        item.className = 'file-list-item';
+        item.style = 'display:flex; flex-direction:column; padding:1.5rem; gap:12px; margin-bottom:12px; border-radius:12px; border:1px solid var(--border-color); background:rgba(22, 27, 34, 0.4);';
+        
+        // 狀態與顏色標籤
+        let statusBadge = '';
+        if (g.status === 'Open') {
+            statusBadge = '<span style="background:rgba(56, 139, 253, 0.15); color:#58a6ff; border:1px solid rgba(56, 139, 253, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">開放承接</span>';
+        } else if (g.status === 'Assigned') {
+            statusBadge = '<span style="background:rgba(210, 153, 34, 0.15); color:#d29922; border:1px solid rgba(210, 153, 34, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">進行中</span>';
+        } else if (g.status === 'Completed') {
+            statusBadge = '<span style="background:rgba(46, 160, 67, 0.15); color:#3fb950; border:1px solid rgba(46, 160, 67, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已完成</span>';
+        } else if (g.status === 'Rejected') {
+            statusBadge = '<span style="background:rgba(248, 81, 73, 0.15); color:#f85149; border:1px solid rgba(248, 81, 73, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已拒絕</span>';
+        }
+
+        // 按鈕與操作控制
+        let actionHtml = '';
+        if (g.status === 'Open') {
+            if (!token) {
+                actionHtml = `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;" onclick="showLoginOverlay()">登入以承接案件</button>`;
+            } else if (g.creator === currentUser) {
+                actionHtml = `<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem;" onclick="deleteGig(${g.id})">撤回案件</button>`;
+            } else {
+                actionHtml = `
+                    <button class="btn btn-primary" style="padding:6px 16px; font-size:0.75rem;" onclick="acceptGig(${g.id})">承接委託</button>
+                    <button class="btn btn-danger" style="padding:6px 16px; font-size:0.75rem; margin-left:8px;" onclick="rejectGigPrompt(${g.id})">拒絕承接</button>
+                `;
+            }
+        } else if (g.status === 'Assigned') {
+            if (currentUser === g.creator || currentUser === g.worker || localStorage.getItem('axis_role') === 'Administrator') {
+                actionHtml = `<button class="btn btn-outline" style="color:#2ecc71; padding:6px 16px; font-size:0.75rem;" onclick="completeGig(${g.id})">標記為已完成</button>`;
+            } else {
+                actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">承接人: ${g.worker}</span>`;
+            }
+        } else if (g.status === 'Completed') {
+            actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">承接人: ${g.worker} (已驗收)</span>`;
+        } else if (g.status === 'Rejected') {
+            actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">已拒絕承接</span>`;
+        }
+
+        // 拒絕理由區塊
+        let rejectReasonHtml = '';
+        if (g.status === 'Rejected') {
+            rejectReasonHtml = `<div style="font-size:0.85rem; color:#f85149; margin-top:8px; font-weight:700; border-top:1px dashed rgba(248, 81, 73, 0.2); padding-top:8px;">拒絕原因：${g.reject_reason || '未提供理由'}</div>`;
+        }
+
+        const creatorText = g.creator === 'Guest' && g.contact ? `Guest (聯絡方式: ${g.contact})` : g.creator;
+
+        item.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+                <div style="font-weight:900; font-size:1.1rem; color:var(--text-main);">${g.title}</div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    ${statusBadge}
+                    <span style="font-weight:900; color:var(--accent-color); font-size:1rem;">$ ${g.budget} TWD</span>
+                </div>
+            </div>
+            <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.6; word-break:break-all;">
+                ${g.description.replace(/\n/g, '<br>')}
+            </div>
+            ${rejectReasonHtml}
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:0.72rem; color:var(--text-muted); font-weight:800;">
+                <div>
+                    <span>發佈者: ${creatorText}</span>
+                    <span style="margin: 0 10px;">|</span>
+                    <span>時間: ${g.created_at.replace('T', ' ').substring(0, 19)}</span>
+                </div>
+                <div>
+                    ${actionHtml}
+                </div>
+            </div>
+        `;
+        container.appendChild(item);
+    });
 }
 
 async function submitGig() {

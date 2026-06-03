@@ -63,6 +63,10 @@
                     <h3 style="margin:0; color:var(--text-main); font-weight:900; letter-spacing:0.5px;">當前委託案件清單</h3>
                     <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;" onclick="loadGigs()">重新整理</button>
                 </div>
+                <div class="pricing-tab-row" style="justify-content: flex-start; padding: 0 0 1rem 0; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
+                    <button class="pricing-tab active" onclick="switchGigTab('active')" id="tab-gig-active" style="padding: 6px 16px; font-size: 0.8rem;">進行中 / 開放中</button>
+                    <button class="pricing-tab" onclick="switchGigTab('completed')" id="tab-gig-completed" style="padding: 6px 16px; font-size: 0.8rem;">已完成委託</button>
+                </div>
                 <div id="gigs-list-container" style="display:flex; flex-direction:column; gap:1rem;">
                     <div style="color:var(--text-muted); padding:2rem; text-align:center;">載入中...</div>
                 </div>
