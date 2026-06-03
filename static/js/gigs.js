@@ -49,7 +49,9 @@ async function loadGigs() {
             // 按鈕與操作控制
             let actionHtml = '';
             if (g.status === 'Open') {
-                if (g.creator === currentUser) {
+                if (!token) {
+                    actionHtml = `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;" onclick="showLoginOverlay()">登入以承接案件</button>`;
+                } else if (g.creator === currentUser) {
                     actionHtml = `<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem;" onclick="deleteGig(${g.id})">撤回案件</button>`;
                 } else {
                     actionHtml = `
