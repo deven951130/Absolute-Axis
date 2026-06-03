@@ -104,6 +104,7 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
             "wan_ip": display_wan_ip,
             "address_lan": f"{MC_LXC_IP}:{MC_LXC_PORT}",
             "address_wan": display_address_wan,
+            "address_wan_real": f"{public_ip}:{MC_LXC_PORT}" if public_ip != "Unknown" else "--",
             "address_ddns": f"absoluteaxis.dpdns.org:{MC_LXC_PORT}"
         },
         "specs": {

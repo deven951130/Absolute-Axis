@@ -63,7 +63,11 @@ function _mvRenderStatus(data) {
 
     // --- 連線資訊 ---
     _mvSet('mv-lan', data.connection?.address_lan || '--');
-    _mvSet('mv-wan', data.connection?.address_wan || '--');
+    const wanEl = document.getElementById('mv-wan');
+    if (wanEl) {
+        wanEl.textContent = data.connection?.address_wan || '--';
+        wanEl.setAttribute('data-copy', data.connection?.address_wan_real || '');
+    }
     _mvSet('mv-ddns', data.connection?.address_ddns || '--');
 
     // --- 硬體規格 ---
@@ -116,7 +120,8 @@ function _mvSet(id, text) {
 window.mvCopy = function(id) {
     const el = document.getElementById(id);
     if (!el) return;
-    navigator.clipboard.writeText(el.textContent).then(() => {
+    const textToCopy = el.getAttribute('data-copy') || el.textContent;
+    navigator.clipboard.writeText(textToCopy).then(() => {
         const orig = el.style.color;
         el.style.color = '#4CAF50';
         setTimeout(() => { el.style.color = orig; }, 800);
