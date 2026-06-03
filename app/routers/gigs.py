@@ -118,9 +118,8 @@ def reject_gig(id: int, req: GigReject, user: dict = Depends(get_current_user_ob
     if gig.creator == user["username"]:
         raise HTTPException(status_code=400, detail="發案人無法拒絕自己發佈的案件")
         
-    gig.status = "Rejected"
-    gig.reject_reason = req.reason
+    db.delete(gig)
     db.commit()
     
-    log_event(user["username"], f"GIG: Rejected gig [{gig.title}] published by {gig.creator} for reason: {req.reason}")
+    log_event(user["username"], f"GIG: Rejected and deleted gig [{gig.title}] published by {gig.creator} for reason: {req.reason}")
     return {"status": "ok"}
