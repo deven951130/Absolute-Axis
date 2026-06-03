@@ -9,6 +9,7 @@
   - 修改 `admin.html` 與 `admin.js` 新增「所有成員」、「等待中」、「已拒絕」、「已核准」的狀態篩選標籤列。
   - 於 `admin.js` 中引入 `window.allUsersCache` 作為快取，實作 `filterUsers` 與 `renderUsers` 進行前端過濾展示。
   - 實作 `approveUser` 與 `rejectUser` 快捷 API 呼叫，管理員可在列表內點擊綠色「核准」或紅色「拒絕」按鈕一鍵更新帳號狀態，並重新載入列表與顯示 Toast 通知。
+- **[新增] 日光模式高畫質背景與慢速浮光**：使用 AI 生成工具設計了專屬日光模式的極簡幾何科技背景 `tech_light_bg.png`，並於 `index.css` 引入作為 Light Mode 背景；同時優化了 Ambient Floating Glow 漂浮光暈，使其在 Light Mode 下呈現為更加柔和細緻的淡藍與淡紫光圈，兼顧視覺高級感與文字易讀性。
 
 ### [V52] - 2026-06-02 更新日誌
 

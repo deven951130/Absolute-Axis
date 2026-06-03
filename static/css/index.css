@@ -1316,7 +1316,7 @@ body {
 }
 
 body.light-mode {
-    background-image: none !important;
+    background-image: url('/static/tech_light_bg.png') !important;
 }
 
 /* 背景慢速漂浮光暈 (Ambient Floating Glow) */
@@ -1342,8 +1342,11 @@ body::after {
     animation: floatGlow 30s infinite alternate-reverse ease-in-out !important;
 }
 
-body.light-mode::before, body.light-mode::after {
-    display: none !important;
+body.light-mode::before {
+    background: radial-gradient(circle, rgba(88, 166, 255, 0.04), transparent 70%) !important;
+}
+body.light-mode::after {
+    background: radial-gradient(circle, rgba(189, 147, 249, 0.03), transparent 70%) !important;
 }
 
 @keyframes floatGlow {
