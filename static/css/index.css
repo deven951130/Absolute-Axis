@@ -172,7 +172,7 @@ body.light-mode .nav-item:hover { background: rgba(0,0,0,0.05); color: #000; }
 body.light-mode .t-input { background: #fff; color: #000; border-color: var(--border-color); }
 body.light-mode .user-popover { background: #fff; }
 body.light-mode .settings-item, body.light-mode .file-list-item { background: #fff; }
-body.light-mode #terminal-logs { color: #1a7f37 !important; }
+/* Cleaned up terminal logs light mode rule, moved to terminal-logs-box styling below */
 
 .progress-bar { width: 100%; height: 5px; background: var(--border-color); border-radius: 3px; overflow: hidden; margin-top: 15px; opacity: 0.5; }
 .progress-fill { height: 100%; background: var(--accent-color); transition: width 0.6s ease; }
@@ -1603,6 +1603,50 @@ body.light-mode .compare-table tbody tr:hover {
 .compare-th-popular {
     border-bottom: 2px solid var(--accent-color) !important;
     color: var(--accent-color) !important;
+}
+
+/* ==================== System Logs Terminal Card Styling ==================== */
+.terminal-card {
+    display: flex;
+    flex-direction: column;
+    padding: 0 !important;
+    overflow: hidden;
+    height: 100%;
+}
+
+.terminal-logs-box {
+    flex: 1;
+    height: 0;
+    min-height: 220px;
+    background: rgba(0, 0, 0, 0.2) !important;
+    padding: 1.5rem;
+    font-family: monospace !important;
+    font-size: 0.8rem;
+    color: #0f0;
+    overflow-y: auto;
+    line-height: 1.5;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.light-mode .terminal-logs-box {
+    background: rgba(255, 255, 255, 0.4) !important;
+    color: #1a7f37 !important;
+    border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+.terminal-broadcast-sec {
+    display: none;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.1) !important;
+    padding: 1.2rem 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 100;
+    position: relative;
+}
+
+body.light-mode .terminal-broadcast-sec {
+    background: rgba(0, 0, 0, 0.02) !important;
+    border-top-color: rgba(0, 0, 0, 0.06);
 }
 
 
