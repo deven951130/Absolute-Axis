@@ -27,6 +27,17 @@ try:
 except Exception as e:
     print(f"[DB_UPGRADE] Warning: failed to auto-upgrade gigs table schema: {e}")
 
+# 自動升級資料庫欄位 (為 gigs 資料表在舊庫中新增 contact 欄位)
+try:
+    with engine.begin() as conn:
+        res = conn.execute(text("PRAGMA table_info(gigs);")).fetchall()
+        cols = [r[1] for r in res]
+        if "contact" not in cols:
+            conn.execute(text("ALTER TABLE gigs ADD COLUMN contact VARCHAR;"))
+            print("[DB_UPGRADE] Column 'contact' added to table 'gigs' successfully.")
+except Exception as e:
+    print(f"[DB_UPGRADE] Warning: failed to auto-upgrade gigs table schema for contact: {e}")
+
 # 自動升級資料庫欄位 (為 users 資料表在舊庫中新增 status 欄位)
 try:
     with engine.begin() as conn:

@@ -63,6 +63,7 @@ class GigCreate(BaseModel):
     title: str
     description: str
     budget: int
+    contact: Optional[str] = None
 
 class FeedbackCreate(BaseModel):
     title: str

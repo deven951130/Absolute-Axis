@@ -63,6 +63,7 @@ class Gig(Base):
     worker = Column(String, nullable=True)
     status = Column(String, default="Open")
     reject_reason = Column(String, nullable=True)
+    contact = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Feedback(Base):

@@ -87,6 +87,22 @@ def get_current_user_obj(authorization: str = Header(None), db: Session = Depend
         
     return {"username": user.username, "role": user.role, "avatar": user.avatar, "quota_bytes": user.quota_bytes}
 
+def get_current_user_obj_optional(authorization: str = Header(None), db: Session = Depends(get_db)):
+    if not authorization or not authorization.startswith("Bearer "): 
+        return None
+    token = authorization.split(" ")[1]
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+        user = db.query(User).filter(User.username == username).first()
+        if user is None:
+            return None
+        return {"username": user.username, "role": user.role, "avatar": user.avatar, "quota_bytes": user.quota_bytes}
+    except jwt.PyJWTError:
+        return None
+
 def safe_path(rel: str, username: str):
     base = os.path.abspath(os.path.join(NAS_ROOT, username))
     if not os.path.exists(base): 

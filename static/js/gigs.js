@@ -8,6 +8,10 @@ async function loadGigs() {
     if (gigsNav) {
         gigsNav.style.display = !token ? 'flex' : 'none';
     }
+    const contactContainer = document.getElementById('gig-contact-container');
+    if (contactContainer) {
+        contactContainer.style.display = !token ? 'block' : 'none';
+    }
 
     try {
         const res = await authFetch('/api/gigs');
@@ -71,6 +75,8 @@ async function loadGigs() {
                 rejectReasonHtml = `<div style="font-size:0.85rem; color:#f85149; margin-top:8px; font-weight:700; border-top:1px dashed rgba(248, 81, 73, 0.2); padding-top:8px;">拒絕原因：${g.reject_reason || '未提供理由'}</div>`;
             }
 
+            const creatorText = g.creator === 'Guest' && g.contact ? `Guest (聯絡方式: ${g.contact})` : g.creator;
+
             item.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
                     <div style="font-weight:900; font-size:1.1rem; color:var(--text-main);">${g.title}</div>
@@ -85,7 +91,7 @@ async function loadGigs() {
                 ${rejectReasonHtml}
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:0.72rem; color:var(--text-muted); font-weight:800;">
                     <div>
-                        <span>發佈者: ${g.creator}</span>
+                        <span>發佈者: ${creatorText}</span>
                         <span style="margin: 0 10px;">|</span>
                         <span>時間: ${g.created_at.replace('T', ' ').substring(0, 19)}</span>
                     </div>
@@ -103,14 +109,22 @@ async function loadGigs() {
 
 async function submitGig() {
     const token = localStorage.getItem('axis_token');
-    if (!token) {
-        if (typeof showLoginOverlay === 'function') showLoginOverlay();
-        return;
-    }
-
-    const titleVal = document.getElementById('gig-title-input').value.strip ? document.getElementById('gig-title-input').value.strip() : document.getElementById('gig-title-input').value.trim();
-    const descVal = document.getElementById('gig-desc-input').value.strip ? document.getElementById('gig-desc-input').value.strip() : document.getElementById('gig-desc-input').value.trim();
+    const titleVal = document.getElementById('gig-title-input').value.trim();
+    const descVal = document.getElementById('gig-desc-input').value.trim();
     const budgetVal = parseInt(document.getElementById('gig-budget-input').value);
+    let contactVal = null;
+
+    if (!token) {
+        contactVal = document.getElementById('gig-contact-input').value.trim();
+        if (!contactVal) {
+            if (typeof showToast === 'function') {
+                showToast("未登入訪客請填寫聯絡方式", "error");
+            } else {
+                alert("未登入訪客請填寫聯絡方式");
+            }
+            return;
+        }
+    }
 
     if (!titleVal || !descVal || isNaN(budgetVal) || budgetVal <= 0) {
         if (typeof showToast === 'function') {
@@ -128,7 +142,8 @@ async function submitGig() {
             body: JSON.stringify({
                 title: titleVal,
                 description: descVal,
-                budget: budgetVal
+                budget: budgetVal,
+                contact: contactVal
             })
         });
 
@@ -137,6 +152,9 @@ async function submitGig() {
             document.getElementById('gig-title-input').value = '';
             document.getElementById('gig-desc-input').value = '';
             document.getElementById('gig-budget-input').value = '';
+            if (document.getElementById('gig-contact-input')) {
+                document.getElementById('gig-contact-input').value = '';
+            }
             loadGigs();
         } else {
             const data = await res.json();

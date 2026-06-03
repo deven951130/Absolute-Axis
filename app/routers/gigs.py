@@ -5,7 +5,7 @@ from typing import List
 
 from app.database import get_db, Gig
 from app.models import GigCreate, GigReject
-from app.utils import get_current_user_obj, log_event
+from app.utils import get_current_user_obj, get_current_user_obj_optional, log_event
 
 router = APIRouter(prefix="/api/gigs", tags=["gigs"])
 
@@ -23,24 +23,34 @@ def list_gigs(db: Session = Depends(get_db)):
             "worker": g.worker,
             "status": g.status,
             "reject_reason": g.reject_reason,
+            "contact": g.contact,
             "created_at": g.created_at.isoformat()
         })
     return res
 
 @router.post("")
-def create_gig(req: GigCreate, user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
+def create_gig(req: GigCreate, user: dict = Depends(get_current_user_obj_optional), db: Session = Depends(get_db)):
+    creator_name = "Guest"
+    if user:
+        creator_name = user["username"]
+    else:
+        if not req.contact or not req.contact.strip():
+            raise HTTPException(status_code=400, detail="未登入訪客必須提供聯絡方式")
+            
     new_gig = Gig(
         title=req.title,
         description=req.description,
         budget=req.budget,
-        creator=user["username"],
+        creator=creator_name,
+        contact=req.contact if not user else None,
         status="Open"
     )
     db.add(new_gig)
     db.commit()
     db.refresh(new_gig)
     
-    log_event(user["username"], f"GIG: Published a new gig [{req.title}] with budget {req.budget}")
+    log_name = user["username"] if user else f"Guest ({req.contact})"
+    log_event(log_name, f"GIG: Published a new gig [{req.title}] with budget {req.budget}")
     return {"status": "ok", "id": new_gig.id}
 
 @router.post("/{id}/accept")
