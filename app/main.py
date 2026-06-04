@@ -87,8 +87,6 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_PATH, "static")), n
 import time as _time
 
 @app.get("/")
-@app.get("/introduce")
-@app.get("/price")
 @app.get("/main")
 @app.get("/virtal")
 @app.get("/iot")

@@ -20,10 +20,7 @@ function setTheme(theme) {
     localStorage.setItem('axis-accent-theme', theme);
 }
 
-// 路由路徑與視圖映射字典
 const ROUTE_MAP = {
-    '/introduce': 'intro',
-    '/price': 'pricing',
     '/main': 'dashboard',
     '/virtal': 'virtual',
     '/iot': 'smart',
@@ -41,8 +38,6 @@ const ROUTE_MAP = {
 };
 
 const VIEW_TO_ROUTE = {
-    'intro': '/introduce',
-    'pricing': '/price',
     'dashboard': '/main',
     'virtual': '/virtal',
     'smart': '/iot',
@@ -72,13 +67,10 @@ function switchView(v, pushHistory = true) {
         v = 'dashboard';
     }
 
-    // 前端 Route Guard 強化，加入 login 與 gigs 虛擬視圖至免驗證白名單
-    if (!token && !['intro', 'pricing', 'login', 'gigs'].includes(v)) {
-        console.warn(`Unauthorized attempt to view: ${v}. Redirecting to intro.`);
-        v = 'intro';
-        setTimeout(() => {
-            if (typeof showLoginOverlay === 'function') showLoginOverlay();
-        }, 200);
+    // 前端 Route Guard 強化，限制未登入存取所有後台視圖
+    if (!token && v !== 'login') {
+        console.warn(`Unauthorized attempt to view: ${v}. Redirecting to login.`);
+        v = 'login';
     }
 
     if (pushHistory) {
@@ -90,7 +82,7 @@ function switchView(v, pushHistory = true) {
 
     // 處理 login 虛擬視圖的底層轉換與彈窗開啟
     if (v === 'login') {
-        v = 'intro';
+        v = 'dashboard';
         setTimeout(() => {
             if (typeof showLoginOverlay === 'function') showLoginOverlay(false);
         }, 100);
@@ -104,8 +96,8 @@ function switchView(v, pushHistory = true) {
         v = 'placeholder';
     }
 
-    // 獨立前台頁面樣式控制（介紹頁、定價頁與未登入接案平台隱藏側邊欄及 Header）
-    if (['intro', 'pricing'].includes(v) || (v === 'gigs' && !token)) {
+    // 獨立前台頁面樣式控制（未登入或正在登入視圖時隱藏側邊欄及 Header）
+    if (!token || v === 'login') {
         document.body.classList.add('full-screen-view');
     } else {
         document.body.classList.remove('full-screen-view');
@@ -133,10 +125,8 @@ function switchView(v, pushHistory = true) {
     if (n) n.classList.add('active');
 
     const titles = {
-        'intro': '服務介紹',
-        'pricing': '方案定價',
         'dashboard': '戰情總覽',
-        'virtual': '虛擬化中心',
+        'virtual': '虛密化中心',
         'cloud': '私有雲儲存',
         'nas-mgnt': 'NAS 管理中樞',
         'admin': '帳號管理',
@@ -178,32 +168,12 @@ function switchView(v, pushHistory = true) {
 
     // 收合行動端側邊欄
     if (typeof closeSidebar === 'function') closeSidebar();
-
-    // 更新前台宣傳頁面與接案中樞導覽列之登入狀態顯示
-    if (typeof updateNavActionsState === 'function') {
-        updateNavActionsState();
-    }
-
+ 
     // 觸發視圖切換自定義事件
     document.dispatchEvent(new CustomEvent('view-switched', { detail: { view: v } }));
 }
 
-function updateNavActionsState() {
-    const token = localStorage.getItem('axis_token');
-    if (token) {
-        const savedAva = localStorage.getItem('axis_avatar');
-        const fallbackAva = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + localStorage.getItem('axis_user');
-        const finalAva = (savedAva && savedAva.trim() !== "") ? savedAva : fallbackAva;
-        
-        document.querySelectorAll('.intro-logged-out-actions').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.intro-logged-in-actions').forEach(el => el.style.display = 'flex');
-        document.querySelectorAll('.intro-avatar-img').forEach(el => el.src = finalAva);
-    } else {
-        document.querySelectorAll('.intro-logged-out-actions').forEach(el => el.style.display = 'flex');
-        document.querySelectorAll('.intro-logged-in-actions').forEach(el => el.style.display = 'none');
-    }
-}
-window.updateNavActionsState = updateNavActionsState;
+// 移除舊的介紹頁導覽更新函數
 
 function openSettingPanel(id) {
     document.getElementById('settings-main').style.display = 'none';
@@ -308,24 +278,18 @@ window.showLoginOverlay = function(pushHistory = true) {
 };
 
 window.hideLoginOverlay = function() {
-    const loginOverlay = document.getElementById('login-overlay');
-    if (loginOverlay) loginOverlay.style.display = 'none';
-    
-    // 如果未登入且關閉了登入框
+    // 若未登入，禁止隱藏登入遮罩以防繞過驗證
     if (!localStorage.getItem('axis_token')) {
         document.body.classList.add('not-logged-in');
-        
-        // 若當前路徑是 /login，關閉時退回 /introduce 頁面，否則保持當前網址
-        if (window.location.pathname === '/login') {
+        if (window.location.pathname !== '/login') {
             if (typeof switchView === 'function') {
-                switchView('intro', true);
-            }
-        } else {
-            if (typeof switchView === 'function') {
-                switchView('intro', false);
+                switchView('login', true);
             }
         }
+        return;
     }
+    const loginOverlay = document.getElementById('login-overlay');
+    if (loginOverlay) loginOverlay.style.display = 'none';
 };
 
 window.toggleSidebar = function(e) {

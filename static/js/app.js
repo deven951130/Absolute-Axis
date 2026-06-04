@@ -4,7 +4,7 @@
  */
 const App = {
     components: {
-        views: ['intro', 'pricing', 'dashboard', 'virtual', 'smart', 'cloud', 'nas-mgnt', 'metrics', 'admin', 'settings', 'placeholder', 'multiverse', 'gigs', 'opensource', 'feedback'],
+        views: ['dashboard', 'virtual', 'smart', 'cloud', 'nas-mgnt', 'metrics', 'admin', 'settings', 'placeholder', 'multiverse', 'gigs', 'opensource', 'feedback'],
         modals: ['profile', 'avatar', 'share', 'preview', 'mkdir', 'deploy-vm', 'admin-edit', 'create-user'],
         overlays: ['popover', 'context-menu']
     },
@@ -115,47 +115,26 @@ const App = {
                 updateNavActionsState();
             }
         } else {
-            // 未登入：只允許訪問 intro, pricing, gigs, login 頁面，其餘強制跳轉
+            // 未登入：強制要求進行身分驗證，並開啟不可關閉的登入遮罩
             const currentPath = window.location.pathname;
-            let finalView = window.ROUTE_MAP ? window.ROUTE_MAP[currentPath] : null;
-            
-            // 決定預設視圖
-            if (!finalView) {
-                finalView = 'intro';
-            }
-            
-            const whitelist = ['intro', 'pricing', 'gigs', 'login'];
-            if (!whitelist.includes(finalView)) {
-                // 嘗試存取受保護頁面，強制變更為 'intro'
-                finalView = 'intro';
-            }
             
             document.body.classList.add('not-logged-in');
             const loginOverlay = document.getElementById('login-overlay');
-            if (loginOverlay) loginOverlay.style.display = 'none';
-
-            // 更新介紹頁面/定價頁面/接案平台導覽列未登入狀態
-            if (typeof updateNavActionsState === 'function') {
-                updateNavActionsState();
+            if (loginOverlay) {
+                loginOverlay.style.display = 'flex';
+                // 隱藏關閉按鈕，使其無法被手動關閉
+                const closeBtn = loginOverlay.querySelector('span[onclick*="hideLoginOverlay"]');
+                if (closeBtn) closeBtn.style.display = 'none';
+                // 移除點擊背景關閉事件
+                loginOverlay.setAttribute('onclick', '');
             }
             
-            // 執行視圖切換
-            if (typeof switchView === 'function') switchView(finalView, false);
+            // 底層視圖切換至 dashboard
+            if (typeof switchView === 'function') switchView('dashboard', false);
             
             // 統一路由與網址列重定向邏輯
-            if (currentPath === '/' || currentPath === '/login') {
-                history.replaceState(null, '', '/introduce');
-                if (currentPath === '/login') {
-                    setTimeout(() => {
-                        if (typeof showLoginOverlay === 'function') showLoginOverlay(false);
-                    }, 300);
-                }
-            } else if (!['/introduce', '/price', '/gigs'].includes(currentPath)) {
-                // 存取其他受保護的後台路徑，重導向至 /introduce 並開啟登入遮罩
-                history.replaceState(null, '', '/introduce');
-                setTimeout(() => {
-                    if (typeof showLoginOverlay === 'function') showLoginOverlay(false);
-                }, 300);
+            if (currentPath !== '/login') {
+                history.replaceState(null, '', '/login');
             }
         }
         
