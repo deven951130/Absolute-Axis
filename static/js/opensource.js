@@ -3,6 +3,12 @@ async function loadGitHubRepos() {
     const grid = document.getElementById('repos-grid');
     if (!grid) return;
 
+    // 處理管理員新增專案按鈕顯示
+    const role = localStorage.getItem('axis_role');
+    const isAdmin = (role === 'admin' || role === 'Administrator');
+    const addBtn = document.getElementById('os-add-repo-btn');
+    if (addBtn) addBtn.style.display = isAdmin ? 'block' : 'none';
+
     try {
         const res = await authFetch('/api/github/repos');
         if (!res.ok) {
@@ -33,6 +39,12 @@ async function loadGitHubRepos() {
             else if (lang === 'Shell') langColor = '#89e051';
 
             const cloneCmd = `git clone ${repo.html_url}.git`;
+            
+            // 僅限管理員顯示刪除按鈕
+            let deleteBtnHtml = '';
+            if (isAdmin) {
+                deleteBtnHtml = `<button class="btn btn-outline" style="padding:4px 10px; font-size:0.7rem; color:var(--danger-color); border-color:var(--danger-color) !important; margin-right:8px;" onclick="window.deleteRepo('${repo.name}')">刪除專案</button>`;
+            }
 
             card.innerHTML = `
                 <div>
@@ -58,7 +70,10 @@ async function loadGitHubRepos() {
                             <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${langColor};"></span>
                             <span>${lang}</span>
                         </div>
-                        <a href="${repo.html_url}" target="_blank" class="btn btn-outline" style="padding:4px 10px; font-size:0.7rem; text-decoration:none;">查看原始碼</a>
+                        <div style="display:flex; align-items:center;">
+                            ${deleteBtnHtml}
+                            <a href="${repo.html_url}" target="_blank" class="btn btn-outline" style="padding:4px 10px; font-size:0.7rem; text-decoration:none;">查看原始碼</a>
+                        </div>
                     </div>
                 </div>
             `;
@@ -79,4 +94,78 @@ window.copyCloneCommand = function(text) {
     }).catch(err => {
         console.error('Could not copy text: ', err);
     });
-}
+};
+
+window.showAddRepoModal = function() {
+    const modal = document.getElementById('os-add-repo-modal');
+    if (modal) {
+        document.getElementById('os-repo-name').value = '';
+        document.getElementById('os-repo-fullname').value = '';
+        document.getElementById('os-repo-url').value = '';
+        document.getElementById('os-repo-lang').value = '';
+        document.getElementById('os-repo-desc').value = '';
+        modal.style.display = 'flex';
+    }
+};
+
+window.hideAddRepoModal = function() {
+    const modal = document.getElementById('os-add-repo-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.submitAddRepo = async function() {
+    const name = document.getElementById('os-repo-name').value.trim();
+    const fullname = document.getElementById('os-repo-fullname').value.trim();
+    const url = document.getElementById('os-repo-url').value.trim();
+    const lang = document.getElementById('os-repo-lang').value.trim();
+    const desc = document.getElementById('os-repo-desc').value.trim();
+    
+    if (!name || !fullname || !url) {
+        if (typeof showToast === 'function') showToast("請填寫專案名稱、完整名稱與專案連結！", "error");
+        return;
+    }
+    
+    try {
+        const res = await authFetch('/api/github/repos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name,
+                full_name: fullname,
+                html_url: url,
+                language: lang || "JavaScript",
+                description: desc
+            })
+        });
+        
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast("已成功新增開源專案！", "success");
+            window.hideAddRepoModal();
+            await loadGitHubRepos();
+        } else {
+            const data = await res.json();
+            if (typeof showToast === 'function') showToast(data.detail || "新增專案失敗", "error");
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
+    }
+};
+
+window.deleteRepo = async function(name) {
+    const ok = confirm(`您確定要刪除開源專案「${name}」嗎？`);
+    if (!ok) return;
+    
+    try {
+        const res = await authFetch(`/api/github/repos/${name}`, { method: 'DELETE' });
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast("已成功刪除該開源專案！", "success");
+            await loadGitHubRepos();
+        } else {
+            const data = await res.json();
+            if (typeof showToast === 'function') showToast(data.detail || "刪除專案失敗", "error");
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
+    }
+};
+

@@ -1,19 +1,58 @@
 <div id="view-opensource" class="view-section">
     <!-- 頂部 GitHub 帳戶卡片 -->
     <div class="card" style="margin-bottom: 2rem; border-left: 4px solid var(--accent-color); padding: 1.5rem 2rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
             <div>
                 <h2 style="margin:0; font-weight:900; color:var(--text-main); font-size:1.4rem; letter-spacing:0.5px;">GitHub 程式碼開源平台</h2>
                 <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-top:5px; text-transform:uppercase;">
                     自動同步開發者 deven951130 的公開專案與開源成果
                 </div>
             </div>
-            <a href="https://github.com/deven951130" target="_blank" class="btn btn-outline" style="padding:8px 16px; font-size:0.8rem; font-weight:800; text-decoration:none;">造訪開發者 GitHub</a>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button id="os-add-repo-btn" class="btn btn-primary" style="display:none; padding:8px 16px; font-size:0.8rem; font-weight:800;" onclick="window.showAddRepoModal()">➕ 新增專案</button>
+                <a href="https://github.com/deven951130" target="_blank" class="btn btn-outline" style="padding:8px 16px; font-size:0.8rem; font-weight:800; text-decoration:none;">造訪開發者 GitHub</a>
+            </div>
         </div>
     </div>
 
     <!-- 開源專案網格 -->
     <div id="repos-grid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:1.5rem;">
         <div style="color:var(--text-muted); padding:2rem; text-align:center; grid-column: 1 / span 2;">載入中...</div>
+    </div>
+
+    <!-- 新增專案彈窗 (Modal Overlay) -->
+    <div id="os-add-repo-modal" class="login-overlay" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6);" onclick="if(event.target === this) window.hideAddRepoModal()">
+        <div style="background:#161b22; width:450px; padding:2.5rem; border-radius:18px; border:1px solid #30363d; position:relative; display:flex; flex-direction:column; gap:14px;" onclick="event.stopPropagation()">
+            <span onclick="window.hideAddRepoModal()" style="position:absolute; top:15px; right:20px; cursor:pointer; color:var(--text-muted); font-size:1.5rem; font-weight:bold; transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
+            
+            <h3 style="margin-top:0; margin-bottom:0.5rem; font-weight:900; color:var(--text-main); text-align:center;">➕ 新增開源專案</h3>
+            
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">專案名稱</span>
+                <input type="text" id="os-repo-name" placeholder="例如: Absolute-Axis" class="t-input">
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">完整名稱 (Owner/Repo)</span>
+                <input type="text" id="os-repo-fullname" placeholder="例如: deven951130/Absolute-Axis" class="t-input">
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">專案連結 (HTML URL)</span>
+                <input type="text" id="os-repo-url" placeholder="例如: https://github.com/deven951130/Absolute-Axis" class="t-input">
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">主要程式語言</span>
+                <input type="text" id="os-repo-lang" placeholder="例如: Python / JavaScript" class="t-input">
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:6px;">
+                <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">專案描述</span>
+                <textarea id="os-repo-desc" placeholder="請輸入專案簡短說明" class="t-input" style="height:70px; resize:vertical;"></textarea>
+            </div>
+            
+            <button class="btn btn-primary" style="width:100%; height:45px; font-weight:800; margin-top:8px;" onclick="window.submitAddRepo()">確認新增專案</button>
+        </div>
     </div>
 </div>
