@@ -5,6 +5,7 @@
             <div class="settings-item" onclick="openSettingPanel('panel-identity')">🔑 個人身分與安全密碼</div>
             <div class="settings-item" onclick="openSettingPanel('panel-system')">💻 伺服器規格與核心資訊</div>
             <div class="settings-item" onclick="openSettingPanel('panel-theme')">🎨 主題色彩實驗室 (Collab)</div>
+            <div class="settings-item" onclick="openSettingPanel('panel-features')">⚙️ 模組化功能控制</div>
         </div>
     </div>
     
@@ -25,6 +26,25 @@
         <div class="card">
             <div id="sys-specs-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.2rem;">
                 <!-- Auto-injected specs -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Features Control Panel -->
+    <div id="panel-features" class="settings-panel">
+        <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeSettingPanel()">⬅ 返回首頁</button>
+        <div class="card">
+            <h2 class="card-title" style="margin-bottom: 1.5rem;">側邊欄模組顯示設定</h2>
+            <div style="display:flex; flex-direction:column; gap:1.5rem; align-items:flex-start; padding: 1rem 0;">
+                <label style="display:flex; align-items:center; gap:12px; font-size:1.1rem; cursor:pointer; color:var(--text-main); user-select:none;">
+                    <input type="checkbox" id="feature-gigs" onchange="window.toggleFeature('gigs', this.checked)" style="width:1.3rem; height:1.3rem; accent-color:var(--accent-color);"> 接案功能
+                </label>
+                <label style="display:flex; align-items:center; gap:12px; font-size:1.1rem; cursor:pointer; color:var(--text-main); user-select:none;">
+                    <input type="checkbox" id="feature-opensource" onchange="window.toggleFeature('opensource', this.checked)" style="width:1.3rem; height:1.3rem; accent-color:var(--accent-color);"> 開源專案分享
+                </label>
+                <label style="display:flex; align-items:center; gap:12px; font-size:1.1rem; cursor:pointer; color:var(--text-main); user-select:none;">
+                    <input type="checkbox" id="feature-multiverse" onchange="window.toggleFeature('multiverse', this.checked)" style="width:1.3rem; height:1.3rem; accent-color:var(--accent-color);"> Minecraft 伺服器
+                </label>
             </div>
         </div>
     </div>

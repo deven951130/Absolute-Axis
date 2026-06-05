@@ -60,8 +60,26 @@ window.ROUTE_MAP = ROUTE_MAP;
 window.VIEW_TO_ROUTE = VIEW_TO_ROUTE;
 
 function switchView(v, pushHistory = true) {
+    // 同步側邊欄功能顯示與設定頁面勾選狀態
+    if (typeof updateFeaturesUI === 'function') updateFeaturesUI();
+
     const token = localStorage.getItem('axis_token');
     
+    // 檢查功能模組是否啟用
+    const gigsEnabled = localStorage.getItem('axis-feature-gigs') !== 'false';
+    const opensourceEnabled = localStorage.getItem('axis-feature-opensource') !== 'false';
+    const multiverseEnabled = localStorage.getItem('axis-feature-multiverse') !== 'false';
+
+    const originalV = v;
+    if (v === 'gigs' && !gigsEnabled) v = 'dashboard';
+    if (v === 'opensource' && !opensourceEnabled) v = 'dashboard';
+    if (v === 'multiverse' && !multiverseEnabled) v = 'dashboard';
+
+    // 若功能被攔截，強制更新網址列
+    if (v !== originalV) {
+        pushHistory = true;
+    }
+
     // 已登入狀態下訪問登入路徑，自動重導向至後台主頁
     if (token && v === 'login') {
         v = 'dashboard';
@@ -310,3 +328,42 @@ window.addEventListener('popstate', () => {
         switchView(matchedView, false);
     }
 });
+
+// 模組化功能控制 (Gigs, Opensource, Multiverse)
+function updateFeaturesUI() {
+    const features = {
+        gigs: localStorage.getItem('axis-feature-gigs') !== 'false',
+        opensource: localStorage.getItem('axis-feature-opensource') !== 'false',
+        multiverse: localStorage.getItem('axis-feature-multiverse') !== 'false'
+    };
+    
+    const navGigs = document.getElementById('nav-gigs');
+    const navOpensource = document.getElementById('nav-opensource');
+    const navMultiverse = document.getElementById('nav-multiverse');
+    
+    if (navGigs) navGigs.style.display = features.gigs ? 'block' : 'none';
+    if (navOpensource) navOpensource.style.display = features.opensource ? 'block' : 'none';
+    if (navMultiverse) navMultiverse.style.display = features.multiverse ? 'block' : 'none';
+    
+    const chkGigs = document.getElementById('feature-gigs');
+    const chkOpensource = document.getElementById('feature-opensource');
+    const chkMultiverse = document.getElementById('feature-multiverse');
+    
+    if (chkGigs) chkGigs.checked = features.gigs;
+    if (chkOpensource) chkOpensource.checked = features.opensource;
+    if (chkMultiverse) chkMultiverse.checked = features.multiverse;
+}
+
+window.toggleFeature = function(feature, enabled) {
+    localStorage.setItem('axis-feature-' + feature, enabled ? 'true' : 'false');
+    updateFeaturesUI();
+    
+    // 若關閉的功能為當前檢視頁面，自動導回首頁
+    const currentView = localStorage.getItem('axis_current_view');
+    if (currentView === feature && !enabled) {
+        switchView('dashboard', true);
+    }
+};
+
+window.updateFeaturesUI = updateFeaturesUI;
+
