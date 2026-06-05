@@ -1,4 +1,13 @@
+### [V55] - 2026-06-05 更新日誌
+
+#### 介紹頁公有通道打通與主控制台路由同步（P0）
+- **[修復] 主控制台舊介紹頁路由清理**：連線至 `axis-main` 虛擬主機 (VM 100)，執行 Git 同步拉取最新的 `origin/main` 分支程式碼，並重啟 `axis-server` 容器，徹底移除了舊主專案的 `/introduce` 路由對應，訪問時將正確回傳 404。
+- **[修復] 獨立介紹頁網站公網 Funnel 通道開通**：
+  - 於 Proxmox 宿主機 (PVE) 啟動先前處於停止狀態之獨立介紹頁容器 `axis-intro-lxc` (VMID 103)。
+  - 登入該容器並呼叫最新版 Tailscale CLI 指令 `tailscale funnel --bg http://127.0.0.1:8080`，成功開通公網 HTTPS 存取通道，免開 VPN 即可連上獨立介紹網頁 `https://axis-intro-lxc-1.tail9f124e.ts.net/`。
+
 ### [V54] - 2026-06-04 更新日誌
+
 
 #### 專案重構與介紹頁分離（P0）
 - **[新增] 獨立介紹頁網站專案**：於 `e:/Absolute-Axis-Intro` 建立全新的獨立介紹頁專案，並搭配極簡 FastAPI Web 伺服器與 Mock 登入/註冊 API，以供其他虛擬機獨立部署使用。
