@@ -90,26 +90,42 @@ function renderGigsList() {
         }
 
         // 按鈕與操作控制
+        const isAdmin = localStorage.getItem('axis_role') === 'Administrator';
         let actionHtml = '';
+
         if (g.status === 'Open') {
             if (!token) {
                 actionHtml = `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;" onclick="showLoginOverlay()">登入以承接案件</button>`;
-            } else if (g.creator === currentUser) {
-                actionHtml = `<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem;" onclick="deleteGig(${g.id})">撤回案件</button>`;
             } else {
-                actionHtml = `
-                    <button class="btn btn-primary" style="padding:6px 16px; font-size:0.75rem;" onclick="acceptGig(${g.id})">承接委託</button>
-                    <button class="btn btn-danger" style="padding:6px 16px; font-size:0.75rem; margin-left:8px;" onclick="rejectGigPrompt(${g.id})">拒絕承接</button>
-                `;
+                let buttons = [];
+                if (g.creator === currentUser || isAdmin) {
+                    const btnText = g.creator === currentUser ? "撤回案件" : "刪除案件";
+                    buttons.push(`<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem;" onclick="deleteGig(${g.id})">${btnText}</button>`);
+                }
+                if (g.creator !== currentUser) {
+                    buttons.push(`<button class="btn btn-primary" style="padding:6px 16px; font-size:0.75rem;" onclick="acceptGig(${g.id})">承接委託</button>`);
+                    buttons.push(`<button class="btn btn-danger" style="padding:6px 16px; font-size:0.75rem; margin-left:8px;" onclick="rejectGigPrompt(${g.id})">拒絕承接</button>`);
+                }
+                actionHtml = buttons.join(' ');
             }
         } else if (g.status === 'Assigned') {
-            if (currentUser === g.creator || currentUser === g.worker || localStorage.getItem('axis_role') === 'Administrator') {
-                actionHtml = `<button class="btn btn-outline" style="color:#2ecc71; padding:6px 16px; font-size:0.75rem;" onclick="completeGig(${g.id})">標記為已完成</button>`;
-            } else {
-                actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">承接人: ${g.worker}</span>`;
+            let buttons = [];
+            if (currentUser === g.creator || currentUser === g.worker || isAdmin) {
+                buttons.push(`<button class="btn btn-outline" style="color:#2ecc71; padding:6px 16px; font-size:0.75rem;" onclick="completeGig(${g.id})">標記為已完成</button>`);
+            }
+            if (isAdmin) {
+                buttons.push(`<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem; margin-left:8px;" onclick="deleteGig(${g.id})">刪除案件</button>`);
+            }
+            actionHtml = buttons.join(' ') || `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">承接人: ${g.worker}</span>`;
+            if (buttons.length > 0) {
+                actionHtml += `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-left:12px;">承接人: ${g.worker}</span>`;
             }
         } else if (g.status === 'Completed') {
-            actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">承接人: ${g.worker} (已驗收)</span>`;
+            let buttons = [];
+            if (isAdmin) {
+                buttons.push(`<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem;" onclick="deleteGig(${g.id})">刪除案件</button>`);
+            }
+            actionHtml = (buttons.join(' ') + ` <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-left:8px;">承接人: ${g.worker} (已驗收)</span>`).trim();
         } else if (g.status === 'Rejected') {
             actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">已拒絕承接</span>`;
         }
