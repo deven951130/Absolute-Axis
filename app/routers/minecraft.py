@@ -1,11 +1,16 @@
 import socket
 import paramiko
+import os
+import json
+import requests
 from typing import Tuple
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from pydantic import BaseModel
 from datetime import datetime
 
 from app.models import MCCommandRequest
 from app.utils import get_current_user_obj, log_event
+from app.config import BASE_PATH
 
 router = APIRouter(prefix="/api/minecraft", tags=["minecraft"])
 
@@ -187,3 +192,192 @@ def send_mc_command(req: MCCommandRequest, user: dict = Depends(get_current_user
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"SSH 指令注入失敗：{str(e)}")
+
+
+INFO_FILE = os.path.join(BASE_PATH, "app", "minecraft-info.json")
+
+def _load_info() -> dict:
+    if os.path.exists(INFO_FILE):
+        try:
+            with open(INFO_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {
+        "description": "這裡輸入模組包的簡介與說明...",
+        "server_pack_name": "無",
+        "client_pack_name": "無",
+        "client_pack_size": 0,
+        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+def _save_info(info: dict):
+    with open(INFO_FILE, "w", encoding="utf-8") as f:
+        json.dump(info, f, indent=4, ensure_ascii=False)
+
+
+class MCInfoUpdate(BaseModel):
+    description: str
+
+
+@router.get("/info")
+def get_mc_info(user: dict = Depends(get_current_user_obj)):
+    """取得模組包簡介與展示狀態"""
+    info = _load_info()
+    client_zip = os.path.join(BASE_PATH, "static", "minecraft-client-pack.zip")
+    info["has_client_pack"] = os.path.exists(client_zip)
+    return info
+
+
+@router.post("/info")
+def update_mc_info(req: MCInfoUpdate, user: dict = Depends(get_current_user_obj)):
+    """編輯模組包簡介（管理員限定）"""
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員修改模組包資訊")
+        
+    info = _load_info()
+    info["description"] = req.description
+    info["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    _save_info(info)
+    
+    log_event(user["username"], "MC_ADMIN: Updated modpack description")
+    return {"status": "ok", "info": info}
+
+
+@router.post("/upload-client")
+async def upload_client_pack(file: UploadFile = File(...), user: dict = Depends(get_current_user_obj)):
+    """上傳客戶端包（管理員限定）"""
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員上傳模組包")
+        
+    client_zip_dir = os.path.join(BASE_PATH, "static")
+    os.makedirs(client_zip_dir, exist_ok=True)
+    target_path = os.path.join(client_zip_dir, "minecraft-client-pack.zip")
+    
+    try:
+        with open(target_path, "wb") as buffer:
+            while True:
+                chunk = await file.read(1024 * 1024)  # 1MB chunk
+                if not chunk:
+                    break
+                buffer.write(chunk)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"儲存客戶端包失敗: {str(e)}")
+        
+    info = _load_info()
+    info["client_pack_name"] = file.filename
+    info["client_pack_size"] = os.path.getsize(target_path)
+    info["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    _save_info(info)
+    
+    log_event(user["username"], f"MC_ADMIN: Uploaded client pack {file.filename}")
+    return {"status": "ok", "filename": file.filename}
+
+
+@router.post("/upload-server")
+async def upload_server_pack(file: UploadFile = File(...), user: dict = Depends(get_current_user_obj)):
+    """上傳並部署伺服器包（管理員限定）"""
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員上傳模組包")
+        
+    temp_dir = os.path.join(BASE_PATH, "scratch")
+    os.makedirs(temp_dir, exist_ok=True)
+    local_temp_path = os.path.join(temp_dir, "temp_server_upload.zip")
+    
+    try:
+        with open(local_temp_path, "wb") as buffer:
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                buffer.write(chunk)
+    except Exception as e:
+        if os.path.exists(local_temp_path):
+            os.remove(local_temp_path)
+        raise HTTPException(status_code=500, detail=f"儲存伺服器包失敗: {str(e)}")
+        
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(MC_LXC_IP, username=MC_SSH_USER, password=MC_SSH_PASS, timeout=15)
+        
+        # Stop minecraft service
+        client.exec_command("systemctl stop minecraft")
+        
+        # SFTP Upload
+        sftp = client.open_sftp()
+        remote_zip = "/root/minecraft_server_upload.zip"
+        sftp.put(local_temp_path, remote_zip)
+        sftp.close()
+        
+        # Clean up existing mods and configs, keep saves/world/properties/whitelist/ops etc
+        uninstall_cmd = (
+            "cd /root/minecraft && "
+            "rm -rf mods config kubejs defaultconfigs modernfix libraries patchouli_books tlm_custom_pack"
+        )
+        client.exec_command(uninstall_cmd)
+        
+        # Extract new files
+        extract_cmd = f"unzip -o {remote_zip} -d /root/minecraft && rm -f {remote_zip}"
+        stdin, stdout, stderr = client.exec_command(extract_cmd)
+        stdout.channel.recv_exit_status()
+        
+        # Start minecraft service
+        client.exec_command("systemctl start minecraft")
+        
+        client.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"部署伺服器包失敗: {str(e)}")
+    finally:
+        if os.path.exists(local_temp_path):
+            os.remove(local_temp_path)
+            
+    info = _load_info()
+    info["server_pack_name"] = file.filename
+    info["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    _save_info(info)
+    
+    log_event(user["username"], f"MC_ADMIN: Uploaded and deployed server pack {file.filename}")
+    return {"status": "ok", "filename": file.filename}
+
+
+@router.post("/uninstall-server")
+def uninstall_server_pack(user: dict = Depends(get_current_user_obj)):
+    """卸載伺服器模組包（管理員限定）"""
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員卸載模組包")
+        
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(MC_LXC_IP, username=MC_SSH_USER, password=MC_SSH_PASS, timeout=15)
+        
+        # Stop minecraft service
+        client.exec_command("systemctl stop minecraft")
+        
+        # Remove folders
+        uninstall_cmd = (
+            "cd /root/minecraft && "
+            "rm -rf mods config kubejs defaultconfigs modernfix libraries patchouli_books tlm_custom_pack"
+        )
+        stdin, stdout, stderr = client.exec_command(uninstall_cmd)
+        stdout.channel.recv_exit_status()
+        
+        # Start minecraft service
+        client.exec_command("systemctl start minecraft")
+        
+        client.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"卸載伺服器包失敗: {str(e)}")
+        
+    info = _load_info()
+    info["server_pack_name"] = "無"
+    info["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    _save_info(info)
+    
+    log_event(user["username"], "MC_ADMIN: Uninstalled server pack")
+    return {"status": "ok"}

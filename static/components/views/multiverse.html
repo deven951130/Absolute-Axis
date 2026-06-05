@@ -142,6 +142,90 @@
         </div>
     </div>
 
+    <!-- 模組包管理與簡介區域 -->
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+        
+        <!-- 模組包簡介 -->
+        <div class="card" style="border-left:4px solid #e67e22; display:flex; flex-direction:column; min-height: 250px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; width: 100%;">
+                <div class="card-title" style="font-size:0.9rem; margin-bottom:0;">
+                    📦 模組包簡介與說明
+                </div>
+                <!-- 僅限管理員顯示編輯按鈕 -->
+                <button id="mv-edit-desc-btn" class="btn btn-outline" style="padding:4px 10px; font-size:0.75rem; display:none; margin-left:auto;" onclick="window.toggleEditDesc(true)">📝 編輯簡介</button>
+            </div>
+            
+            <!-- 顯示簡介區 -->
+            <div id="mv-desc-display" style="
+                background:rgba(0,0,0,0.2); border:1px solid #30363d;
+                padding:1.2rem; border-radius:8px; font-size:0.9rem;
+                line-height:1.7; color:var(--text-main); flex:1;
+                min-height:120px; white-space:pre-wrap;
+            ">
+                載入中...
+            </div>
+            
+            <!-- 編輯簡介區（預設隱藏） -->
+            <div id="mv-desc-edit-area" style="display:none; flex-direction:column; gap:10px; flex:1;">
+                <textarea id="mv-desc-textarea" class="t-input" style="
+                    width:100%; height:120px; background:rgba(0,0,0,0.3);
+                    border:1px solid #30363d; border-radius:8px; padding:10px;
+                    color:#fff; font-family:inherit; font-size:0.9rem; resize:vertical;
+                "></textarea>
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button class="btn btn-outline" style="padding:6px 14px; font-size:0.8rem;" onclick="window.toggleEditDesc(false)">取消</button>
+                    <button class="btn btn-primary" style="padding:6px 16px; font-size:0.8rem;" onclick="window.saveDesc()">保存說明</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 檔案與模組包下載/管理 -->
+        <div class="card" style="border-left:4px solid #bd93f9; display:flex; flex-direction:column;">
+            <div class="card-title" style="font-size:0.9rem; margin-bottom:1.2rem;">
+                💾 模組包下載與管理
+            </div>
+            
+            <div style="display:flex; flex-direction:column; gap:1.2rem; flex:1; justify-content:center;">
+                <!-- 狀態顯示 -->
+                <div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-bottom:6px;">當前伺服器模組包：</div>
+                    <div style="font-size:0.85rem; font-weight:800; color:var(--accent-color); word-break:break-all;" id="mv-server-pack-name">--</div>
+                </div>
+                
+                <div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-bottom:6px;">當前客戶端模組包：</div>
+                    <div style="font-size:0.85rem; font-weight:800; color:#2ecc71; word-break:break-all;" id="mv-client-pack-name">--</div>
+                </div>
+
+                <!-- 下載按鈕 (一般使用者與管理員皆可見) -->
+                <button id="mv-download-client-btn" class="btn btn-primary" style="width:100%; height:45px; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="window.downloadClientPack()" disabled>
+                    📥 下載客戶端模組包
+                </button>
+                
+                <!-- 管理員控制區 (隱藏，由 JS 切換顯示) -->
+                <div id="mv-admin-pack-controls" style="display:none; flex-direction:column; gap:10px; border-top:1px solid var(--border-color); padding-top:1rem; margin-top:0.5rem;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); font-weight:800; text-transform:uppercase; margin-bottom:5px;">管理員專屬功能：</div>
+                    
+                    <button class="btn btn-outline" style="width:100%; height:38px; border-color:var(--accent-color) !important; color:var(--accent-color);" onclick="window.triggerUpload('server')">
+                        📤 上傳伺服器包 (.zip)
+                    </button>
+                    
+                    <button class="btn btn-outline" style="width:100%; height:38px; border-color:#2ecc71 !important; color:#2ecc71;" onclick="window.triggerUpload('client')">
+                        📤 上傳客戶端包 (.zip)
+                    </button>
+                    
+                    <button class="btn btn-outline" style="width:100%; height:38px; border-color:var(--danger-color) !important; color:var(--danger-color);" onclick="window.uninstallServerPack()">
+                        🗑️ 卸載伺服器模組包
+                    </button>
+                    
+                    <!-- 隱藏的檔案輸入框 -->
+                    <input type="file" id="mv-file-input" style="display:none;" onchange="window.handleFileSelected(this)">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
     <!-- MC 指令控制台（管理員限定，由 JS 控制顯示） -->
     <div id="mv-console-section" style="display:none;">
         <div class="card" style="padding:0; overflow:hidden; border-color:#bd93f9;">

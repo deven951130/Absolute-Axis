@@ -19,8 +19,54 @@ async function loadMultiverse() {
         }
         const data = await res.json();
         _mvRenderStatus(data);
+        
+        // 載入模組包簡介與管理資訊
+        await loadMultiverseInfo();
     } catch (e) {
         _mvRenderError(`連線失敗：${e.message}`);
+    }
+}
+
+async function loadMultiverseInfo() {
+    try {
+        const res = await authFetch('/api/minecraft/info');
+        if (res.ok) {
+            const info = await res.json();
+            
+            // 渲染簡介
+            const display = document.getElementById('mv-desc-display');
+            if (display) display.textContent = info.description || '暫無說明。';
+            
+            const textarea = document.getElementById('mv-desc-textarea');
+            if (textarea) textarea.value = info.description || '';
+            
+            // 渲染模組包名稱
+            _mvSet('mv-server-pack-name', info.server_pack_name || '無');
+            _mvSet('mv-client-pack-name', info.client_pack_name || '無');
+            
+            // 下載按鈕狀態
+            const dlBtn = document.getElementById('mv-download-client-btn');
+            if (dlBtn) {
+                if (info.has_client_pack) {
+                    dlBtn.disabled = false;
+                    dlBtn.innerHTML = '📥 下載客戶端模組包';
+                } else {
+                    dlBtn.disabled = true;
+                    dlBtn.innerHTML = '❌ 尚未上傳客戶端模組包';
+                }
+            }
+            
+            // 管理端按鈕權限顯示
+            const role = localStorage.getItem('axis_role');
+            const isAdmin = (role === 'admin' || role === 'Administrator');
+            const editDescBtn = document.getElementById('mv-edit-desc-btn');
+            const adminControls = document.getElementById('mv-admin-pack-controls');
+            
+            if (editDescBtn) editDescBtn.style.display = isAdmin ? 'block' : 'none';
+            if (adminControls) adminControls.style.display = isAdmin ? 'flex' : 'none';
+        }
+    } catch (e) {
+        console.error("載入模組包資訊失敗:", e);
     }
 }
 
@@ -216,3 +262,120 @@ if (!document.getElementById('mv-style')) {
     `;
     document.head.appendChild(style);
 }
+
+window.toggleEditDesc = function(show) {
+    const display = document.getElementById('mv-desc-display');
+    const editArea = document.getElementById('mv-desc-edit-area');
+    const editBtn = document.getElementById('mv-edit-desc-btn');
+    const textarea = document.getElementById('mv-desc-textarea');
+    
+    if (show) {
+        if (display) display.style.display = 'none';
+        if (editArea) editArea.style.display = 'flex';
+        if (editBtn) editBtn.style.display = 'none';
+        if (textarea) textarea.focus();
+    } else {
+        if (display) display.style.display = 'block';
+        if (editArea) editArea.style.display = 'none';
+        if (editBtn) editBtn.style.display = 'block';
+    }
+};
+
+window.saveDesc = async function() {
+    const textarea = document.getElementById('mv-desc-textarea');
+    if (!textarea) return;
+    
+    const description = textarea.value;
+    try {
+        const res = await authFetch('/api/minecraft/info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description })
+        });
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast("模組包說明已保存", "success");
+            toggleEditDesc(false);
+            await loadMultiverseInfo();
+        } else {
+            const data = await res.json();
+            if (typeof showToast === 'function') showToast(data.detail || "保存失敗", "error");
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
+    }
+};
+
+window.triggerUpload = function(type) {
+    window._mvUploadType = type;
+    const fileInput = document.getElementById('mv-file-input');
+    if (fileInput) {
+        fileInput.value = ''; // Reset
+        fileInput.click();
+    }
+};
+
+window.handleFileSelected = async function(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const type = window._mvUploadType;
+    
+    if (!file.name.endsWith('.zip')) {
+        if (typeof showToast === 'function') showToast("僅接受 .zip 壓縮包！", "warning");
+        return;
+    }
+    
+    const url = type === 'server' ? '/api/minecraft/upload-server' : '/api/minecraft/upload-client';
+    const desc = type === 'server' ? '伺服器端包' : '客戶端包';
+    
+    if (typeof showToast === 'function') showToast(`正在上傳 ${desc}，大檔案請耐心等候...`, "info");
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    try {
+        const token = localStorage.getItem('axis_token');
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast(`${desc} 上傳並部署成功！`, "success");
+            await loadMultiverse();
+        } else {
+            if (typeof showToast === 'function') showToast(data.detail || "上傳失敗", "error");
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast("上傳網路錯誤：" + e.message, "error");
+    }
+};
+
+window.uninstallServerPack = async function() {
+    const ok = confirm("警告：您確定要卸載伺服器模組包嗎？這將刪除 mods、config 等資料夾並重啟伺服器（地圖存檔 world 將會保留）。");
+    if (!ok) return;
+    
+    if (typeof showToast === 'function') showToast("正在卸載伺服器模組包，請稍候...", "info");
+    
+    try {
+        const res = await authFetch('/api/minecraft/uninstall-server', { method: 'POST' });
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast("伺服器模組包已成功卸載！", "success");
+            await loadMultiverse();
+        } else {
+            const data = await res.json();
+            if (typeof showToast === 'function') showToast(data.detail || "卸載失敗", "error");
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
+    }
+};
+
+window.downloadClientPack = function() {
+    if (typeof showToast === 'function') showToast("開始下載客戶端模組包...", "success");
+    window.location.href = window.location.origin + '/static/minecraft-client-pack.zip';
+};
+
