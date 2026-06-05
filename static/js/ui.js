@@ -142,6 +142,16 @@ function switchView(v, pushHistory = true) {
     const n = document.getElementById(nId);
     if (n) n.classList.add('active');
 
+    // 更新底部問題反饋按鈕的 active 狀態
+    const footerFeedbackBtn = document.getElementById('footer-feedback-btn');
+    if (footerFeedbackBtn) {
+        if (v === 'feedback') {
+            footerFeedbackBtn.classList.add('active');
+        } else {
+            footerFeedbackBtn.classList.remove('active');
+        }
+    }
+
     const titles = {
         'dashboard': '戰情總覽',
         'virtual': '虛密化中心',
