@@ -61,6 +61,11 @@
                     <input type="text" id="cfg-os-url" placeholder="例如: https://github.com/deven951130" class="t-input" style="max-width: 400px; font-weight:800;">
                 </div>
                 
+                <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                    <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">GitHub 個人存取權杖 (GITHUB_TOKEN)</span>
+                    <input type="password" id="cfg-os-token" placeholder="已設定時顯示遮罩。填入新權杖以覆寫，保留空白則維持現狀" class="t-input" style="max-width: 400px; font-weight:800;">
+                </div>
+                
                 <button class="btn btn-primary" style="padding:10px 20px; font-size:0.8rem; font-weight:800; align-self:flex-start; margin-top:6px;" onclick="window.saveOSConfig()">儲存開源專案設定</button>
             </div>
         </div>

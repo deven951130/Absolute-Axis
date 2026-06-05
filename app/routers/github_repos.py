@@ -1,10 +1,10 @@
 import os
 import json
 import requests
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from app.utils import get_current_user_obj, log_event
+from app.utils import get_current_user_obj, log_event, get_current_user_obj_optional
 from app.config import BASE_PATH
 
 router = APIRouter(prefix="/api/github", tags=["github_repos"])
@@ -24,6 +24,7 @@ class RepoCreate(BaseModel):
 class GithubConfig(BaseModel):
     developer_name: str
     github_url: str
+    github_token: Optional[str] = ""
 
 def _load_config() -> dict:
     if os.path.exists(CONFIG_FILE):
@@ -34,12 +35,23 @@ def _load_config() -> dict:
             pass
     return {
         "developer_name": "deven951130",
-        "github_url": "https://github.com/deven951130"
+        "github_url": "https://github.com/deven951130",
+        "github_token": ""
     }
 
 def _save_config(config: dict):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=4, ensure_ascii=False)
+
+def _get_effective_token() -> str:
+    config = _load_config()
+    cfg_token = config.get("github_token", "").strip()
+    if cfg_token:
+        return cfg_token
+    env_token = os.getenv("GITHUB_TOKEN")
+    if env_token and env_token != "your_github_token_here":
+        return env_token
+    return ""
 
 def _load_repos() -> list:
     if os.path.exists(REPOS_FILE):
@@ -52,9 +64,9 @@ def _load_repos() -> list:
     config = _load_config()
     dev_name = config.get("developer_name", "deven951130")
     
-    token = os.getenv("GITHUB_TOKEN")
+    token = _get_effective_token()
     headers = {}
-    if token and token != "your_github_token_here":
+    if token:
         headers["Authorization"] = f"token {token}"
         
     try:
@@ -173,9 +185,9 @@ def parse_github_url(url: str, user: dict = Depends(get_current_user_obj)):
             raise e
         raise HTTPException(status_code=400, detail=f"連結解析失敗: {str(e)}")
         
-    token = os.getenv("GITHUB_TOKEN")
+    token = _get_effective_token()
     headers = {}
-    if token and token != "your_github_token_here":
+    if token:
         headers["Authorization"] = f"token {token}"
         
     try:
@@ -210,9 +222,16 @@ def parse_github_url(url: str, user: dict = Depends(get_current_user_obj)):
 
 
 @router.get("/config")
-def get_github_config():
-    """取得開源專案作者配置資訊（全域公開）"""
-    return _load_config()
+def get_github_config(user: dict = Depends(get_current_user_obj_optional)):
+    """取得開源專案作者配置資訊"""
+    config = _load_config()
+    res = {
+        "developer_name": config.get("developer_name", "deven951130"),
+        "github_url": config.get("github_url", "https://github.com/deven951130")
+    }
+    if user and user.get("role") in ("admin", "Administrator"):
+        res["has_token"] = bool(config.get("github_token", "").strip())
+    return res
 
 
 @router.post("/config")
@@ -223,9 +242,15 @@ def update_github_config(req: GithubConfig, user: dict = Depends(get_current_use
         raise HTTPException(status_code=403, detail="僅限管理員管理專案設定")
         
     old_config = _load_config()
+    
+    new_token = req.github_token.strip() if req.github_token else ""
+    if new_token == "••••••••••••••••":
+        new_token = old_config.get("github_token", "")
+        
     new_config = {
         "developer_name": req.developer_name.strip(),
-        "github_url": req.github_url.strip()
+        "github_url": req.github_url.strip(),
+        "github_token": new_token
     }
     
     if not new_config["developer_name"] or not new_config["github_url"]:
@@ -243,6 +268,9 @@ def update_github_config(req: GithubConfig, user: dict = Depends(get_current_use
                 print(f"Error removing cache file: {e}")
                 
     log_event(user["username"], f"GITHUB_ADMIN: Updated author profile config to {new_config['developer_name']}")
-    return {"status": "ok", "config": new_config}
+    return {"status": "ok", "config": {
+        "developer_name": new_config["developer_name"],
+        "github_url": new_config["github_url"]
+    }}
 
 

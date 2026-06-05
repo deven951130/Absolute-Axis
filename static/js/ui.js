@@ -389,8 +389,12 @@ async function loadOSConfigValues() {
             const data = await res.json();
             const inputName = document.getElementById('cfg-os-name');
             const inputUrl = document.getElementById('cfg-os-url');
+            const inputToken = document.getElementById('cfg-os-token');
             if (inputName) inputName.value = data.developer_name || '';
             if (inputUrl) inputUrl.value = data.github_url || '';
+            if (inputToken) {
+                inputToken.value = data.has_token ? '••••••••••••••••' : '';
+            }
         }
     } catch (e) {
         console.error("Failed to load OS config values:", e);
@@ -400,10 +404,13 @@ async function loadOSConfigValues() {
 window.saveOSConfig = async function() {
     const nameInput = document.getElementById('cfg-os-name');
     const urlInput = document.getElementById('cfg-os-url');
+    const tokenInput = document.getElementById('cfg-os-token');
     if (!nameInput || !urlInput) return;
     
     const name = nameInput.value.trim();
     const url = urlInput.value.trim();
+    const token = tokenInput ? tokenInput.value : '';
+    
     if (!name || !url) {
         if (typeof showToast === 'function') showToast("請填寫開發者帳號名稱與主頁連結！", "error");
         return;
@@ -415,12 +422,15 @@ window.saveOSConfig = async function() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 developer_name: name,
-                github_url: url
+                github_url: url,
+                github_token: token
             })
         });
         if (res.ok) {
             if (typeof showToast === 'function') showToast("開源專案設定已成功儲存！", "success");
-            // 同步載入新的專案列表，因為名字或連結變更了
+            // 重新整理 Token 遮罩狀態
+            await loadOSConfigValues();
+            // 同步載入新的專案列表，因為名字、連結或 Token 變更了
             if (typeof loadGitHubRepos === 'function') {
                 await loadGitHubRepos();
             }
