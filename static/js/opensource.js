@@ -99,11 +99,18 @@ window.copyCloneCommand = function(text) {
 window.showAddRepoModal = function() {
     const modal = document.getElementById('os-add-repo-modal');
     if (modal) {
+        document.getElementById('os-import-url').value = '';
         document.getElementById('os-repo-name').value = '';
         document.getElementById('os-repo-fullname').value = '';
         document.getElementById('os-repo-url').value = '';
         document.getElementById('os-repo-lang').value = '';
         document.getElementById('os-repo-desc').value = '';
+        
+        const btn = document.getElementById('os-import-btn');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '解析';
+        }
         modal.style.display = 'flex';
     }
 };
@@ -113,12 +120,94 @@ window.hideAddRepoModal = function() {
     if (modal) modal.style.display = 'none';
 };
 
+window.importFromUrl = async function() {
+    const urlInput = document.getElementById('os-import-url');
+    const btn = document.getElementById('os-import-btn');
+    if (!urlInput || !btn) return;
+    
+    const url = urlInput.value.trim();
+    if (!url) {
+        if (typeof showToast === 'function') showToast("請貼上有效的 GitHub 專案連結！", "error");
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = '解析中...';
+    
+    try {
+        const res = await authFetch('/api/github/parse-url?url=' + encodeURIComponent(url));
+        const data = await res.json();
+        
+        if (res.ok) {
+            document.getElementById('os-repo-name').value = data.name || '';
+            document.getElementById('os-repo-fullname').value = data.full_name || '';
+            document.getElementById('os-repo-url').value = data.html_url || '';
+            document.getElementById('os-repo-lang').value = data.language || '';
+            document.getElementById('os-repo-desc').value = data.description || '';
+            
+            if (typeof showToast === 'function') showToast("成功解析並自動填入專案資訊！", "success");
+        } else {
+            if (typeof showToast === 'function') showToast(data.detail || "解析專案連結失敗", "error");
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '解析';
+    }
+};
+
 window.submitAddRepo = async function() {
-    const name = document.getElementById('os-repo-name').value.trim();
-    const fullname = document.getElementById('os-repo-fullname').value.trim();
-    const url = document.getElementById('os-repo-url').value.trim();
-    const lang = document.getElementById('os-repo-lang').value.trim();
-    const desc = document.getElementById('os-repo-desc').value.trim();
+    let name = document.getElementById('os-repo-name').value.trim();
+    let fullname = document.getElementById('os-repo-fullname').value.trim();
+    let url = document.getElementById('os-repo-url').value.trim();
+    let lang = document.getElementById('os-repo-lang').value.trim();
+    let desc = document.getElementById('os-repo-desc').value.trim();
+    
+    const importUrlInput = document.getElementById('os-import-url');
+    const importUrl = importUrlInput ? importUrlInput.value.trim() : '';
+    
+    // 如果主要欄位空白但有填匯入網址，則自動進行一次解析
+    if ((!name || !fullname || !url) && importUrl) {
+        if (typeof showToast === 'function') showToast("檢測到匯入連結，正在自動解析中...", "info");
+        
+        const btn = document.getElementById('os-import-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '解析中...';
+        }
+        
+        try {
+            const res = await authFetch('/api/github/parse-url?url=' + encodeURIComponent(importUrl));
+            if (res.ok) {
+                const data = await res.json();
+                name = data.name || '';
+                fullname = data.full_name || '';
+                url = data.html_url || '';
+                lang = data.language || lang;
+                desc = data.description || desc;
+                
+                // 同步填回 UI
+                document.getElementById('os-repo-name').value = name;
+                document.getElementById('os-repo-fullname').value = fullname;
+                document.getElementById('os-repo-url').value = url;
+                document.getElementById('os-repo-lang').value = lang;
+                document.getElementById('os-repo-desc').value = desc;
+            } else {
+                const data = await res.json();
+                if (typeof showToast === 'function') showToast(data.detail || "自動解析失敗，請手動填寫或重新檢查連結", "error");
+                return;
+            }
+        } catch (e) {
+            if (typeof showToast === 'function') showToast("自動解析網路錯誤：" + e.message, "error");
+            return;
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '解析';
+            }
+        }
+    }
     
     if (!name || !fullname || !url) {
         if (typeof showToast === 'function') showToast("請填寫專案名稱、完整名稱與專案連結！", "error");

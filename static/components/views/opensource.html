@@ -27,6 +27,14 @@
             
             <h3 style="margin-top:0; margin-bottom:0.5rem; font-weight:900; color:var(--text-main); text-align:center;">➕ 新增開源專案</h3>
             
+            <div style="display:flex; flex-direction:column; gap:6px; padding-bottom:12px; border-bottom:1px dashed var(--border-color); margin-bottom:4px;">
+                <span style="font-size:0.75rem; font-weight:800; color:var(--accent-color);">🔗 GitHub 連結直接匯入</span>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="os-import-url" placeholder="貼上 GitHub 連結，例如: https://github.com/deven951130/Absolute-Axis" class="t-input" style="flex:1;">
+                    <button id="os-import-btn" class="btn btn-outline" style="padding:0 14px; font-size:0.75rem; font-weight:800; white-space:nowrap;" onclick="window.importFromUrl()">解析</button>
+                </div>
+            </div>
+            
             <div style="display:flex; flex-direction:column; gap:6px;">
                 <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">專案名稱</span>
                 <input type="text" id="os-repo-name" placeholder="例如: Absolute-Axis" class="t-input">

@@ -116,3 +116,71 @@ def delete_github_repo(name: str, user: dict = Depends(get_current_user_obj)):
     
     log_event(user["username"], f"GITHUB_ADMIN: Deleted repo {name}")
     return {"status": "ok"}
+
+
+@router.get("/parse-url")
+def parse_github_url(url: str, user: dict = Depends(get_current_user_obj)):
+    """解析 GitHub 專案連結並取得 metadata（管理員限定）"""
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員管理專案")
+        
+    url = url.strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="請提供有效的 GitHub 連結")
+        
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(url)
+        if "github.com" not in parsed.netloc.lower():
+            raise HTTPException(status_code=400, detail="僅支援 github.com 網域的連結")
+            
+        path = parsed.path.strip("/")
+        parts = [p for p in path.split("/") if p]
+        if len(parts) < 2:
+            raise HTTPException(status_code=400, detail="無法解析的 GitHub 專案路徑，格式應為 https://github.com/owner/repo")
+            
+        owner = parts[0]
+        repo = parts[1]
+        if repo.endswith(".git"):
+            repo = repo[:-4]
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=400, detail=f"連結解析失敗: {str(e)}")
+        
+    token = os.getenv("GITHUB_TOKEN")
+    headers = {}
+    if token and token != "your_github_token_here":
+        headers["Authorization"] = f"token {token}"
+        
+    try:
+        api_url = f"https://api.github.com/repos/{owner}/{repo}"
+        r = requests.get(api_url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            repo_data = r.json()
+            return {
+                "name": repo_data.get("name"),
+                "full_name": repo_data.get("full_name"),
+                "description": repo_data.get("description") or "",
+                "stars": repo_data.get("stargazers_count", 0),
+                "forks": repo_data.get("forks_count", 0),
+                "language": repo_data.get("language") or "JavaScript",
+                "html_url": repo_data.get("html_url")
+            }
+        elif r.status_code == 404:
+            raise HTTPException(status_code=404, detail="找不到該專案，請確認專案是否存在且為公開專案")
+        else:
+            detail_msg = f"GitHub API 回傳錯誤: {r.status_code}"
+            try:
+                err_json = r.json()
+                if "message" in err_json:
+                    detail_msg += f" ({err_json['message']})"
+            except Exception:
+                pass
+            raise HTTPException(status_code=400, detail=detail_msg)
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"請求 GitHub API 發生錯誤: {str(e)}")
+

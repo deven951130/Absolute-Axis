@@ -21,6 +21,10 @@
 - **[新增] 開源專案本地快取與管理 API**：後端 `github_repos.py` 引入 `github-repos.json` 本地快取機制以緩解 GitHub API 頻率限制。同時新增 `POST /api/github/repos` 與 `DELETE /api/github/repos/{name}` API，供管理員增刪自訂專案。
 - **[新增] 前端專案新增與刪除操作介面**：修改 `opensource.html` 與 `opensource.js`。管理員登入後，頂部會顯示「新增專案」按鈕以彈出新增彈窗；同時每個專案卡片底部會額外顯示紅色「刪除專案」按鈕，實作完整的專案管治能力。
 
+#### 開源專案透過連結直接新增與解析優化（P0）
+- **[新增] 後端 GitHub URL 解析端點**：於 `github_repos.py` 新增 `/api/github/parse-url` API。當傳入 GitHub 連結時，系統會自動拆解 owner/repo 並調用 GitHub API 來解析獲取專案的名稱、完整名稱、連結、語言、描述等 metadata，僅限管理員調用。
+- **[優化] 前端一鍵匯入與解析自動填入**：於 `opensource.html` 新增專案彈窗中整合「GitHub 連結直接匯入」區塊。管理者貼上 URL 後點擊「解析」，系統將自動填滿所有表單欄位。同時優化提交邏輯，若僅貼上匯入連結便直接點擊「確認新增專案」，系統會自動在背景先執行解析再提交，實現極速新增體驗。
+
 
 
 
