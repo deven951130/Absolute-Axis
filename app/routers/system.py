@@ -6,12 +6,13 @@ import shutil
 import platform
 import time
 from datetime import datetime
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.models import MessageRequest
 from app.utils import get_current_user_obj, log_event, get_dir_size
-from app.config import SYS_ROOT, NAS_ROOT, BLYNK_TOKEN
+from app.config import SYS_ROOT, NAS_ROOT, BLYNK_TOKEN, BASE_PATH
 from app.database import get_db, AuditLog
 
 router = APIRouter(tags=["system"])
@@ -451,3 +452,56 @@ def restart_server(user: dict = Depends(get_current_user_obj)):
         os._exit(0)
     threading.Thread(target=die, daemon=True).start()
     return {"status": "restarting"}
+
+
+ANNOUNCEMENTS_FILE = os.path.join(BASE_PATH, "app", "announcements.json")
+
+class AnnouncementCreate(BaseModel):
+    content: str
+
+def _load_announcements() -> list:
+    if os.path.exists(ANNOUNCEMENTS_FILE):
+        try:
+            with open(ANNOUNCEMENTS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
+def _save_announcements(anns: list):
+    with open(ANNOUNCEMENTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(anns, f, indent=4, ensure_ascii=False)
+
+
+@router.get("/api/system/announcements")
+def get_announcements(user: dict = Depends(get_current_user_obj)):
+    """取得所有系統公告"""
+    return _load_announcements()
+
+
+@router.post("/api/system/announcements")
+def create_announcement(req: AnnouncementCreate, user: dict = Depends(get_current_user_obj)):
+    """發佈新公告（管理員限定）"""
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員發布公告")
+        
+    content = req.content.strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="公告內容不得為空")
+        
+    anns = _load_announcements()
+    
+    new_ann = {
+        "id": int(time.time() * 1000),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "author": user["username"],
+        "content": content
+    }
+    
+    anns.insert(0, new_ann)
+    _save_announcements(anns)
+    
+    log_event(user["username"], f"ANNOUNCEMENT: Published new announcement: {content[:30]}")
+    return {"status": "ok", "announcement": new_ann}
+

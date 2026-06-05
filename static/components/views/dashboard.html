@@ -44,18 +44,35 @@
 
     <!-- Main Grid -->
     <div style="display:grid; grid-template-columns: 2fr 1fr; gap:2rem;">
-        <div class="card terminal-card">
-            <div class="card-title" style="padding:1.8rem 1.8rem 0.5rem 1.8rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <span>🖥️ 線上系統動作紀錄 (System Logs)</span>
+        <div class="card terminal-card" style="display:flex; flex-direction:column; height:480px; padding:0;">
+            <div class="card-title" style="padding:1.2rem 1.8rem 0.5rem 1.8rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid var(--border-color); margin-bottom:0;">
+                <div style="display:flex; gap:18px;">
+                    <span id="tab-log-title" onclick="window.switchTerminalTab('log')" style="cursor:pointer; font-weight:900; color:var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 6px; font-size: 0.95rem; transition:0.2s;">🖥️ 系統動作紀錄</span>
+                    <span id="tab-ann-title" onclick="window.switchTerminalTab('ann')" style="cursor:pointer; font-weight:900; color:var(--text-muted); padding-bottom: 6px; font-size: 0.95rem; transition:0.2s;">📢 系統公告看板</span>
+                </div>
                 <input type="text" id="log-search-input" placeholder="篩選日誌..." class="t-input" style="width:160px; padding:6px 12px; font-size:0.75rem; margin-bottom:0;" oninput="filterLogs()">
             </div>
-            <div id="terminal-logs" class="terminal-logs-box">
-                <div>[SYSTEM] 初始化終端機介面...</div>
+            
+            <!-- Tab 1: System Logs -->
+            <div id="terminal-log-content" style="display:flex; flex-direction:column; flex:1; height:0; width:100%;">
+                <div id="terminal-logs" class="terminal-logs-box">
+                    <div>[SYSTEM] 初始化終端機介面...</div>
+                </div>
+                <div id="broadcast-sec" class="terminal-broadcast-sec" style="display:flex;">
+                    <input type="text" id="msg-input" placeholder="發送系統廣播訊息..." class="t-input" style="flex:1; margin-bottom:0; padding:10px 15px;" onkeypress="if(event.key==='Enter') broadCast()">
+                    <button class="btn btn-primary" style="padding:8px 20px; font-size:0.85rem; font-weight:800;" onclick="broadCast()">📡 發送廣播</button>
+                </div>
             </div>
-            <!-- 系統廣播輸入框 -->
-            <div id="broadcast-sec" class="terminal-broadcast-sec">
-                <input type="text" id="msg-input" placeholder="發送系統廣播訊息..." class="t-input" style="flex:1; margin-bottom:0; padding:10px 15px;" onkeypress="if(event.key==='Enter') broadCast()">
-                <button class="btn btn-primary" style="padding:8px 20px; font-size:0.85rem; font-weight:800;" onclick="broadCast()">📡 發送廣播</button>
+
+            <!-- Tab 2: Announcements -->
+            <div id="terminal-ann-content" style="display:none; flex-direction:column; flex:1; height:0; width:100%;">
+                <div id="terminal-announcements" class="terminal-logs-box">
+                    <div>[SYSTEM] 初始化公告看板...</div>
+                </div>
+                <div id="announcement-post-sec" class="terminal-broadcast-sec" style="display:none;">
+                    <input type="text" id="ann-input" placeholder="發布新公告內容..." class="t-input" style="flex:1; margin-bottom:0; padding:10px 15px;" onkeypress="if(event.key==='Enter') window.publishAnnouncement()">
+                    <button class="btn btn-primary" style="padding:8px 20px; font-size:0.85rem; font-weight:800;" onclick="window.publishAnnouncement()">📢 發佈公告</button>
+                </div>
             </div>
         </div>
         

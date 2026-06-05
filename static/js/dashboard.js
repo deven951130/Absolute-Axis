@@ -266,6 +266,17 @@ function startPolling() {
     if (broadSec) {
         broadSec.style.display = 'flex';
     }
+
+    // 管理者顯示公告發布區塊
+    const role = localStorage.getItem('axis_role');
+    const isAdmin = (role === 'admin' || role === 'Administrator');
+    const annPostSec = document.getElementById('announcement-post-sec');
+    if (annPostSec) {
+        annPostSec.style.display = isAdmin ? 'flex' : 'none';
+    }
+    
+    // 預載公告列表
+    loadAnnouncements();
 }
 
 async function loadSpecs() {
@@ -293,3 +304,107 @@ async function broadCast() {
         m.value = '';
     }
 }
+
+window.switchTerminalTab = function(tab) {
+    const tabLogTitle = document.getElementById('tab-log-title');
+    const tabAnnTitle = document.getElementById('tab-ann-title');
+    const logContent = document.getElementById('terminal-log-content');
+    const annContent = document.getElementById('terminal-ann-content');
+    const logSearchInput = document.getElementById('log-search-input');
+    
+    if (tab === 'log') {
+        if (tabLogTitle) {
+            tabLogTitle.style.color = 'var(--accent-color)';
+            tabLogTitle.style.borderBottom = '2px solid var(--accent-color)';
+        }
+        if (tabAnnTitle) {
+            tabAnnTitle.style.color = 'var(--text-muted)';
+            tabAnnTitle.style.borderBottom = 'none';
+        }
+        if (logContent) logContent.style.display = 'flex';
+        if (annContent) annContent.style.display = 'none';
+        if (logSearchInput) logSearchInput.style.display = 'block';
+    } else if (tab === 'ann') {
+        if (tabLogTitle) {
+            tabLogTitle.style.color = 'var(--text-muted)';
+            tabLogTitle.style.borderBottom = 'none';
+        }
+        if (tabAnnTitle) {
+            tabAnnTitle.style.color = 'var(--accent-color)';
+            tabAnnTitle.style.borderBottom = '2px solid var(--accent-color)';
+        }
+        if (logContent) logContent.style.display = 'none';
+        if (annContent) annContent.style.display = 'flex';
+        if (logSearchInput) logSearchInput.style.display = 'none';
+        
+        loadAnnouncements();
+    }
+};
+
+async function loadAnnouncements() {
+    const annBox = document.getElementById('terminal-announcements');
+    if (!annBox) return;
+    
+    try {
+        const res = await authFetch('/api/system/announcements');
+        if (res.ok) {
+            const anns = await res.json();
+            if (anns.length === 0) {
+                annBox.innerHTML = '<div style="color:var(--text-muted); font-style:italic; padding: 1.5rem 0;">目前沒有任何發布的公告。</div>';
+                return;
+            }
+            
+            annBox.innerHTML = anns.map(x => `
+                <div style="margin-bottom:12px; line-height:1.6; border-bottom:1px dashed rgba(255,255,255,0.05); padding-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:800; color:var(--accent-color); margin-bottom:6px;">
+                        <span>📢 [ANNOUNCEMENT] By ${x.author}</span>
+                        <span>${x.timestamp}</span>
+                    </div>
+                    <div style="color:var(--text-main); font-size:0.85rem; padding-left:8px; word-break:break-all;">${x.content}</div>
+                </div>
+            `).join('');
+            
+            // 自動滾動到底部
+            annBox.scrollTop = annBox.scrollHeight;
+        } else {
+            annBox.innerHTML = '<div style="color:var(--danger-color);">無法加載公告列表。</div>';
+        }
+    } catch (e) {
+        console.error("Failed to load announcements:", e);
+        annBox.innerHTML = '<div style="color:var(--danger-color);">加載公告發生錯誤。</div>';
+    }
+}
+window.loadAnnouncements = loadAnnouncements;
+
+window.publishAnnouncement = async function() {
+    const input = document.getElementById('ann-input');
+    if (!input) return;
+    
+    const content = input.value.trim();
+    if (!content) {
+        if (typeof showToast === 'function') showToast("請輸入公告內容！", "error");
+        return;
+    }
+    
+    const ok = confirm("您確定要發布此公告嗎？所有登入使用者皆可見。");
+    if (!ok) return;
+    
+    try {
+        const res = await authFetch('/api/system/announcements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content })
+        });
+        
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast("公告發布成功！", "success");
+            input.value = '';
+            await loadAnnouncements();
+        } else {
+            const err = await res.json();
+            if (typeof showToast === 'function') showToast(err.detail || "發布公告失敗", "error");
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
+    }
+};
