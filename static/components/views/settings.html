@@ -46,6 +46,23 @@
                     <input type="checkbox" id="feature-multiverse" onchange="window.toggleFeature('multiverse', this.checked)" style="width:1.3rem; height:1.3rem; accent-color:var(--accent-color);"> Minecraft 伺服器
                 </label>
             </div>
+            
+            <!-- 管理者專屬的開源專案設定區塊 -->
+            <div id="os-config-admin-section" style="display:none; border-top:1px dashed var(--border-color); padding-top:1.5rem; margin-top:0.5rem; flex-direction:column; gap:14px; width:100%;">
+                <h3 style="margin:0; font-size:1.05rem; font-weight:900; color:var(--accent-color);">🔗 開源專案平台資訊設定</h3>
+                
+                <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                    <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">開發者 GitHub 帳號名稱</span>
+                    <input type="text" id="cfg-os-name" placeholder="例如: deven951130" class="t-input" style="max-width: 400px; font-weight:800;">
+                </div>
+                
+                <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                    <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">開發者 GitHub 主頁連結</span>
+                    <input type="text" id="cfg-os-url" placeholder="例如: https://github.com/deven951130" class="t-input" style="max-width: 400px; font-weight:800;">
+                </div>
+                
+                <button class="btn btn-primary" style="padding:10px 20px; font-size:0.8rem; font-weight:800; align-self:flex-start; margin-top:6px;" onclick="window.saveOSConfig()">儲存開源專案設定</button>
+            </div>
         </div>
     </div>
 

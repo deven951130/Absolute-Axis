@@ -10,6 +10,7 @@ from app.config import BASE_PATH
 router = APIRouter(prefix="/api/github", tags=["github_repos"])
 
 REPOS_FILE = os.path.join(BASE_PATH, "app", "github-repos.json")
+CONFIG_FILE = os.path.join(BASE_PATH, "app", "github-config.json")
 
 class RepoCreate(BaseModel):
     name: str
@@ -20,6 +21,26 @@ class RepoCreate(BaseModel):
     language: str = "JavaScript"
     html_url: str
 
+class GithubConfig(BaseModel):
+    developer_name: str
+    github_url: str
+
+def _load_config() -> dict:
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {
+        "developer_name": "deven951130",
+        "github_url": "https://github.com/deven951130"
+    }
+
+def _save_config(config: dict):
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=4, ensure_ascii=False)
+
 def _load_repos() -> list:
     if os.path.exists(REPOS_FILE):
         try:
@@ -28,13 +49,16 @@ def _load_repos() -> list:
         except Exception:
             pass
     
+    config = _load_config()
+    dev_name = config.get("developer_name", "deven951130")
+    
     token = os.getenv("GITHUB_TOKEN")
     headers = {}
     if token and token != "your_github_token_here":
         headers["Authorization"] = f"token {token}"
         
     try:
-        r = requests.get("https://api.github.com/users/deven951130/repos?sort=updated", headers=headers, timeout=10)
+        r = requests.get(f"https://api.github.com/users/{dev_name}/repos?sort=updated", headers=headers, timeout=10)
         if r.status_code == 200:
             repos_data = r.json()
             res = []
@@ -183,4 +207,42 @@ def parse_github_url(url: str, user: dict = Depends(get_current_user_obj)):
         if isinstance(e, HTTPException):
             raise e
         raise HTTPException(status_code=500, detail=f"請求 GitHub API 發生錯誤: {str(e)}")
+
+
+@router.get("/config")
+def get_github_config():
+    """取得開源專案作者配置資訊（全域公開）"""
+    return _load_config()
+
+
+@router.post("/config")
+def update_github_config(req: GithubConfig, user: dict = Depends(get_current_user_obj)):
+    """更新開源專案作者配置資訊（管理員限定）"""
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員管理專案設定")
+        
+    old_config = _load_config()
+    new_config = {
+        "developer_name": req.developer_name.strip(),
+        "github_url": req.github_url.strip()
+    }
+    
+    if not new_config["developer_name"] or not new_config["github_url"]:
+        raise HTTPException(status_code=400, detail="名字與連結不得為空")
+        
+    _save_config(new_config)
+    
+    # 如果開發者名稱改變了，自動清除專案快取，促使重新向新帳號拉取
+    if old_config.get("developer_name", "").lower() != new_config["developer_name"].lower():
+        if os.path.exists(REPOS_FILE):
+            try:
+                os.remove(REPOS_FILE)
+                log_event(user["username"], f"GITHUB_ADMIN: Cleared repos cache because developer_name changed to {new_config['developer_name']}")
+            except Exception as e:
+                print(f"Error removing cache file: {e}")
+                
+    log_event(user["username"], f"GITHUB_ADMIN: Updated author profile config to {new_config['developer_name']}")
+    return {"status": "ok", "config": new_config}
+
 

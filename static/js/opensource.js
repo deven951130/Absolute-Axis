@@ -9,6 +9,24 @@ async function loadGitHubRepos() {
     const addBtn = document.getElementById('os-add-repo-btn');
     if (addBtn) addBtn.style.display = isAdmin ? 'block' : 'none';
 
+    // 動態載入並渲染作者設定資訊
+    try {
+        const configRes = await authFetch('/api/github/config');
+        if (configRes.ok) {
+            const config = await configRes.json();
+            const subtitle = document.getElementById('os-subtitle');
+            const authorUrl = document.getElementById('os-author-url');
+            if (subtitle) {
+                subtitle.textContent = `自動同步開發者 ${config.developer_name.toUpperCase()} 的公開專案與開源成果`;
+            }
+            if (authorUrl) {
+                authorUrl.href = config.github_url;
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load github config in view:", e);
+    }
+
     try {
         const res = await authFetch('/api/github/repos');
         if (!res.ok) {

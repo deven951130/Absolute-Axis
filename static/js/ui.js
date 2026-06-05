@@ -352,6 +352,21 @@ function updateFeaturesUI() {
     if (chkGigs) chkGigs.checked = features.gigs;
     if (chkOpensource) chkOpensource.checked = features.opensource;
     if (chkMultiverse) chkMultiverse.checked = features.multiverse;
+
+    // 當前使用者若是管理員，顯示開源專案設定區塊並載入資料
+    const role = localStorage.getItem('axis_role');
+    const isAdmin = (role === 'admin' || role === 'Administrator');
+    const adminSection = document.getElementById('os-config-admin-section');
+    if (adminSection) {
+        if (isAdmin) {
+            adminSection.style.display = 'flex';
+            if (typeof loadOSConfigValues === 'function') {
+                loadOSConfigValues();
+            }
+        } else {
+            adminSection.style.display = 'none';
+        }
+    }
 }
 
 window.toggleFeature = function(feature, enabled) {
@@ -366,4 +381,55 @@ window.toggleFeature = function(feature, enabled) {
 };
 
 window.updateFeaturesUI = updateFeaturesUI;
+
+async function loadOSConfigValues() {
+    try {
+        const res = await authFetch('/api/github/config');
+        if (res.ok) {
+            const data = await res.json();
+            const inputName = document.getElementById('cfg-os-name');
+            const inputUrl = document.getElementById('cfg-os-url');
+            if (inputName) inputName.value = data.developer_name || '';
+            if (inputUrl) inputUrl.value = data.github_url || '';
+        }
+    } catch (e) {
+        console.error("Failed to load OS config values:", e);
+    }
+}
+
+window.saveOSConfig = async function() {
+    const nameInput = document.getElementById('cfg-os-name');
+    const urlInput = document.getElementById('cfg-os-url');
+    if (!nameInput || !urlInput) return;
+    
+    const name = nameInput.value.trim();
+    const url = urlInput.value.trim();
+    if (!name || !url) {
+        if (typeof showToast === 'function') showToast("請填寫開發者帳號名稱與主頁連結！", "error");
+        return;
+    }
+    
+    try {
+        const res = await authFetch('/api/github/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                developer_name: name,
+                github_url: url
+            })
+        });
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast("開源專案設定已成功儲存！", "success");
+            // 同步載入新的專案列表，因為名字或連結變更了
+            if (typeof loadGitHubRepos === 'function') {
+                await loadGitHubRepos();
+            }
+        } else {
+            const data = await res.json();
+            if (typeof showToast === 'function') showToast(data.detail || "儲存設定失敗", "error");
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
+    }
+};
 
