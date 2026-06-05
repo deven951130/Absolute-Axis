@@ -26,7 +26,7 @@ def run_cmd_on_vm(command):
 
 print("--- Listing users in axis.db ---")
 # Use sqlite3 to query the database
-out, err = run_cmd_on_vm("sqlite3 /home/sparkle/Absolute-Axis/axis.db 'SELECT id, username, role FROM users;'")
+out, err = run_cmd_on_vm('docker exec -i axis-server python -c "import sqlite3; conn = sqlite3.connect(\'/app/axis.db\'); cursor = conn.cursor(); cursor.execute(\'SELECT id, username, role FROM users\'); print(cursor.fetchall())"')
 print(out)
 if err: print("ERR:", err)
 
