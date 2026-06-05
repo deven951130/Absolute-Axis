@@ -43,7 +43,7 @@ const App = {
             console.warn("Failed to parse CSS version, falling back to 'dev':", e);
         }
 
-        const res = await fetch(`${url}?v=${ver}`);
+        const res = await fetch(`${url}?v=${ver}_${Date.now()}`);
         if (!res.ok) throw new Error(`Failed to load component: ${url}`);
         const html = await res.text();
         const container = (target === 'body') ? document.body : document.querySelector(target);
