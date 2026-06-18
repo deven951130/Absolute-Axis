@@ -364,9 +364,11 @@ def list_packs(user: dict = Depends(get_current_user_obj)):
         raise HTTPException(status_code=403, detail="僅限管理員查看模組包列表")
 
     info = _load_info()
-    active = info.get("active_pack", "")
+    active = info.get("active_pack", "") or info.get("server_pack_name", "")
 
+    # 讀取函式庫目錄中所有 ZIP
     packs = []
+    library_names = set()
     for fname in sorted(os.listdir(PACKS_DIR)):
         if fname.lower().endswith(".zip"):
             fpath = os.path.join(PACKS_DIR, fname)
@@ -375,8 +377,21 @@ def list_packs(user: dict = Depends(get_current_user_obj)):
                 "name": fname,
                 "size_mb": size_mb,
                 "active": fname == active,
+                "in_library": True,
             })
+            library_names.add(fname)
+
+    # 若目前啟用的包不在函式庫目錄（舊版上傳，未保留），插入虛擬條目顯示在頂部
+    if active and active not in library_names and active not in ("無", ""):
+        packs.insert(0, {
+            "name": active,
+            "size_mb": None,
+            "active": True,
+            "in_library": False,
+        })
+
     return {"packs": packs, "active_pack": active}
+
 
 
 class SwitchPackRequest(BaseModel):

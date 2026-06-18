@@ -352,38 +352,63 @@ function renderPackList(packs) {
     }
 
     container.innerHTML = packs.map(pack => {
-        const activeStyle = pack.active
-            ? 'border-color:#4CAF50; background:rgba(76,175,80,0.08);'
-            : 'border-color:#30363d; background:rgba(255,255,255,0.02);';
-        const activeBadge = pack.active
-            ? '<span style="font-size:0.6rem; background:rgba(76,175,80,0.2); color:#4CAF50; border:1px solid rgba(76,175,80,0.5); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中</span>'
-            : '';
-        const switchBtn = !pack.active
-            ? `<button class="btn btn-outline" style="padding:5px 14px; font-size:0.75rem; border-color:var(--accent-color) !important; color:var(--accent-color);" onclick="window.switchPack('${escapeHtml(pack.name)}')">⚡ 切換部署</button>`
-            : '<span style="font-size:0.75rem; color:#4CAF50; font-weight:700;">✓ 已部署</span>';
-        const deleteBtn = !pack.active
-            ? `<button class="btn btn-outline" style="padding:5px 10px; font-size:0.75rem; border-color:var(--danger-color) !important; color:var(--danger-color);" onclick="window.deletePackFromLibrary('${escapeHtml(pack.name)}')">🗑️</button>`
-            : '';
+        const inLibrary = pack.in_library !== false; // 預設 true
+
+        // 樣式：啟用中 + 在庫 → 綠色；啟用中 + 不在庫 → 橙色；其他 → 預設灰
+        let borderStyle, bgStyle;
+        if (pack.active && inLibrary) {
+            borderStyle = 'border-color:#4CAF50;';
+            bgStyle = 'background:rgba(76,175,80,0.08);';
+        } else if (pack.active && !inLibrary) {
+            borderStyle = 'border-color:#f39c12;';
+            bgStyle = 'background:rgba(243,156,18,0.08);';
+        } else {
+            borderStyle = 'border-color:#30363d;';
+            bgStyle = 'background:rgba(255,255,255,0.02);';
+        }
+
+        // 徽章
+        let badge = '';
+        if (pack.active && inLibrary) {
+            badge = '<span style="font-size:0.6rem; background:rgba(76,175,80,0.2); color:#4CAF50; border:1px solid rgba(76,175,80,0.5); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中</span>';
+        } else if (pack.active && !inLibrary) {
+            badge = '<span style="font-size:0.6rem; background:rgba(243,156,18,0.2); color:#f39c12; border:1px solid rgba(243,156,18,0.5); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中・未存入庫</span>';
+        }
+
+        // 右側動作
+        let actions = '';
+        if (pack.active) {
+            actions = '<span style="font-size:0.75rem; color:#4CAF50; font-weight:700;">✓ 已部署</span>';
+        } else {
+            actions = `
+                <button class="btn btn-outline" style="padding:5px 14px; font-size:0.75rem; border-color:var(--accent-color) !important; color:var(--accent-color);" onclick="window.switchPack('${escapeHtml(pack.name)}')">⚡ 切換部署</button>
+                <button class="btn btn-outline" style="padding:5px 10px; font-size:0.75rem; border-color:var(--danger-color) !important; color:var(--danger-color);" onclick="window.deletePackFromLibrary('${escapeHtml(pack.name)}')">🗑️</button>
+            `;
+        }
+
+        // 大小顯示
+        const sizeText = pack.size_mb != null ? `${pack.size_mb} MB` : '檔案不在函式庫中（需重新上傳才能保存至庫）';
+        const sizeColor = pack.size_mb != null ? 'color:var(--text-muted);' : 'color:#f39c12;';
 
         return `
             <div style="display:flex; align-items:center; gap:12px; padding:10px 14px;
-                border:1px solid; border-radius:8px; ${activeStyle} transition:0.2s;">
+                border:1px solid; border-radius:8px; ${borderStyle} ${bgStyle} transition:0.2s;">
                 <div style="flex:1; min-width:0;">
                     <div style="font-size:0.82rem; font-weight:800; color:var(--text-main);
                         white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                        📦 ${escapeHtml(pack.name)}${activeBadge}
+                        📦 ${escapeHtml(pack.name)}${badge}
                     </div>
-                    <div style="font-size:0.68rem; color:var(--text-muted); margin-top:3px; font-weight:700;">
-                        ${pack.size_mb} MB
+                    <div style="font-size:0.68rem; margin-top:3px; font-weight:700; ${sizeColor}">
+                        ${sizeText}
                     </div>
                 </div>
                 <div style="display:flex; gap:8px; flex-shrink:0; align-items:center;">
-                    ${switchBtn}
-                    ${deleteBtn}
+                    ${actions}
                 </div>
             </div>`;
     }).join('');
 }
+
 
 /**
  * 切換並部署指定模組包
