@@ -1,3 +1,9 @@
+### [V56] - 2026-06-18 更新日誌
+
+#### Minecraft 大型伺服器包上傳修復（P0）
+- **[修復] uvicorn HTTP body size 限制**：修改 `run.py`，加入 `h11_max_incomplete_event_size=2GB` 參數，解決 877MB+ 模組包上傳因預設 1MB body 限制被截斷的根本原因。同時設定 `timeout_keep_alive=600` 確保大檔案傳輸期間連線不中斷。
+- **[新增] 上傳即時進度條**：重構 `static/js/multiverse.js` 的 `handleFileSelected` 函數，以 `XMLHttpRequest` 取代原有的 `fetch` 方式，接入 `xhr.upload.onprogress` 事件，實作全螢幕進度覆蓋層（Overlay），即時顯示上傳百分比、目前速度（MB/s）與預估剩餘時間，大型模組包上傳過程中不再有 UI 凍結感。
+
 ### [V55] - 2026-06-05 更新日誌
 
 #### 介紹頁公有通道打通與主控制台路由同步（P0）

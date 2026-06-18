@@ -314,45 +314,132 @@ window.triggerUpload = function(type) {
     }
 };
 
-window.handleFileSelected = async function(input) {
+window.handleFileSelected = function(input) {
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
     const type = window._mvUploadType;
-    
+
     if (!file.name.endsWith('.zip')) {
         if (typeof showToast === 'function') showToast("僅接受 .zip 壓縮包！", "warning");
         return;
     }
-    
+
     const url = type === 'server' ? '/api/minecraft/upload-server' : '/api/minecraft/upload-client';
     const desc = type === 'server' ? '伺服器端包' : '客戶端包';
-    
-    if (typeof showToast === 'function') showToast(`正在上傳 ${desc}，大檔案請耐心等候...`, "info");
-    
+
+    // 顯示進度條 UI
+    _mvShowProgress(0, `準備上傳 ${desc}（${(file.size / 1024 / 1024).toFixed(1)} MB）`);
+
     const formData = new FormData();
     formData.append("file", file);
-    
-    try {
-        const token = localStorage.getItem('axis_token');
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        });
-        
-        const data = await res.json();
-        if (res.ok) {
+
+    const token = localStorage.getItem('axis_token');
+    const xhr = new XMLHttpRequest();
+
+    // 上傳進度回調
+    let startTime = Date.now();
+    xhr.upload.addEventListener('progress', function(e) {
+        if (!e.lengthComputable) return;
+        const pct = Math.round((e.loaded / e.total) * 100);
+        const elapsed = (Date.now() - startTime) / 1000;
+        const speedMBps = (e.loaded / 1024 / 1024 / elapsed).toFixed(1);
+        const remainBytes = e.total - e.loaded;
+        const remainSec = Math.round(remainBytes / 1024 / 1024 / speedMBps);
+        const remainStr = remainSec > 60
+            ? `${Math.floor(remainSec / 60)} 分 ${remainSec % 60} 秒`
+            : `${remainSec} 秒`;
+        _mvShowProgress(pct, `上傳中 ${pct}%・速度 ${speedMBps} MB/s・剩餘約 ${remainStr}`);
+    });
+
+    xhr.addEventListener('load', async function() {
+        _mvHideProgress();
+        if (xhr.status >= 200 && xhr.status < 300) {
             if (typeof showToast === 'function') showToast(`${desc} 上傳並部署成功！`, "success");
             await loadMultiverse();
         } else {
-            if (typeof showToast === 'function') showToast(data.detail || "上傳失敗", "error");
+            let detail = '上傳失敗';
+            try { detail = JSON.parse(xhr.responseText).detail || detail; } catch (_) {}
+            if (typeof showToast === 'function') showToast(detail, "error");
         }
-    } catch (e) {
-        if (typeof showToast === 'function') showToast("上傳網路錯誤：" + e.message, "error");
-    }
+    });
+
+    xhr.addEventListener('error', function() {
+        _mvHideProgress();
+        if (typeof showToast === 'function') showToast("上傳網路錯誤，請確認伺服器狀態", "error");
+    });
+
+    xhr.addEventListener('timeout', function() {
+        _mvHideProgress();
+        if (typeof showToast === 'function') showToast("上傳逾時，請確認網路品質後重試", "error");
+    });
+
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.timeout = 0; // 不設逾時，讓大檔案有足夠時間
+    xhr.send(formData);
 };
+
+/** 顯示/更新進度條 */
+function _mvShowProgress(pct, label) {
+    let overlay = document.getElementById('mv-upload-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'mv-upload-overlay';
+        overlay.style.cssText = `
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+        `;
+        overlay.innerHTML = `
+            <div style="
+                background: linear-gradient(135deg, rgba(20,20,35,0.98), rgba(13,17,23,0.98));
+                border: 1px solid #30363d; border-radius: 16px;
+                padding: 2rem 2.5rem; min-width: 420px; max-width: 90vw;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                text-align: center;
+            ">
+                <div style="font-size: 2rem; margin-bottom: 1rem;">📤</div>
+                <div id="mv-prog-label" style="
+                    font-size: 0.85rem; font-weight: 700; color: #ccc;
+                    margin-bottom: 1.2rem; min-height: 1.2em;
+                ">準備上傳...</div>
+                <div style="
+                    background: rgba(255,255,255,0.06); border-radius: 8px;
+                    height: 12px; overflow: hidden; margin-bottom: 0.8rem;
+                    border: 1px solid #30363d;
+                ">
+                    <div id="mv-prog-bar" style="
+                        height: 100%; width: 0%;
+                        background: linear-gradient(90deg, var(--accent-color, #7c3aed), #bd93f9);
+                        border-radius: 8px;
+                        transition: width 0.3s ease;
+                        box-shadow: 0 0 12px rgba(124,58,237,0.5);
+                    "></div>
+                </div>
+                <div id="mv-prog-pct" style="
+                    font-size: 1.4rem; font-weight: 900;
+                    color: var(--accent-color, #bd93f9); margin-bottom: 0.5rem;
+                ">0%</div>
+                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 0.5rem;">
+                    上傳完成後伺服器會自動停止並重新部署，請勿關閉頁面
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+    const bar = document.getElementById('mv-prog-bar');
+    const lbl = document.getElementById('mv-prog-label');
+    const pctEl = document.getElementById('mv-prog-pct');
+    if (bar) bar.style.width = `${pct}%`;
+    if (lbl) lbl.textContent = label;
+    if (pctEl) pctEl.textContent = `${pct}%`;
+}
+
+/** 隱藏進度條 */
+function _mvHideProgress() {
+    const overlay = document.getElementById('mv-upload-overlay');
+    if (overlay) overlay.remove();
+}
 
 window.uninstallServerPack = async function() {
     const ok = confirm("警告：您確定要卸載伺服器模組包嗎？這將刪除 mods、config 等資料夾並重啟伺服器（地圖存檔 world 將會保留）。");
