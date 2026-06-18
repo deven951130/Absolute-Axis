@@ -4,6 +4,11 @@
 - **[修復] uvicorn HTTP body size 限制**：修改 `run.py`，加入 `h11_max_incomplete_event_size=2GB` 參數，解決 877MB+ 模組包上傳因預設 1MB body 限制被截斷的根本原因。同時設定 `timeout_keep_alive=600` 確保大檔案傳輸期間連線不中斷。
 - **[新增] 上傳即時進度條**：重構 `static/js/multiverse.js` 的 `handleFileSelected` 函數，以 `XMLHttpRequest` 取代原有的 `fetch` 方式，接入 `xhr.upload.onprogress` 事件，實作全螢幕進度覆蓋層（Overlay），即時顯示上傳百分比、目前速度（MB/s）與預估剩餘時間，大型模組包上傳過程中不再有 UI 凍結感。
 
+#### Minecraft 模組包函式庫（P0）
+- **[修復] MC 重啟時序 Bug**：重構 `app/routers/minecraft.py`，將部署流程抽離為 `_deploy_pack_to_lxc()` 共用函數。原先 `systemctl stop` 與 `systemctl start` 未等待完成，現在全部加入 `recv_exit_status()` 確保每個步驟確實執行完畢後才進行下一步，避免清模組時 MC 仍在運行導致檔案鎖死。
+- **[新增] 模組包函式庫**：上傳的 ZIP 不再是臨時檔，永久保存於 `scratch/minecraft_packs/` 目錄，供日後隨時切換部署使用。新增三支 API：`GET /api/minecraft/packs`（列舉所有已保存包）、`POST /api/minecraft/switch-pack`（一鍵切換部署）、`DELETE /api/minecraft/packs/{name}`（刪除函式庫中的包，不可刪除啟用中的包）。
+- **[新增] 前端模組包選單**：Multiverse 頁面新增「📚 模組包函式庫」Card（管理員限定）。清單顯示每個已保存的模組包名稱、檔案大小、啟用狀態，並提供「⚡ 切換部署」與「🗑️ 刪除」按鈕。切換時顯示全螢幕進度覆蓋層，完成後自動刷新頁面資料。
+
 ### [V55] - 2026-06-05 更新日誌
 
 #### 介紹頁公有通道打通與主控制台路由同步（P0）

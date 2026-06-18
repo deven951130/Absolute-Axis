@@ -226,6 +226,29 @@
 
     </div>
 
+    <!-- 模組包函式庫（管理員限定，由 JS 控制顯示） -->
+    <div id="mv-pack-library-section" style="display:none; margin-bottom:1.5rem;">
+        <div class="card" style="border-left:4px solid #f39c12;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
+                <div class="card-title" style="font-size:0.9rem; margin-bottom:0;">
+                    📚 模組包函式庫
+                    <span style="font-size:0.65rem; background:rgba(248,81,73,0.15); color:#f85149;
+                        border:1px solid rgba(248,81,73,0.4); border-radius:10px; padding:2px 8px;
+                        margin-left:8px; font-weight:800;">ADMIN ONLY</span>
+                </div>
+                <div style="font-size:0.72rem; color:var(--text-muted); font-weight:700;">
+                    已保存的模組包可隨時一鍵切換部署，切換時伺服器自動重啟，世界存檔完整保留
+                </div>
+            </div>
+            <!-- 函式庫列表 -->
+            <div id="mv-pack-list" style="display:flex; flex-direction:column; gap:10px; min-height:60px;">
+                <div style="color:var(--text-muted); font-size:0.82rem; text-align:center; padding:1rem;">
+                    載入中...
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MC 指令控制台（管理員限定，由 JS 控制顯示） -->
     <div id="mv-console-section" style="display:none;">
         <div class="card" style="padding:0; overflow:hidden; border-color:#bd93f9;">

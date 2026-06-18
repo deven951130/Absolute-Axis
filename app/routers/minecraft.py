@@ -195,6 +195,8 @@ def send_mc_command(req: MCCommandRequest, user: dict = Depends(get_current_user
 
 
 INFO_FILE = os.path.join(BASE_PATH, "app", "minecraft-info.json")
+PACKS_DIR = os.path.join(BASE_PATH, "scratch", "minecraft_packs")
+os.makedirs(PACKS_DIR, exist_ok=True)
 
 def _load_info() -> dict:
     if os.path.exists(INFO_FILE):
@@ -276,72 +278,157 @@ async def upload_client_pack(file: UploadFile = File(...), user: dict = Depends(
     return {"status": "ok", "filename": file.filename}
 
 
+def _deploy_pack_to_lxc(local_zip_path: str):
+    """
+    共用部署函數：停止 MC → SFTP 上傳 → 清除舊模組 → 解壓 → 啟動 MC。
+    所有步驟均等待完成，確保重啟時序正確。
+    """
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect(MC_LXC_IP, username=MC_SSH_USER, password=MC_SSH_PASS, timeout=30)
+    try:
+        # 1. 停止 MC（等待服務完全停止）
+        _, stdout_stop, _ = client.exec_command("systemctl stop minecraft && sleep 2")
+        stdout_stop.channel.recv_exit_status()
+
+        # 2. SFTP 上傳 ZIP 至 LXC
+        remote_zip = "/root/minecraft_server_upload.zip"
+        sftp = client.open_sftp()
+        sftp.put(local_zip_path, remote_zip)
+        sftp.close()
+
+        # 3. 清除舊模組/設定（保留 world/存檔/properties）
+        clean_cmd = (
+            "cd /root/minecraft && "
+            "rm -rf mods config kubejs defaultconfigs modernfix "
+            "libraries patchouli_books tlm_custom_pack"
+        )
+        _, stdout_clean, _ = client.exec_command(clean_cmd)
+        stdout_clean.channel.recv_exit_status()
+
+        # 4. 解壓新包
+        extract_cmd = f"unzip -o {remote_zip} -d /root/minecraft && rm -f {remote_zip}"
+        _, stdout_ext, stderr_ext = client.exec_command(extract_cmd)
+        stdout_ext.channel.recv_exit_status()
+
+        # 5. 啟動 MC（等待服務啟動完成）
+        _, stdout_start, _ = client.exec_command("systemctl start minecraft")
+        stdout_start.channel.recv_exit_status()
+    finally:
+        client.close()
+
+
 @router.post("/upload-server")
 async def upload_server_pack(file: UploadFile = File(...), user: dict = Depends(get_current_user_obj)):
-    """上傳並部署伺服器包（管理員限定）"""
+    """上傳伺服器包至函式庫並立即部署（管理員限定）"""
     role = user.get("role", "")
     if role not in ("admin", "Administrator"):
         raise HTTPException(status_code=403, detail="僅限管理員上傳模組包")
-        
-    temp_dir = os.path.join(BASE_PATH, "scratch")
-    os.makedirs(temp_dir, exist_ok=True)
-    local_temp_path = os.path.join(temp_dir, "temp_server_upload.zip")
-    
+
+    # 存到函式庫目錄（永久保存，供日後切換使用）
+    safe_filename = os.path.basename(file.filename)
+    pack_path = os.path.join(PACKS_DIR, safe_filename)
+
     try:
-        with open(local_temp_path, "wb") as buffer:
+        with open(pack_path, "wb") as buffer:
             while True:
-                chunk = await file.read(1024 * 1024)
+                chunk = await file.read(1024 * 1024)  # 1MB chunk
                 if not chunk:
                     break
                 buffer.write(chunk)
     except Exception as e:
-        if os.path.exists(local_temp_path):
-            os.remove(local_temp_path)
+        if os.path.exists(pack_path):
+            os.remove(pack_path)
         raise HTTPException(status_code=500, detail=f"儲存伺服器包失敗: {str(e)}")
-        
+
     try:
-        client = paramiko.SSHClient()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(MC_LXC_IP, username=MC_SSH_USER, password=MC_SSH_PASS, timeout=15)
-        
-        # Stop minecraft service
-        client.exec_command("systemctl stop minecraft")
-        
-        # SFTP Upload
-        sftp = client.open_sftp()
-        remote_zip = "/root/minecraft_server_upload.zip"
-        sftp.put(local_temp_path, remote_zip)
-        sftp.close()
-        
-        # Clean up existing mods and configs, keep saves/world/properties/whitelist/ops etc
-        uninstall_cmd = (
-            "cd /root/minecraft && "
-            "rm -rf mods config kubejs defaultconfigs modernfix libraries patchouli_books tlm_custom_pack"
-        )
-        client.exec_command(uninstall_cmd)
-        
-        # Extract new files
-        extract_cmd = f"unzip -o {remote_zip} -d /root/minecraft && rm -f {remote_zip}"
-        stdin, stdout, stderr = client.exec_command(extract_cmd)
-        stdout.channel.recv_exit_status()
-        
-        # Start minecraft service
-        client.exec_command("systemctl start minecraft")
-        
-        client.close()
+        _deploy_pack_to_lxc(pack_path)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"部署伺服器包失敗: {str(e)}")
-    finally:
-        if os.path.exists(local_temp_path):
-            os.remove(local_temp_path)
-            
+
     info = _load_info()
-    info["server_pack_name"] = file.filename
+    info["server_pack_name"] = safe_filename
+    info["active_pack"] = safe_filename
     info["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     _save_info(info)
-    
-    log_event(user["username"], f"MC_ADMIN: Uploaded and deployed server pack {file.filename}")
-    return {"status": "ok", "filename": file.filename}
+
+    log_event(user["username"], f"MC_ADMIN: Uploaded and deployed server pack {safe_filename}")
+    return {"status": "ok", "filename": safe_filename}
+
+
+@router.get("/packs")
+def list_packs(user: dict = Depends(get_current_user_obj)):
+    """列出模組包函式庫中的所有 ZIP 檔（管理員限定）"""
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員查看模組包列表")
+
+    info = _load_info()
+    active = info.get("active_pack", "")
+
+    packs = []
+    for fname in sorted(os.listdir(PACKS_DIR)):
+        if fname.lower().endswith(".zip"):
+            fpath = os.path.join(PACKS_DIR, fname)
+            size_mb = round(os.path.getsize(fpath) / 1024 / 1024, 1)
+            packs.append({
+                "name": fname,
+                "size_mb": size_mb,
+                "active": fname == active,
+            })
+    return {"packs": packs, "active_pack": active}
+
+
+class SwitchPackRequest(BaseModel):
+    pack_name: str
+
+
+@router.post("/switch-pack")
+def switch_pack(req: SwitchPackRequest, user: dict = Depends(get_current_user_obj)):
+    """從函式庫切換並部署指定模組包（管理員限定）"""
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員切換模組包")
+
+    safe_name = os.path.basename(req.pack_name)
+    pack_path = os.path.join(PACKS_DIR, safe_name)
+    if not os.path.exists(pack_path):
+        raise HTTPException(status_code=404, detail=f"找不到模組包：{safe_name}")
+
+    try:
+        _deploy_pack_to_lxc(pack_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"切換模組包失敗: {str(e)}")
+
+    info = _load_info()
+    info["server_pack_name"] = safe_name
+    info["active_pack"] = safe_name
+    info["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    _save_info(info)
+
+    log_event(user["username"], f"MC_ADMIN: Switched server pack to {safe_name}")
+    return {"status": "ok", "active_pack": safe_name}
+
+
+@router.delete("/packs/{pack_name}")
+def delete_pack(pack_name: str, user: dict = Depends(get_current_user_obj)):
+    """從函式庫刪除指定模組包（管理員限定，不可刪除目前啟用的包）"""
+    role = user.get("role", "")
+    if role not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="僅限管理員刪除模組包")
+
+    safe_name = os.path.basename(pack_name)
+    pack_path = os.path.join(PACKS_DIR, safe_name)
+    if not os.path.exists(pack_path):
+        raise HTTPException(status_code=404, detail=f"找不到模組包：{safe_name}")
+
+    info = _load_info()
+    if info.get("active_pack") == safe_name:
+        raise HTTPException(status_code=400, detail="無法刪除目前正在使用的模組包，請先切換至其他包")
+
+    os.remove(pack_path)
+    log_event(user["username"], f"MC_ADMIN: Deleted pack {safe_name} from library")
+    return {"status": "ok"}
 
 
 @router.post("/uninstall-server")
@@ -350,34 +437,30 @@ def uninstall_server_pack(user: dict = Depends(get_current_user_obj)):
     role = user.get("role", "")
     if role not in ("admin", "Administrator"):
         raise HTTPException(status_code=403, detail="僅限管理員卸載模組包")
-        
+
     try:
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         client.connect(MC_LXC_IP, username=MC_SSH_USER, password=MC_SSH_PASS, timeout=15)
-        
-        # Stop minecraft service
-        client.exec_command("systemctl stop minecraft")
-        
-        # Remove folders
+        _, stdout_stop, _ = client.exec_command("systemctl stop minecraft && sleep 2")
+        stdout_stop.channel.recv_exit_status()
         uninstall_cmd = (
             "cd /root/minecraft && "
             "rm -rf mods config kubejs defaultconfigs modernfix libraries patchouli_books tlm_custom_pack"
         )
-        stdin, stdout, stderr = client.exec_command(uninstall_cmd)
-        stdout.channel.recv_exit_status()
-        
-        # Start minecraft service
-        client.exec_command("systemctl start minecraft")
-        
+        _, stdout_rm, _ = client.exec_command(uninstall_cmd)
+        stdout_rm.channel.recv_exit_status()
+        _, stdout_start, _ = client.exec_command("systemctl start minecraft")
+        stdout_start.channel.recv_exit_status()
         client.close()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"卸載伺服器包失敗: {str(e)}")
-        
+
     info = _load_info()
     info["server_pack_name"] = "無"
+    info["active_pack"] = ""
     info["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     _save_info(info)
-    
+
     log_event(user["username"], "MC_ADMIN: Uninstalled server pack")
     return {"status": "ok"}

@@ -61,9 +61,12 @@ async function loadMultiverseInfo() {
             const isAdmin = (role === 'admin' || role === 'Administrator');
             const editDescBtn = document.getElementById('mv-edit-desc-btn');
             const adminControls = document.getElementById('mv-admin-pack-controls');
-            
+            const librarySection = document.getElementById('mv-pack-library-section');
+
             if (editDescBtn) editDescBtn.style.display = isAdmin ? 'block' : 'none';
             if (adminControls) adminControls.style.display = isAdmin ? 'flex' : 'none';
+            if (librarySection) librarySection.style.display = isAdmin ? 'block' : 'none';
+            if (isAdmin) loadPackLibrary();
         }
     } catch (e) {
         console.error("載入模組包資訊失敗:", e);
@@ -313,6 +316,128 @@ window.triggerUpload = function(type) {
         fileInput.click();
     }
 };
+
+// ==================== 模組包函式庫 ====================
+
+/**
+ * 載入函式庫列表並渲染至 #mv-pack-list
+ */
+async function loadPackLibrary() {
+    const container = document.getElementById('mv-pack-list');
+    if (!container) return;
+    container.innerHTML = '<div style="color:var(--text-muted); font-size:0.82rem; text-align:center; padding:0.8rem;">載入中...</div>';
+    try {
+        const res = await authFetch('/api/minecraft/packs');
+        if (!res.ok) {
+            container.innerHTML = '<div style="color:#f85149; font-size:0.82rem; text-align:center; padding:0.8rem;">載入失敗</div>';
+            return;
+        }
+        const data = await res.json();
+        renderPackList(data.packs || []);
+    } catch (e) {
+        container.innerHTML = `<div style="color:#f85149; font-size:0.82rem; text-align:center; padding:0.8rem;">錯誤：${e.message}</div>`;
+    }
+}
+
+/**
+ * 渲染模組包清單
+ */
+function renderPackList(packs) {
+    const container = document.getElementById('mv-pack-list');
+    if (!container) return;
+
+    if (packs.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted); font-size:0.82rem; text-align:center; padding:1rem;">函式庫為空，請先上傳模組包</div>';
+        return;
+    }
+
+    container.innerHTML = packs.map(pack => {
+        const activeStyle = pack.active
+            ? 'border-color:#4CAF50; background:rgba(76,175,80,0.08);'
+            : 'border-color:#30363d; background:rgba(255,255,255,0.02);';
+        const activeBadge = pack.active
+            ? '<span style="font-size:0.6rem; background:rgba(76,175,80,0.2); color:#4CAF50; border:1px solid rgba(76,175,80,0.5); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中</span>'
+            : '';
+        const switchBtn = !pack.active
+            ? `<button class="btn btn-outline" style="padding:5px 14px; font-size:0.75rem; border-color:var(--accent-color) !important; color:var(--accent-color);" onclick="window.switchPack('${escapeHtml(pack.name)}')">⚡ 切換部署</button>`
+            : '<span style="font-size:0.75rem; color:#4CAF50; font-weight:700;">✓ 已部署</span>';
+        const deleteBtn = !pack.active
+            ? `<button class="btn btn-outline" style="padding:5px 10px; font-size:0.75rem; border-color:var(--danger-color) !important; color:var(--danger-color);" onclick="window.deletePackFromLibrary('${escapeHtml(pack.name)}')">🗑️</button>`
+            : '';
+
+        return `
+            <div style="display:flex; align-items:center; gap:12px; padding:10px 14px;
+                border:1px solid; border-radius:8px; ${activeStyle} transition:0.2s;">
+                <div style="flex:1; min-width:0;">
+                    <div style="font-size:0.82rem; font-weight:800; color:var(--text-main);
+                        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        📦 ${escapeHtml(pack.name)}${activeBadge}
+                    </div>
+                    <div style="font-size:0.68rem; color:var(--text-muted); margin-top:3px; font-weight:700;">
+                        ${pack.size_mb} MB
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; flex-shrink:0; align-items:center;">
+                    ${switchBtn}
+                    ${deleteBtn}
+                </div>
+            </div>`;
+    }).join('');
+}
+
+/**
+ * 切換並部署指定模組包
+ */
+window.switchPack = async function(packName) {
+    const ok = confirm(`確定要切換至「${packName}」嗎？\n\n伺服器將自動停止、部署新模組包後重新啟動。\n世界存檔將完整保留。`);
+    if (!ok) return;
+
+    _mvShowProgress(0, `正在切換至 ${packName}，伺服器停止中...`);
+
+    try {
+        const token = localStorage.getItem('axis_token');
+        const res = await fetch('/api/minecraft/switch-pack', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pack_name: packName })
+        });
+        _mvHideProgress();
+        const data = await res.json();
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast(`已成功切換至 ${packName}，伺服器重啟完成！`, 'success');
+            await loadMultiverse();
+        } else {
+            if (typeof showToast === 'function') showToast(data.detail || '切換失敗', 'error');
+        }
+    } catch (e) {
+        _mvHideProgress();
+        if (typeof showToast === 'function') showToast('切換錯誤：' + e.message, 'error');
+    }
+};
+
+/**
+ * 從函式庫刪除指定模組包
+ */
+window.deletePackFromLibrary = async function(packName) {
+    const ok = confirm(`確定要從函式庫刪除「${packName}」嗎？\n此操作不可復原。`);
+    if (!ok) return;
+
+    try {
+        const res = await authFetch(`/api/minecraft/packs/${encodeURIComponent(packName)}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (res.ok) {
+            if (typeof showToast === 'function') showToast(`已刪除 ${packName}`, 'success');
+            await loadPackLibrary();
+        } else {
+            if (typeof showToast === 'function') showToast(data.detail || '刪除失敗', 'error');
+        }
+    } catch (e) {
+        if (typeof showToast === 'function') showToast('刪除錯誤：' + e.message, 'error');
+    }
+};
+
+// ==================== Upload Trigger ====================
+
 
 window.handleFileSelected = function(input) {
     if (!input.files || input.files.length === 0) return;
