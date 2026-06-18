@@ -278,10 +278,11 @@ async def upload_client_pack(file: UploadFile = File(...), user: dict = Depends(
     return {"status": "ok", "filename": file.filename}
 
 
-def _deploy_pack_to_lxc(local_zip_path: str):
+def _deploy_pack_to_lxc(local_zip_path: str, reset_world: bool = False):
     """
-    共用部署函數：停止 MC → SFTP 上傳 → 清除舊模組 → 解壓 → 啟動 MC。
+    共用部署函數：停止 MC → SFTP 上傳 → 清除舊模組 → 解壓 → [可選] 重置地圖 → 啟動 MC。
     所有步驟均等待完成，確保重啟時序正確。
+    reset_world=True 時會刪除 world/ world_nether/ world_the_end/ 讓 MC 生成全新地圖。
     """
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -310,6 +311,18 @@ def _deploy_pack_to_lxc(local_zip_path: str):
         extract_cmd = f"unzip -o {remote_zip} -d /root/minecraft && rm -f {remote_zip}"
         _, stdout_ext, stderr_ext = client.exec_command(extract_cmd)
         stdout_ext.channel.recv_exit_status()
+
+        # 4.5 若選擇重置地圖，删除全部世界資料廞
+        if reset_world:
+            reset_cmd = (
+                "rm -rf /root/minecraft/world "
+                "/root/minecraft/world_nether "
+                "/root/minecraft/world_the_end "
+                "/root/minecraft/DIM-1 "
+                "/root/minecraft/DIM1"
+            )
+            _, stdout_reset, _ = client.exec_command(reset_cmd)
+            stdout_reset.channel.recv_exit_status()
 
         # 5. 啟動 MC（等待服務啟動完成）
         _, stdout_start, _ = client.exec_command("systemctl start minecraft")
@@ -396,6 +409,7 @@ def list_packs(user: dict = Depends(get_current_user_obj)):
 
 class SwitchPackRequest(BaseModel):
     pack_name: str
+    reset_world: bool = False
 
 
 @router.post("/switch-pack")
@@ -411,7 +425,7 @@ def switch_pack(req: SwitchPackRequest, user: dict = Depends(get_current_user_ob
         raise HTTPException(status_code=404, detail=f"找不到模組包：{safe_name}")
 
     try:
-        _deploy_pack_to_lxc(pack_path)
+        _deploy_pack_to_lxc(pack_path, reset_world=req.reset_world)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"切換模組包失敗: {str(e)}")
 
@@ -421,8 +435,9 @@ def switch_pack(req: SwitchPackRequest, user: dict = Depends(get_current_user_ob
     info["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     _save_info(info)
 
-    log_event(user["username"], f"MC_ADMIN: Switched server pack to {safe_name}")
-    return {"status": "ok", "active_pack": safe_name}
+    world_note = "（已重置地圖）" if req.reset_world else ""
+    log_event(user["username"], f"MC_ADMIN: Switched server pack to {safe_name}{world_note}")
+    return {"status": "ok", "active_pack": safe_name, "world_reset": req.reset_world}
 
 
 @router.delete("/packs/{pack_name}")

@@ -414,22 +414,35 @@ function renderPackList(packs) {
  * 切換並部署指定模組包
  */
 window.switchPack = async function(packName) {
-    const ok = confirm(`確定要切換至「${packName}」嗎？\n\n伺服器將自動停止、部署新模組包後重新啟動。\n世界存檔將完整保留。`);
-    if (!ok) return;
+    // 第一步：確認切換
+    if (!confirm(`確定要切換至「${packName}」？\n\n伺服器將自動停止、部署新模組包後重新啟動。`)) return;
 
-    _mvShowProgress(0, `正在切換至 ${packName}，伺服器停止中...`);
+    // 第二步：詢問是否重置地圖
+    const resetWorld = confirm(
+        `是否同時建立全新地圖？\n\n` +
+        `確定 → 刪除現有世界，讓 Minecraft 生成全新地圖\n` +
+        `取消 → 保留現有世界繼續遊玩`
+    );
+
+    const progressLabel = resetWorld
+        ? `正在切換至 ${packName}（將重置地圖），停止伺服器中...`
+        : `正在切換至 ${packName}，停止伺服器中...`;
+    _mvShowProgress(0, progressLabel);
 
     try {
         const token = localStorage.getItem('axis_token');
         const res = await fetch('/api/minecraft/switch-pack', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pack_name: packName })
+            body: JSON.stringify({ pack_name: packName, reset_world: resetWorld })
         });
         _mvHideProgress();
         const data = await res.json();
         if (res.ok) {
-            if (typeof showToast === 'function') showToast(`已成功切換至 ${packName}，伺服器重啟完成！`, 'success');
+            const worldMsg = resetWorld ? '，新地圖將在首次連線時自動生成' : '';
+            if (typeof showToast === 'function') showToast(
+                `已切換至 ${packName}${worldMsg}。Minecraft 模組載入需要數分鐘，請稍後再連線。`, 'success'
+            );
             await loadMultiverse();
         } else {
             if (typeof showToast === 'function') showToast(data.detail || '切換失敗', 'error');
@@ -439,6 +452,7 @@ window.switchPack = async function(packName) {
         if (typeof showToast === 'function') showToast('切換錯誤：' + e.message, 'error');
     }
 };
+
 
 /**
  * 從函式庫刪除指定模組包
