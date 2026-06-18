@@ -278,12 +278,96 @@ async def upload_client_pack(file: UploadFile = File(...), user: dict = Depends(
     return {"status": "ok", "filename": file.filename}
 
 
-def _deploy_pack_to_lxc(local_zip_path: str, reset_world: bool = False):
+# 各模組包世界資料存放根目錄（LXC 容器上）
+WORLDS_BASE = "/root/minecraft_worlds"
+# MC 的世界目錄名稱清單
+WORLD_DIRS = ["world", "world_nether", "world_the_end", "DIM-1", "DIM1"]
+
+
+def _pack_slug(pack_name: str) -> str:
+    """從模組包檔名取得安全的目錄名稱（移除 .zip、將空格轉底線）"""
+    slug = pack_name.strip()
+    if slug.lower().endswith(".zip"):
+        slug = slug[:-4]
+    return slug.replace(" ", "_")
+
+
+def _ssh_save_world(client, pack_name: str):
     """
-    共用部署函數：停止 MC → SFTP 上傳 → 清除舊模組 → 解壓 → [可選] 重置地圖 → 啟動 MC。
-    所有步驟均等待完成，確保重啟時序正確。
-    reset_world=True 時會刪除 world/ world_nether/ world_the_end/ 讓 MC 生成全新地圖。
+    將 /root/minecraft/ 中的地圖資料夾移動到 WORLDS_BASE/{slug}/。
+    若目前沒有地圖（全新伺服器），此步驟無副作用。
     """
+    if not pack_name or pack_name in ("無", ""):
+        return
+    slug = _pack_slug(pack_name)
+    # 先建立目標目錄，再逐個 mv 存在的世界資料夾
+    cmd = (
+        f"mkdir -p '{WORLDS_BASE}/{slug}' && "
+        f"for d in {' '.join(WORLD_DIRS)}; do "
+        f"  [ -d /root/minecraft/$d ] && mv /root/minecraft/$d '{WORLDS_BASE}/{slug}/'$d || true; "
+        f"done"
+    )
+    _, stdout, _ = client.exec_command(cmd)
+    stdout.channel.recv_exit_status()
+
+
+def _ssh_restore_world(client, pack_name: str):
+    """
+    將 WORLDS_BASE/{slug}/ 中的地圖資料夾還原至 /root/minecraft/。
+    若該包從未有地圖存檔，此步驟無副作用（MC 將自動生成新地圖）。
+    """
+    if not pack_name or pack_name in ("無", ""):
+        return
+    slug = _pack_slug(pack_name)
+    cmd = (
+        f"if [ -d '{WORLDS_BASE}/{slug}' ]; then "
+        f"  for d in {' '.join(WORLD_DIRS)}; do "
+        f"    [ -d '{WORLDS_BASE}/{slug}'/$d ] && mv '{WORLDS_BASE}/{slug}'/$d /root/minecraft/$d || true; "
+        f"  done; "
+        f"fi"
+    )
+    _, stdout, _ = client.exec_command(cmd)
+    stdout.channel.recv_exit_status()
+
+
+def _ssh_delete_world(client, pack_name: str):
+    """刪除指定模組包的存檔地圖（讓下次進入時生成全新地圖）"""
+    if not pack_name or pack_name in ("無", ""):
+        return
+    slug = _pack_slug(pack_name)
+    cmd = f"rm -rf '{WORLDS_BASE}/{slug}'"
+    _, stdout, _ = client.exec_command(cmd)
+    stdout.channel.recv_exit_status()
+
+
+def _ssh_has_world(client, pack_name: str) -> bool:
+    """偵測指定模組包是否有存過地圖"""
+    if not pack_name or pack_name in ("無", ""):
+        return False
+    slug = _pack_slug(pack_name)
+    _, stdout, _ = client.exec_command(
+        f"[ -d '{WORLDS_BASE}/{slug}/world' ] && echo 'yes' || echo 'no'"
+    )
+    result = stdout.read().decode().strip()
+    return result == "yes"
+
+
+def _deploy_pack_to_lxc(
+    local_zip_path: str,
+    current_pack: str = "",
+    reset_world: bool = False
+):
+    """
+    共用部署函數（支援每包獨立世界）：
+    1. 停止 MC
+    2. 保存目前包的地圖 → WORLDS_BASE/{current_slug}/
+    3. 清除 mods/config 等模組相關目錄
+    4. SFTP 上傳並解壓新包
+    5. 若 reset_world=True，刪除新包已存的地圖（讓 MC 重新生成）
+    6. 還原新包的地圖（若存在） → /root/minecraft/
+    7. 啟動 MC
+    """
+    new_pack_name = os.path.basename(local_zip_path)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(MC_LXC_IP, username=MC_SSH_USER, password=MC_SSH_PASS, timeout=30)
@@ -292,13 +376,10 @@ def _deploy_pack_to_lxc(local_zip_path: str, reset_world: bool = False):
         _, stdout_stop, _ = client.exec_command("systemctl stop minecraft && sleep 2")
         stdout_stop.channel.recv_exit_status()
 
-        # 2. SFTP 上傳 ZIP 至 LXC
-        remote_zip = "/root/minecraft_server_upload.zip"
-        sftp = client.open_sftp()
-        sftp.put(local_zip_path, remote_zip)
-        sftp.close()
+        # 2. 保存目前包的地圖
+        _ssh_save_world(client, current_pack)
 
-        # 3. 清除舊模組/設定（保留 world/存檔/properties）
+        # 3. 清除舊模組/設定（world 已移走，這裡不會誤刪）
         clean_cmd = (
             "cd /root/minecraft && "
             "rm -rf mods config kubejs defaultconfigs modernfix "
@@ -307,24 +388,23 @@ def _deploy_pack_to_lxc(local_zip_path: str, reset_world: bool = False):
         _, stdout_clean, _ = client.exec_command(clean_cmd)
         stdout_clean.channel.recv_exit_status()
 
-        # 4. 解壓新包
+        # 4. SFTP 上傳並解壓新包
+        remote_zip = "/root/minecraft_server_upload.zip"
+        sftp = client.open_sftp()
+        sftp.put(local_zip_path, remote_zip)
+        sftp.close()
         extract_cmd = f"unzip -o {remote_zip} -d /root/minecraft && rm -f {remote_zip}"
-        _, stdout_ext, stderr_ext = client.exec_command(extract_cmd)
+        _, stdout_ext, _ = client.exec_command(extract_cmd)
         stdout_ext.channel.recv_exit_status()
 
-        # 4.5 若選擇重置地圖，删除全部世界資料廞
+        # 5. 若選擇重置地圖，刪除新包的存檔地圖
         if reset_world:
-            reset_cmd = (
-                "rm -rf /root/minecraft/world "
-                "/root/minecraft/world_nether "
-                "/root/minecraft/world_the_end "
-                "/root/minecraft/DIM-1 "
-                "/root/minecraft/DIM1"
-            )
-            _, stdout_reset, _ = client.exec_command(reset_cmd)
-            stdout_reset.channel.recv_exit_status()
+            _ssh_delete_world(client, new_pack_name)
 
-        # 5. 啟動 MC（等待服務啟動完成）
+        # 6. 還原新包的地圖（若存在）
+        _ssh_restore_world(client, new_pack_name)
+
+        # 7. 啟動 MC
         _, stdout_start, _ = client.exec_command("systemctl start minecraft")
         stdout_start.channel.recv_exit_status()
     finally:
@@ -338,14 +418,13 @@ async def upload_server_pack(file: UploadFile = File(...), user: dict = Depends(
     if role not in ("admin", "Administrator"):
         raise HTTPException(status_code=403, detail="僅限管理員上傳模組包")
 
-    # 存到函式庫目錄（永久保存，供日後切換使用）
     safe_filename = os.path.basename(file.filename)
     pack_path = os.path.join(PACKS_DIR, safe_filename)
 
     try:
         with open(pack_path, "wb") as buffer:
             while True:
-                chunk = await file.read(1024 * 1024)  # 1MB chunk
+                chunk = await file.read(1024 * 1024)
                 if not chunk:
                     break
                 buffer.write(chunk)
@@ -354,12 +433,15 @@ async def upload_server_pack(file: UploadFile = File(...), user: dict = Depends(
             os.remove(pack_path)
         raise HTTPException(status_code=500, detail=f"儲存伺服器包失敗: {str(e)}")
 
+    # 讀取目前啟用的包名稱，以便保存其世界
+    info = _load_info()
+    current_pack = info.get("active_pack", "") or info.get("server_pack_name", "")
+
     try:
-        _deploy_pack_to_lxc(pack_path)
+        _deploy_pack_to_lxc(pack_path, current_pack=current_pack)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"部署伺服器包失敗: {str(e)}")
 
-    info = _load_info()
     info["server_pack_name"] = safe_filename
     info["active_pack"] = safe_filename
     info["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -371,7 +453,7 @@ async def upload_server_pack(file: UploadFile = File(...), user: dict = Depends(
 
 @router.get("/packs")
 def list_packs(user: dict = Depends(get_current_user_obj)):
-    """列出模組包函式庫中的所有 ZIP 檔（管理員限定）"""
+    """列出模組包函式庫中的所有 ZIP 檔（管理員限定），含每包是否有存檔地圖"""
     role = user.get("role", "")
     if role not in ("admin", "Administrator"):
         raise HTTPException(status_code=403, detail="僅限管理員查看模組包列表")
@@ -379,7 +461,24 @@ def list_packs(user: dict = Depends(get_current_user_obj)):
     info = _load_info()
     active = info.get("active_pack", "") or info.get("server_pack_name", "")
 
-    # 讀取函式庫目錄中所有 ZIP
+    # 透過 SSH 一次取得所有包的世界存檔狀態
+    world_status: dict[str, bool] = {}
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(MC_LXC_IP, username=MC_SSH_USER, password=MC_SSH_PASS, timeout=8)
+        _, stdout, _ = client.exec_command(f"ls {WORLDS_BASE}/ 2>/dev/null || echo ''")
+        saved_slugs = set(stdout.read().decode().split())
+        client.close()
+
+        # 讀取函式庫目錄中的包，比對 slug 是否有存檔
+        for fname in os.listdir(PACKS_DIR):
+            if fname.lower().endswith(".zip"):
+                slug = _pack_slug(fname)
+                world_status[fname] = slug in saved_slugs
+    except Exception:
+        pass  # SSH 失敗時 has_world 預設 False
+
     packs = []
     library_names = set()
     for fname in sorted(os.listdir(PACKS_DIR)):
@@ -391,20 +490,21 @@ def list_packs(user: dict = Depends(get_current_user_obj)):
                 "size_mb": size_mb,
                 "active": fname == active,
                 "in_library": True,
+                "has_world": world_status.get(fname, False),
             })
             library_names.add(fname)
 
-    # 若目前啟用的包不在函式庫目錄（舊版上傳，未保留），插入虛擬條目顯示在頂部
+    # 若目前啟用的包不在函式庫目錄（舊版上傳，未保留），插入虛擬條目
     if active and active not in library_names and active not in ("無", ""):
         packs.insert(0, {
             "name": active,
             "size_mb": None,
             "active": True,
             "in_library": False,
+            "has_world": False,
         })
 
     return {"packs": packs, "active_pack": active}
-
 
 
 class SwitchPackRequest(BaseModel):
@@ -424,18 +524,21 @@ def switch_pack(req: SwitchPackRequest, user: dict = Depends(get_current_user_ob
     if not os.path.exists(pack_path):
         raise HTTPException(status_code=404, detail=f"找不到模組包：{safe_name}")
 
+    # 讀取目前啟用的包，以便切換時保存其地圖
+    info = _load_info()
+    current_pack = info.get("active_pack", "") or info.get("server_pack_name", "")
+
     try:
-        _deploy_pack_to_lxc(pack_path, reset_world=req.reset_world)
+        _deploy_pack_to_lxc(pack_path, current_pack=current_pack, reset_world=req.reset_world)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"切換模組包失敗: {str(e)}")
 
-    info = _load_info()
     info["server_pack_name"] = safe_name
     info["active_pack"] = safe_name
     info["updated_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     _save_info(info)
 
-    world_note = "（已重置地圖）" if req.reset_world else ""
+    world_note = "（已重置地圖）" if req.reset_world else "（已還原該包地圖）"
     log_event(user["username"], f"MC_ADMIN: Switched server pack to {safe_name}{world_note}")
     return {"status": "ok", "active_pack": safe_name, "world_reset": req.reset_world}
 

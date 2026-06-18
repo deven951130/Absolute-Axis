@@ -1,5 +1,10 @@
 ### [V56] - 2026-06-18 更新日誌
 
+#### Minecraft 模組包獨立世界系統（P0）
+- **[新增] 每包獨立世界存檔**：在 LXC 容器上建立 `/root/minecraft_worlds/{pack_slug}/` 目錄存放各模組包的地圖存檔（包含 `world`、`world_nether`、`world_the_end`、`DIM-1`、`DIM1`）。切換模組包時，系統將自動保存目前包的地圖，並還原目標包的地圖，若無舊存檔則自動生成全新地圖。
+- **[新增] 切換重置地圖與二次確認**：前端切換模組包改為兩步確認，先確認是否切換（包含說明會自動備份/還原世界），若目標包已有存檔地圖，再詢問是否要刪除存檔並重置地圖。
+- **[新增] 函式庫地圖狀態標籤**：前端選單清單中，動態顯示每個模組包的存檔狀態，顯示「🗺 有地圖存檔」或「✨ 全新地圖」徽章，提供直覺的管理視野。
+
 #### Minecraft 大型伺服器包上傳修復（P0）
 - **[修復] uvicorn HTTP body size 限制**：修改 `run.py`，加入 `h11_max_incomplete_event_size=2GB` 參數，解決 877MB+ 模組包上傳因預設 1MB body 限制被截斷的根本原因。同時設定 `timeout_keep_alive=600` 確保大檔案傳輸期間連線不中斷。
 - **[新增] 上傳即時進度條**：重構 `static/js/multiverse.js` 的 `handleFileSelected` 函數，以 `XMLHttpRequest` 取代原有的 `fetch` 方式，接入 `xhr.upload.onprogress` 事件，實作全螢幕進度覆蓋層（Overlay），即時顯示上傳百分比、目前速度（MB/s）與預估剩餘時間，大型模組包上傳過程中不再有 UI 凍結感。

@@ -352,9 +352,9 @@ function renderPackList(packs) {
     }
 
     container.innerHTML = packs.map(pack => {
-        const inLibrary = pack.in_library !== false; // 預設 true
+        const inLibrary = pack.in_library !== false;
 
-        // 樣式：啟用中 + 在庫 → 綠色；啟用中 + 不在庫 → 橙色；其他 → 預設灰
+        // 邊框顏色
         let borderStyle, bgStyle;
         if (pack.active && inLibrary) {
             borderStyle = 'border-color:#4CAF50;';
@@ -367,7 +367,7 @@ function renderPackList(packs) {
             bgStyle = 'background:rgba(255,255,255,0.02);';
         }
 
-        // 徽章
+        // 啟用徽章
         let badge = '';
         if (pack.active && inLibrary) {
             badge = '<span style="font-size:0.6rem; background:rgba(76,175,80,0.2); color:#4CAF50; border:1px solid rgba(76,175,80,0.5); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中</span>';
@@ -375,18 +375,24 @@ function renderPackList(packs) {
             badge = '<span style="font-size:0.6rem; background:rgba(243,156,18,0.2); color:#f39c12; border:1px solid rgba(243,156,18,0.5); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中・未存入庫</span>';
         }
 
+        // 地圖狀態標籤
+        const worldBadge = inLibrary
+            ? (pack.has_world
+                ? '<span style="font-size:0.6rem; background:rgba(100,181,246,0.15); color:#64b5f6; border:1px solid rgba(100,181,246,0.4); border-radius:8px; padding:2px 8px; font-weight:700; margin-left:6px;">🗺 有地圖存檔</span>'
+                : '<span style="font-size:0.6rem; background:rgba(255,255,255,0.06); color:var(--text-muted); border:1px solid #30363d; border-radius:8px; padding:2px 8px; font-weight:700; margin-left:6px;">✨ 全新地圖</span>')
+            : '';
+
         // 右側動作
         let actions = '';
         if (pack.active) {
             actions = '<span style="font-size:0.75rem; color:#4CAF50; font-weight:700;">✓ 已部署</span>';
         } else {
             actions = `
-                <button class="btn btn-outline" style="padding:5px 14px; font-size:0.75rem; border-color:var(--accent-color) !important; color:var(--accent-color);" onclick="window.switchPack('${escapeHtml(pack.name)}')">⚡ 切換部署</button>
-                <button class="btn btn-outline" style="padding:5px 10px; font-size:0.75rem; border-color:var(--danger-color) !important; color:var(--danger-color);" onclick="window.deletePackFromLibrary('${escapeHtml(pack.name)}')">🗑️</button>
+                <button class="btn btn-outline" style="padding:5px 14px; font-size:0.75rem; border-color:var(--accent-color) !important; color:var(--accent-color);" onclick="window.switchPack('${escapeHtml(pack.name)}', ${pack.has_world})">⚡ 切換部署</button>
+                <button class="btn btn-outline" style="padding:5px 10px; font-size:0.75rem; border-color:var(--danger-color) !important; color:var(--danger-color);" onclick="window.deletePackFromLibrary('${escapeHtml(pack.name)}')" title="從函式庫刪除">🗑️</button>
             `;
         }
 
-        // 大小顯示
         const sizeText = pack.size_mb != null ? `${pack.size_mb} MB` : '檔案不在函式庫中（需重新上傳才能保存至庫）';
         const sizeColor = pack.size_mb != null ? 'color:var(--text-muted);' : 'color:#f39c12;';
 
@@ -396,7 +402,7 @@ function renderPackList(packs) {
                 <div style="flex:1; min-width:0;">
                     <div style="font-size:0.82rem; font-weight:800; color:var(--text-main);
                         white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                        📦 ${escapeHtml(pack.name)}${badge}
+                        📦 ${escapeHtml(pack.name)}${badge}${worldBadge}
                     </div>
                     <div style="font-size:0.68rem; margin-top:3px; font-weight:700; ${sizeColor}">
                         ${sizeText}
@@ -410,23 +416,27 @@ function renderPackList(packs) {
 }
 
 
+
 /**
  * 切換並部署指定模組包
  */
-window.switchPack = async function(packName) {
+window.switchPack = async function(packName, hasWorld = false) {
     // 第一步：確認切換
-    if (!confirm(`確定要切換至「${packName}」？\n\n伺服器將自動停止、部署新模組包後重新啟動。`)) return;
+    if (!confirm(`確定要切換至「${packName}」？\n\n系統將自動：\n・保存目前世界存檔\n・${hasWorld ? '還原該模組包的世界存檔' : '建立全新世界（該包尚無存檔）'}\n・重新啟動伺服器`)) return;
 
-    // 第二步：詢問是否重置地圖
-    const resetWorld = confirm(
-        `是否同時建立全新地圖？\n\n` +
-        `確定 → 刪除現有世界，讓 Minecraft 生成全新地圖\n` +
-        `取消 → 保留現有世界繼續遊玩`
-    );
+    // 第二步：若該包已有存檔，詢問是否重置地圖
+    let resetWorld = false;
+    if (hasWorld) {
+        resetWorld = confirm(
+            `「${packName}」有舊的世界存檔。\n\n` +
+            `確定 → 刪除舊存檔，生成全新地圖\n` +
+            `取消 → 繼續使用該包的舊地圖（推薦）`
+        );
+    }
 
     const progressLabel = resetWorld
-        ? `正在切換至 ${packName}（將重置地圖），停止伺服器中...`
-        : `正在切換至 ${packName}，停止伺服器中...`;
+        ? `正在切換至 ${packName}（重置地圖），停止伺服器中...`
+        : `正在切換至 ${packName}，儲存目前地圖中...`;
     _mvShowProgress(0, progressLabel);
 
     try {
@@ -439,7 +449,9 @@ window.switchPack = async function(packName) {
         _mvHideProgress();
         const data = await res.json();
         if (res.ok) {
-            const worldMsg = resetWorld ? '，新地圖將在首次連線時自動生成' : '';
+            const worldMsg = resetWorld
+                ? '，已重置為全新地圖'
+                : (hasWorld ? '，已還原該包的世界存檔' : '，全新地圖將在首次連線時生成');
             if (typeof showToast === 'function') showToast(
                 `已切換至 ${packName}${worldMsg}。Minecraft 模組載入需要數分鐘，請稍後再連線。`, 'success'
             );
