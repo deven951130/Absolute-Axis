@@ -397,6 +397,23 @@ def _deploy_pack_to_lxc(
         _, stdout_ext, _ = client.exec_command(extract_cmd)
         stdout_ext.channel.recv_exit_status()
 
+        # 4.5 自動重整目錄結構，防範模組包帶有頂層/多層嵌套或中文編碼目錄
+        restruct_cmd = (
+            "MODS_PATH=$(find /root/minecraft -type d -name 'mods' | awk -F'/' '{ print NF, $0 }' | sort -n | cut -d' ' -f2- | head -n 1) && "
+            "if [ -n \"$MODS_PATH\" ]; then "
+            "  REAL_DIR=$(dirname \"$MODS_PATH\"); "
+            "  if [ \"$REAL_DIR\" != \"/root/minecraft\" ]; then "
+            "    find \"$REAL_DIR\" -maxdepth 1 -mindepth 1 -exec mv -t /root/minecraft/ {} +; "
+            "    TEMP_TOP=$(echo \"$REAL_DIR\" | cut -d'/' -f4); "
+            "    if [ -n \"$TEMP_TOP\" ] && [ \"$TEMP_TOP\" != \"minecraft\" ]; then "
+            "      rm -rf \"/root/minecraft/$TEMP_TOP\"; "
+            "    fi; "
+            "  fi; "
+            "fi"
+        )
+        _, stdout_restruct, _ = client.exec_command(restruct_cmd)
+        stdout_restruct.channel.recv_exit_status()
+
         # 5. 若選擇重置地圖，刪除新包的存檔地圖
         if reset_world:
             _ssh_delete_world(client, new_pack_name)
