@@ -285,11 +285,17 @@ WORLD_DIRS = ["world", "world_nether", "world_the_end", "DIM-1", "DIM1"]
 
 
 def _pack_slug(pack_name: str) -> str:
-    """從模組包檔名取得安全的目錄名稱（移除 .zip、將空格轉底線）"""
+    """從模組包檔名取得安全的目錄名稱（僅保留英數點底線減號，並附加 MD5 防止衝突與中文亂碼）"""
+    import re
+    import hashlib
     slug = pack_name.strip()
     if slug.lower().endswith(".zip"):
         slug = slug[:-4]
-    return slug.replace(" ", "_")
+    safe_slug = re.sub(r'[^a-zA-Z0-9_\-\.]', '', slug)
+    md5_hex = hashlib.md5(pack_name.encode('utf-8')).hexdigest()[:8]
+    if not safe_slug:
+        return f"world_{md5_hex}"
+    return f"{safe_slug}_{md5_hex}"
 
 
 def _ssh_save_world(client, pack_name: str):
