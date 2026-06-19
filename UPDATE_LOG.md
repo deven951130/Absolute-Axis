@@ -1,3 +1,10 @@
+### [V57] - 2026-06-19 更新日誌
+
+#### Minecraft 伺服器世界獨立化與磁碟掛載（P0）
+- **[新增] 6TB HDD 實體磁碟掛載**：停止 Minecraft 伺服器與 Proxmox LXC 102 容器，將 6TB 機械硬碟（`sdb1`）對應的 `NAS-Data` 儲存區，透過 Bind Mount 掛載點直接掛載至容器內的 `/root/minecraft/simplebackups`（備份目錄）與 `/root/minecraft_worlds`（世界存檔目錄），提供 6TB 的世界存檔與備份空間。
+- **[新增] 每個模組包獨立世界資料夾**：重構後端 `app/routers/minecraft.py`，取消原本在模組包部署與切換時透過物理移動地圖資料夾的高風險邏輯，改為動態修改 `/root/minecraft/server.properties` 中的 `level-name` 為 `world_{slug}`，使每個模組包均有專屬世界資料夾（如 `world_香草紀元`）。
+- **[新增] 歷史存檔安全遷移與相容**：在 API 中加入過渡機制。切換模組包時，若偵測到舊備份路徑（`/root/minecraft_worlds/{slug}`）有世界存檔，自動搬移過渡至新專屬資料夾；且若根目錄有殘留之 `/root/minecraft/world` 亦能安全重命名為當前模組包的世界資料夾，確保存檔永不遺失。
+
 ### [V56] - 2026-06-18 更新日誌
 
 #### Minecraft 模組包獨立世界系統（P0）
