@@ -294,36 +294,29 @@ def _pack_slug(pack_name: str) -> str:
 
 def _ssh_save_world(client, pack_name: str):
     """
-    將 /root/minecraft/ 中的地圖資料夾移動到 WORLDS_BASE/{slug}/。
-    若目前沒有地圖（全新伺服器），此步驟無副作用。
+    自訂世界資料夾模式下，此處不做物理移動，世界資料夾直接存放在 /root/minecraft/world_{slug}。
     """
-    if not pack_name or pack_name in ("無", ""):
-        return
-    slug = _pack_slug(pack_name)
-    # 先建立目標目錄，再逐個 mv 存在的世界資料夾
-    cmd = (
-        f"mkdir -p '{WORLDS_BASE}/{slug}' && "
-        f"for d in {' '.join(WORLD_DIRS)}; do "
-        f"  [ -d /root/minecraft/$d ] && mv /root/minecraft/$d '{WORLDS_BASE}/{slug}/'$d || true; "
-        f"done"
-    )
-    _, stdout, _ = client.exec_command(cmd)
-    stdout.channel.recv_exit_status()
+    pass
 
 
 def _ssh_restore_world(client, pack_name: str):
     """
-    將 WORLDS_BASE/{slug}/ 中的地圖資料夾還原至 /root/minecraft/。
-    若該包從未有地圖存檔，此步驟無副作用（MC 將自動生成新地圖）。
+    世界資料夾過渡與相容：
+    若舊有備份目錄下有世界，且新專屬世界目錄不存在，則過渡搬移。
+    若 /root/minecraft/world 存在，且 /root/minecraft/world_{slug} 不存在，亦將其更名為新目錄。
     """
     if not pack_name or pack_name in ("無", ""):
         return
     slug = _pack_slug(pack_name)
     cmd = (
-        f"if [ -d '{WORLDS_BASE}/{slug}' ]; then "
+        f"if [ -d '{WORLDS_BASE}/{slug}' ] && [ ! -d '/root/minecraft/world_{slug}' ]; then "
+        f"  mkdir -p '/root/minecraft/world_{slug}' && "
         f"  for d in {' '.join(WORLD_DIRS)}; do "
-        f"    [ -d '{WORLDS_BASE}/{slug}'/$d ] && mv '{WORLDS_BASE}/{slug}'/$d /root/minecraft/$d || true; "
+        f"    [ -d '{WORLDS_BASE}/{slug}'/$d ] && mv '{WORLDS_BASE}/{slug}'/$d '/root/minecraft/world_{slug}/' || true; "
         f"  done; "
+        f"fi; "
+        f"if [ -d '/root/minecraft/world' ] && [ ! -d '/root/minecraft/world_{slug}' ]; then "
+        f"  mv '/root/minecraft/world' '/root/minecraft/world_{slug}'; "
         f"fi"
     )
     _, stdout, _ = client.exec_command(cmd)
@@ -335,7 +328,8 @@ def _ssh_delete_world(client, pack_name: str):
     if not pack_name or pack_name in ("無", ""):
         return
     slug = _pack_slug(pack_name)
-    cmd = f"rm -rf '{WORLDS_BASE}/{slug}'"
+    # 同時清除舊備份與新的專屬世界目錄
+    cmd = f"rm -rf '{WORLDS_BASE}/{slug}' '/root/minecraft/world_{slug}'"
     _, stdout, _ = client.exec_command(cmd)
     stdout.channel.recv_exit_status()
 
@@ -345,9 +339,15 @@ def _ssh_has_world(client, pack_name: str) -> bool:
     if not pack_name or pack_name in ("無", ""):
         return False
     slug = _pack_slug(pack_name)
-    _, stdout, _ = client.exec_command(
-        f"[ -d '{WORLDS_BASE}/{slug}/world' ] && echo 'yes' || echo 'no'"
+    # 同時檢查舊備份目錄與新專屬世界目錄
+    cmd = (
+        f"if [ -d '{WORLDS_BASE}/{slug}/world' ] || [ -d '/root/minecraft/world_{slug}' ]; then "
+        f"  echo 'yes'; "
+        f"else "
+        f"  echo 'no'; "
+        f"fi"
     )
+    _, stdout, _ = client.exec_command(cmd)
     result = stdout.read().decode().strip()
     return result == "yes"
 
@@ -421,6 +421,19 @@ def _deploy_pack_to_lxc(
         # 6. 還原新包的地圖（若存在）
         _ssh_restore_world(client, new_pack_name)
 
+        # 6.5 修改 server.properties 的 level-name 指向專屬世界
+        slug = _pack_slug(new_pack_name)
+        prop_cmd = (
+            f"python3 -c \""
+            f"import re, os; "
+            f"p = '/root/minecraft/server.properties'; "
+            f"c = open(p).read() if os.path.exists(p) else ''; "
+            f"c = re.sub(r'^level-name=.*', 'level-name=world_{slug}', c, flags=re.M) if 'level-name=' in c else c + '\\nlevel-name=world_{slug}\\n'; "
+            f"open(p, 'w').write(c)\""
+        )
+        _, stdout_prop, _ = client.exec_command(prop_cmd)
+        stdout_prop.channel.recv_exit_status()
+
         # 7. 啟動 MC
         _, stdout_start, _ = client.exec_command("systemctl start minecraft")
         stdout_start.channel.recv_exit_status()
@@ -484,8 +497,20 @@ def list_packs(user: dict = Depends(get_current_user_obj)):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         client.connect(MC_LXC_IP, username=MC_SSH_USER, password=MC_SSH_PASS, timeout=8)
-        _, stdout, _ = client.exec_command(f"ls {WORLDS_BASE}/ 2>/dev/null || echo ''")
-        saved_slugs = set(stdout.read().decode().split())
+        # 同時取得舊備份目錄與新專屬世界目錄的名稱
+        cmd = (
+            f"ls {WORLDS_BASE}/ 2>/dev/null || echo ''; "
+            f"find /root/minecraft/ -maxdepth 1 -type d -name 'world_*' -exec basename {{}} \\; 2>/dev/null || echo ''"
+        )
+        _, stdout, _ = client.exec_command(cmd)
+        output_lines = stdout.read().decode().split()
+        saved_slugs = set()
+        for line in output_lines:
+            line = line.strip()
+            if line.startswith("world_"):
+                saved_slugs.add(line[6:])  # 提取 'world_' 後的 slug
+            elif line:
+                saved_slugs.add(line)
         client.close()
 
         # 讀取函式庫目錄中的包，比對 slug 是否有存檔
