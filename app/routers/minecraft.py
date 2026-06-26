@@ -440,6 +440,24 @@ def _deploy_pack_to_lxc(
         _, stdout_prop, _ = client.exec_command(prop_cmd)
         stdout_prop.channel.recv_exit_status()
 
+        # 6.6 動態探測模組版本並生成 run.sh
+        run_sh_cmd = (
+            "python3 -c \""
+            "import os; "
+            "mods = os.listdir('/root/minecraft/mods') if os.path.exists('/root/minecraft/mods') else []; "
+            "is_21 = any('1.21' in m for m in mods); "
+            "is_20 = any('1.20' in m for m in mods); "
+            "run_path = '/root/minecraft/run.sh'; "
+            "if is_21 or (not is_20 and os.path.exists('/root/minecraft/libraries/net/neoforged/')): "
+            "  cmd = 'java @user_jvm_args.txt -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:+ExplicitGCInvokesConcurrent -XX:+UseLargePages -Xss1M -XX:ConcGCThreads=4 -XX:ZAllocationSpikeTolerance=2 -XX:ZCollectionInterval=120 -Dfile.encoding=UTF-8 @libraries/net/neoforged/neoforge/21.1.233/unix_args.txt \\\"$@\\\"\\n'; "
+            "else: "
+            "  cmd = 'java @user_jvm_args.txt @libraries/net/minecraftforge/forge/1.20.1-47.4.0/unix_args.txt \\\"$@\\\"\\n'; "
+            "open(run_path, 'w').write('#!/usr/bin/env sh\\n' + cmd); "
+            "os.chmod(run_path, 0o755)\""
+        )
+        _, stdout_run, _ = client.exec_command(run_sh_cmd)
+        stdout_run.channel.recv_exit_status()
+
         # 7. 啟動 MC
         _, stdout_start, _ = client.exec_command("systemctl start minecraft")
         stdout_start.channel.recv_exit_status()
