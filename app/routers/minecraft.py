@@ -399,9 +399,11 @@ def _deploy_pack_to_lxc(
         sftp = client.open_sftp()
         sftp.put(local_zip_path, remote_zip)
         sftp.close()
-        extract_cmd = f"unzip -o {remote_zip} -d /root/minecraft && rm -f {remote_zip}"
+        extract_cmd = f"unzip -o {remote_zip} -d /root/minecraft > /dev/null 2>&1 && rm -f {remote_zip}"
         _, stdout_ext, _ = client.exec_command(extract_cmd)
-        stdout_ext.channel.recv_exit_status()
+        status = stdout_ext.channel.recv_exit_status()
+        if status != 0:
+            raise Exception(f"解壓縮模組包失敗，Exit Code: {status}")
 
         # 4.5 自動重整目錄結構，防範模組包帶有頂層/多層嵌套或中文編碼目錄
         restruct_cmd = (

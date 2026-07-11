@@ -3,6 +3,8 @@
 #### Minecraft 伺服器 Watchdog 死鎖修復（P0）
 - **[修復] 停用 Minecraft 內建 Watchdog 監視器**：為徹底解決 DeceasedCraft 等大型模組包因啟動載入時間過長（超過 60 秒）觸發 Minecraft 內建 Watchdog 機制強制終止 JVM，導致 Linux 核心釋放 12 GB 記憶體時引發跨 CPU TLB shootdown 中斷（IPI）互鎖之 hard lockup 當機問題。我們在 PVE 宿主機開機時成功以自動腳本連入，將 `/root/minecraft/server.properties` 中的 `max-tick-time` 參數修改為 `-1` 並重新啟動 LXC 102 容器。此修改將完全停用內建 Watchdog，允許伺服器有充足時間完成重載與世界生成，並從源頭避免了系統記憶體回收造成的死鎖。
 - **[優化] 後端自動注入 max-tick-time=-1 機制**：修改 `app/routers/minecraft.py` 中的 `_deploy_pack_to_lxc` 部署邏輯。當管理員點擊「切換部署」或上傳新模組包時，系統在解壓並生成 `server.properties` 後，會自動且強制將 `max-tick-time` 改為 `-1`，確保未來切換至任何新模組包（如 DeceasedCraft）均能自動套用此設定，徹底預防設定被覆蓋導致的死鎖復發。
+- **[修復] 解決解壓縮（unzip）Paramiko 緩衝區卡死與驗證機制**：修正 `_deploy_pack_to_lxc` 中執行 `unzip` 時，由於輸出解壓路徑過多導致 Paramiko 輸出緩衝區填滿，造成進程永久卡死的 Bug。將 `unzip` 輸出重導向至 `/dev/null`，並加入對 `recv_exit_status()` 的狀態驗證（若 exit code 非 0 則拋出異常），大幅提升部署腳本的健全度。
+- **[優化] 調整宿主機 Watchdog 超時閾值解決 JVM 退場死鎖**：針對雙路 Xeon 處理器在 JVM 退場釋放大量記憶體（12 GB）時，因核心 lazy vmap 回收與跨 CPU TLB shootdown 產生極為密集的 IPI 廣播導致的 watchdog 誤判定死鎖問題，我們已將 PVE 宿主機的 `kernel.watchdog_thresh` 調大至 `40` 秒，並寫入 `/etc/sysctl.conf` 以永久生效。
 
 ### [V58] - 2026-06-26 更新日誌
 
