@@ -1,3 +1,8 @@
+### [V59] - 2026-07-11 更新日誌
+
+#### Minecraft 伺服器 Watchdog 死鎖修復（P0）
+- **[修復] 停用 Minecraft 內建 Watchdog 監視器**：為徹底解決 DeceasedCraft 等大型模組包因啟動載入時間過長（超過 60 秒）觸發 Minecraft 內建 Watchdog 機制強制終止 JVM，導致 Linux 核心釋放 12 GB 記憶體時引發跨 CPU TLB shootdown 中斷（IPI）互鎖之 hard lockup 當機問題。我們在 PVE 宿主機開機時成功以自動腳本連入，將 `/root/minecraft/server.properties` 中的 `max-tick-time` 參數修改為 `-1` 並重新啟動 LXC 102 容器。此修改將完全停用內建 Watchdog，允許伺服器有充足時間完成重載與世界生成，並從源頭避免了系統記憶體回收造成的死鎖。
+
 ### [V58] - 2026-06-26 更新日誌
 
 #### Minecraft 伺服器多版本核心動態切換與修復（P0）
