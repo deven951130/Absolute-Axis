@@ -5,7 +5,8 @@
 - **[優化] 後端自動注入 max-tick-time=-1 機制**：修改 `app/routers/minecraft.py` 中的 `_deploy_pack_to_lxc` 部署邏輯。當管理員點擊「切換部署」或上傳新模組包時，系統在解壓並生成 `server.properties` 後，會自動且強制將 `max-tick-time` 改為 `-1`，確保未來切換至任何新模組包（如 DeceasedCraft）均能自動套用此設定，徹底預防設定被覆蓋導致的死鎖復發。
 - **[修復] 解決解壓縮（unzip）Paramiko 緩衝區卡死與驗證機制**：修正 `_deploy_pack_to_lxc` 中執行 `unzip` 時，由於輸出解壓路徑過多導致 Paramiko 輸出緩衝區填滿，造成進程永久卡死的 Bug。將 `unzip` 輸出重導向至 `/dev/null`，並加入對 `recv_exit_status()` 的狀態驗證（若 exit code 非 0 則拋出異常），大幅提升部署腳本的健全度。
 - **[優化] 調整宿主機 Watchdog 超時閾值解決 JVM 退場死鎖**：針對雙路 Xeon 處理器在 JVM 退場釋放大量記憶體（12 GB）時，因核心 lazy vmap 回收與跨 CPU TLB shootdown 產生極為密集的 IPI 廣播導致的 watchdog 誤判定死鎖問題，我們已將 PVE 宿主機的 `kernel.watchdog_thresh` 調大至 `40` 秒，並寫入 `/etc/sysctl.conf` 以永久生效。
-- **[修復] 實現 Forge 與 NeoForge 版本動態探測**：重構 `app/routers/minecraft.py` 中的 `run.sh` 生成邏輯。由原本寫死 Forge 與 NeoForge 的版本路徑（如 `1.20.1-47.4.0`）改為動態列出並讀取 `/root/minecraft/libraries` 底下實際存在的核心版本目錄，徹底排除因版本號不符導致 Java 無法開啟 `unix_args.txt` 進而引發啟動無限重試失敗的 Bug。
+- **[修復] 實現 Forge 與 NeoForge 版本動態探測**：重構 `app/routers/minecraft.py` 中的 `run.sh` 生成邏輯。由原本寫死 Forge 與 NeoForge 的版本路徑（如 `1.20.1-47.4.0`）改為動態列出並讀取 `/root/minecraft/libraries` 底下實際存在的核心版本目錄，徹底排除因版本號不符導致 Java 無法開啟 `unix_args.txt`進而引發啟動無限重試失敗的 Bug。
+- **[修復] 修正 python 一行式語法錯誤改採 Here Document 寫入與狀態檢查**：修正 `run_sh_cmd` 在 Python 一行式（`-c` 參數）下使用分號串接 `if/else` 縮排結構導致的 `SyntaxError`。改以 Here Document 將生成指令寫入臨時檔案 `/tmp/gen_run.py` 執行，並加入 exit status 檢查，防範錯誤被靜默忽略。
 
 ### [V58] - 2026-06-26 更新日誌
 

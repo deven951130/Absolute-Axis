@@ -444,28 +444,35 @@ def _deploy_pack_to_lxc(
         stdout_prop.channel.recv_exit_status()
 
         # 6.6 動態探測模組版本並生成 run.sh
+        gen_script = (
+            "import os\n"
+            "mods = os.listdir('/root/minecraft/mods') if os.path.exists('/root/minecraft/mods') else []\n"
+            "is_21 = any('1.21' in m for m in mods)\n"
+            "is_20 = any('1.20' in m for m in mods)\n"
+            "run_path = '/root/minecraft/run.sh'\n"
+            "if is_21 or (not is_20 and os.path.exists('/root/minecraft/libraries/net/neoforged/')):\n"
+            "    neo_dir = '/root/minecraft/libraries/net/neoforged/neoforge'\n"
+            "    neo_versions = os.listdir(neo_dir) if os.path.exists(neo_dir) else []\n"
+            "    neo_ver = neo_versions[0] if neo_versions else '21.1.233'\n"
+            "    cmd = f'java @user_jvm_args.txt -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:+ExplicitGCInvokesConcurrent -XX:+UseLargePages -Xss1M -XX:ConcGCThreads=4 -XX:ZAllocationSpikeTolerance=2 -XX:ZCollectionInterval=120 -Dfile.encoding=UTF-8 @libraries/net/neoforged/neoforge/{neo_ver}/unix_args.txt \"$@\"\\n'\n"
+            "else:\n"
+            "    forge_dir = '/root/minecraft/libraries/net/minecraftforge/forge'\n"
+            "    versions = os.listdir(forge_dir) if os.path.exists(forge_dir) else []\n"
+            "    ver = versions[0] if versions else '1.20.1-47.4.0'\n"
+            "    cmd = f'java @user_jvm_args.txt @libraries/net/minecraftforge/forge/{ver}/unix_args.txt \"$@\"\\n'\n"
+            "open(run_path, 'w').write('#!/usr/bin/env sh\\n' + cmd)\n"
+            "os.chmod(run_path, 0o755)\n"
+        )
         run_sh_cmd = (
-            "python3 -c \""
-            "import os; "
-            "mods = os.listdir('/root/minecraft/mods') if os.path.exists('/root/minecraft/mods') else []; "
-            "is_21 = any('1.21' in m for m in mods); "
-            "is_20 = any('1.20' in m for m in mods); "
-            "run_path = '/root/minecraft/run.sh'; "
-            "if is_21 or (not is_20 and os.path.exists('/root/minecraft/libraries/net/neoforged/')): "
-            "  neo_dir = '/root/minecraft/libraries/net/neoforged/neoforge'; "
-            "  neo_versions = os.listdir(neo_dir) if os.path.exists(neo_dir) else []; "
-            "  neo_ver = neo_versions[0] if neo_versions else '21.1.233'; "
-            "  cmd = f'java @user_jvm_args.txt -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:+ExplicitGCInvokesConcurrent -XX:+UseLargePages -Xss1M -XX:ConcGCThreads=4 -XX:ZAllocationSpikeTolerance=2 -XX:ZCollectionInterval=120 -Dfile.encoding=UTF-8 @libraries/net/neoforged/neoforge/{neo_ver}/unix_args.txt \\\"$@\\\"\\n'; "
-            "else: "
-            "  forge_dir = '/root/minecraft/libraries/net/minecraftforge/forge'; "
-            "  versions = os.listdir(forge_dir) if os.path.exists(forge_dir) else []; "
-            "  ver = versions[0] if versions else '1.20.1-47.4.0'; "
-            "  cmd = f'java @user_jvm_args.txt @libraries/net/minecraftforge/forge/{ver}/unix_args.txt \\\"$@\\\"\\n'; "
-            "open(run_path, 'w').write('#!/usr/bin/env sh\\n' + cmd); "
-            "os.chmod(run_path, 0o755)\""
+            f"cat << 'EOF' > /tmp/gen_run.py\n"
+            f"{gen_script}"
+            f"EOF\n"
+            f"python3 /tmp/gen_run.py && rm -f /tmp/gen_run.py"
         )
         _, stdout_run, _ = client.exec_command(run_sh_cmd)
-        stdout_run.channel.recv_exit_status()
+        run_status = stdout_run.channel.recv_exit_status()
+        if run_status != 0:
+            raise Exception(f"生成 run.sh 啟動檔失敗，Exit Code: {run_status}")
 
         # 7. 啟動 MC
         _, stdout_start, _ = client.exec_command("systemctl start minecraft")
