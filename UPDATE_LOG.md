@@ -2,6 +2,7 @@
 
 #### Minecraft 伺服器 Watchdog 死鎖修復（P0）
 - **[修復] 停用 Minecraft 內建 Watchdog 監視器**：為徹底解決 DeceasedCraft 等大型模組包因啟動載入時間過長（超過 60 秒）觸發 Minecraft 內建 Watchdog 機制強制終止 JVM，導致 Linux 核心釋放 12 GB 記憶體時引發跨 CPU TLB shootdown 中斷（IPI）互鎖之 hard lockup 當機問題。我們在 PVE 宿主機開機時成功以自動腳本連入，將 `/root/minecraft/server.properties` 中的 `max-tick-time` 參數修改為 `-1` 並重新啟動 LXC 102 容器。此修改將完全停用內建 Watchdog，允許伺服器有充足時間完成重載與世界生成，並從源頭避免了系統記憶體回收造成的死鎖。
+- **[優化] 後端自動注入 max-tick-time=-1 機制**：修改 `app/routers/minecraft.py` 中的 `_deploy_pack_to_lxc` 部署邏輯。當管理員點擊「切換部署」或上傳新模組包時，系統在解壓並生成 `server.properties` 後，會自動且強制將 `max-tick-time` 改為 `-1`，確保未來切換至任何新模組包（如 DeceasedCraft）均能自動套用此設定，徹底預防設定被覆蓋導致的死鎖復發。
 
 ### [V58] - 2026-06-26 更新日誌
 

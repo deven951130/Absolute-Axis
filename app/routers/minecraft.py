@@ -427,7 +427,7 @@ def _deploy_pack_to_lxc(
         # 6. 還原新包的地圖（若存在）
         _ssh_restore_world(client, new_pack_name)
 
-        # 6.5 修改 server.properties 的 level-name 指向專屬世界
+        # 6.5 修改 server.properties 的 level-name 指向專屬世界，並強制停用 Watchdog
         slug = _pack_slug(new_pack_name)
         prop_cmd = (
             f"python3 -c \""
@@ -435,6 +435,7 @@ def _deploy_pack_to_lxc(
             f"p = '/root/minecraft/server.properties'; "
             f"c = open(p).read() if os.path.exists(p) else ''; "
             f"c = re.sub(r'^level-name=.*', 'level-name=world_{slug}', c, flags=re.M) if 'level-name=' in c else c + '\\nlevel-name=world_{slug}\\n'; "
+            f"c = re.sub(r'^max-tick-time=.*', 'max-tick-time=-1', c, flags=re.M) if 'max-tick-time=' in c else c + '\\nmax-tick-time=-1\\n'; "
             f"open(p, 'w').write(c)\""
         )
         _, stdout_prop, _ = client.exec_command(prop_cmd)
