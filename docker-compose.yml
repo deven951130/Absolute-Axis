@@ -21,6 +21,9 @@ services:
       - MC_SSH_USER=${MC_SSH_USER:-root}
       - MC_SSH_PASS=${MC_SSH_PASS:-}
       - BLYNK_TOKEN=${BLYNK_TOKEN}
+      # DeviceHub 模組（DeviceHub repo: docs/spec/integration-api.md）
+      - DEVICEHUB_URL=${DEVICEHUB_URL:-http://192.168.0.50:8080}
+      - DEVICEHUB_TOKEN=${DEVICEHUB_TOKEN:-}
       # 必填、不得有預設值：預設值寫在 repo 裡等於公開，任何人都能偽造管理員登入
       - AXIS_JWT_SECRET=${AXIS_JWT_SECRET:?請在 .env 設定 AXIS_JWT_SECRET，產生方式見 .env.example}
       # 只在第一次建立 sparkle 帳號時使用；沒有預設值

@@ -12,6 +12,9 @@
         <button class="btn btn-outline smart-tab-btn" data-tab="devices" onclick="switchSmartTab('devices')" style="flex:1; border:none; font-weight:800;">
             📱 綁定裝置
         </button>
+        <button class="btn btn-outline smart-tab-btn" data-tab="devicehub" onclick="switchSmartTab('devicehub')" style="flex:1; border:none; font-weight:800; display:none;">
+            🛰️ DeviceHub
+        </button>
     </div>
 
     <!-- ============================================== -->
@@ -301,8 +304,34 @@
                     </div>
                 </div>
             </div>
-            
+
         </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- TAB 4: DeviceHub（唯讀模組；控制請到 DeviceHub） -->
+    <!-- ============================================== -->
+    <div id="smart-tab-devicehub" class="smart-tab-content" style="display:none; animation: fadeIn 0.3s ease;">
+        <div class="card" style="display:flex; align-items:center; gap:16px; margin-bottom:1.5rem; border-left:4px solid var(--accent-color);">
+            <div>
+                <div style="font-size:1rem; font-weight:900;">🛰️ DeviceHub 設備與電源管理</div>
+                <div id="dh-status" style="font-size:0.75rem; color:var(--text-muted); margin-top:3px; font-weight:700;">載入中…</div>
+            </div>
+            <a id="dh-open" class="btn btn-primary" target="_blank" rel="noopener noreferrer"
+               style="margin-left:auto; display:none; text-decoration:none;">開啟 DeviceHub 控制台 ↗</a>
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-muted); margin:-0.8rem 0 1.2rem; font-weight:700;">
+            這裡只顯示狀態。開關機等控制請按上方按鈕到 DeviceHub（需在已登入 Tailscale 的裝置上開啟）。
+        </div>
+
+        <h3 style="font-size:1.1rem; margin-bottom:1rem; color:var(--text-main);">設備</h3>
+        <div id="dh-devices" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:1.2rem; margin-bottom:2rem;"></div>
+
+        <h3 style="font-size:1.1rem; margin-bottom:1rem; color:var(--text-main);">虛擬機與容器</h3>
+        <div id="dh-guests" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:1.2rem; margin-bottom:2rem;"></div>
+
+        <h3 style="font-size:1.1rem; margin-bottom:1rem; color:var(--text-main);">最近告警</h3>
+        <div id="dh-alerts" class="card" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
 
 </div>

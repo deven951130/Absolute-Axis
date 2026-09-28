@@ -15,6 +15,9 @@ let _smartFanSpeed = 'AUTO';
  * 由 ui.js switchView('smart') 以及定時自動刷新觸發。
  */
 async function loadSmart() {
+    // DeviceHub 頁籤只給管理員（元件為動態載入，所以在這裡套用）
+    if (typeof dhApplyRole === 'function') dhApplyRole();
+
     // 確保只在當前頁面為 smart 時才進行刷新
     const currentActiveView = document.querySelector('.view-section.active');
     if (!currentActiveView || currentActiveView.id !== 'view-smart') {
@@ -316,6 +319,11 @@ window.switchSmartTab = function(tabId) {
     // 若切換到數據頁，初始化圖表
     if (tabId === 'data' && !window._smartChartsInitialized) {
         initSmartCharts();
+    }
+
+    // DeviceHub 頁籤：開始載入（只在可見時自動刷新）
+    if (tabId === 'devicehub' && typeof loadDeviceHub === 'function') {
+        loadDeviceHub();
     }
 };
 

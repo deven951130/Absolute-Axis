@@ -9,7 +9,7 @@ from sqlalchemy import text
 from app.config import BASE_PATH, ALLOWED_ORIGINS
 from app.database import engine, Base
 from app.utils import init_db_user
-from app.routers import auth, admin, user, system, docker, nas, proxmox, minecraft, smart_home, vm_user, gigs, feedback, github_repos
+from app.routers import auth, admin, user, system, docker, nas, proxmox, minecraft, smart_home, vm_user, gigs, feedback, github_repos, devicehub
 
 app = FastAPI(title="Absolute Axis Server")
 
@@ -77,6 +77,7 @@ app.include_router(vm_user.router)
 app.include_router(gigs.router)
 app.include_router(feedback.router)
 app.include_router(github_repos.router)
+app.include_router(devicehub.router)
 
 
 # ----------------- 靜態與首頁路由 -----------------
