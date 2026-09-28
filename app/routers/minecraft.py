@@ -17,8 +17,9 @@ router = APIRouter(prefix="/api/minecraft", tags=["minecraft"])
 # LXC 容器連線設定
 MC_LXC_IP = "192.168.0.130"
 MC_LXC_PORT = 25565
-MC_SSH_USER = "root"
-MC_SSH_PASS = "951130"
+# SSH 帳密改由環境變數提供，不寫在程式碼裡（舊的明碼密碼已在 git 歷史中，請務必更換）
+MC_SSH_USER = os.getenv("MC_SSH_USER", "root")
+MC_SSH_PASS = os.getenv("MC_SSH_PASS", "")
 MC_SCREEN_NAME = "mc"
 
 

@@ -4,12 +4,12 @@ from typing import List
 
 from app.database import get_db, VMAccount
 from app.models import VMAccountCreate
-from app.utils import get_current_user_obj, log_event
+from app.utils import get_current_user_obj, log_event, require_admin
 
 router = APIRouter(prefix="/api/proxmox", tags=["proxmox_users"])
 
 @router.get("/vm_users")
-def get_vm_users(user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
+def get_vm_users(user: dict = Depends(require_admin), db: Session = Depends(get_db)):
     accounts = db.query(VMAccount).all()
     res = []
     for acc in accounts:
@@ -23,7 +23,7 @@ def get_vm_users(user: dict = Depends(get_current_user_obj), db: Session = Depen
     return res
 
 @router.post("/vm_users")
-def create_vm_user(req: VMAccountCreate, user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
+def create_vm_user(req: VMAccountCreate, user: dict = Depends(require_admin), db: Session = Depends(get_db)):
     # 檢查是否已存在
     existing = db.query(VMAccount).filter(VMAccount.username == req.username).first()
     if existing:
@@ -43,7 +43,7 @@ def create_vm_user(req: VMAccountCreate, user: dict = Depends(get_current_user_o
     return {"status": "ok", "id": new_acc.id}
 
 @router.delete("/vm_users/{id}")
-def delete_vm_user(id: int, user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
+def delete_vm_user(id: int, user: dict = Depends(require_admin), db: Session = Depends(get_db)):
     acc = db.query(VMAccount).filter(VMAccount.id == id).first()
     if not acc:
         raise HTTPException(status_code=404, detail="找不到此帳號")

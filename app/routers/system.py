@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.models import MessageRequest
-from app.utils import get_current_user_obj, log_event, get_dir_size
+from app.utils import get_current_user_obj, log_event, get_dir_size, require_admin
 from app.config import SYS_ROOT, NAS_ROOT, BLYNK_TOKEN, BASE_PATH
 from app.database import get_db, AuditLog
 
@@ -445,7 +445,7 @@ def post_msg(req: MessageRequest, user: dict = Depends(get_current_user_obj)):
 
 
 @router.post("/api/action/restart")
-def restart_server(user: dict = Depends(get_current_user_obj)):
+def restart_server(user: dict = Depends(require_admin)):
     log_event(user["username"], "SYSTEM: Initiated a server process restart.")
     import threading
     def die():

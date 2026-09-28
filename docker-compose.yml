@@ -14,9 +14,17 @@ services:
       - PVE_HOST=${PVE_HOST:-192.168.0.138}
       - PVE_USER=${PVE_USER:-root@pam}
       - PVE_PASS=${PVE_PASS}
+      # 建議改用最小權限的 API token（設定後優先使用，不再需要 root 密碼呼叫 API）
+      - PVE_TOKEN_ID=${PVE_TOKEN_ID:-}
+      - PVE_TOKEN_SECRET=${PVE_TOKEN_SECRET:-}
+      - PVE_CA_FILE=${PVE_CA_FILE:-}
+      - MC_SSH_USER=${MC_SSH_USER:-root}
+      - MC_SSH_PASS=${MC_SSH_PASS:-}
       - BLYNK_TOKEN=${BLYNK_TOKEN}
-      - AXIS_JWT_SECRET=${AXIS_JWT_SECRET:-axis_jwt_secret_key_deven951130}
-      - AXIS_ADMIN_PASS=${AXIS_ADMIN_PASS:-951130}
+      # 必填、不得有預設值：預設值寫在 repo 裡等於公開，任何人都能偽造管理員登入
+      - AXIS_JWT_SECRET=${AXIS_JWT_SECRET:?請在 .env 設定 AXIS_JWT_SECRET，產生方式見 .env.example}
+      # 只在第一次建立 sparkle 帳號時使用；沒有預設值
+      - AXIS_ADMIN_PASS=${AXIS_ADMIN_PASS:-}
       - AXIS_BASE_PATH=/app
       - AXIS_SYS_ROOT=/
       - AXIS_NAS_PATH=/app/nas

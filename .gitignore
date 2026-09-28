@@ -67,3 +67,5 @@ scratch/*.tar
 *.zip
 *.gz
 cloudflared.exe
+# 一次性除錯腳本與執行期資料（曾含明碼密碼，請勿再提交）
+scratch/

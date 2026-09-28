@@ -87,6 +87,16 @@ def get_current_user_obj(authorization: str = Header(None), db: Session = Depend
         
     return {"username": user.username, "role": user.role, "avatar": user.avatar, "quota_bytes": user.quota_bytes}
 
+def require_admin(user: dict = Depends(get_current_user_obj)):
+    """只允許管理員。用在會影響整台主機或其他使用者的 API（容器、虛擬機、重啟、VM 帳號）。
+
+    前端隱藏按鈕不算保護：一般會員只要帶自己的 token 直接呼叫 API 就能執行，所以一定要在後端檢查。
+    """
+    if user.get("role") not in ("admin", "Administrator"):
+        raise HTTPException(status_code=403, detail="需要管理員權限")
+    return user
+
+
 def get_current_user_obj_optional(authorization: str = Header(None), db: Session = Depends(get_db)):
     if not authorization or not authorization.startswith("Bearer "): 
         return None

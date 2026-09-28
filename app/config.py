@@ -31,6 +31,10 @@ if not _jwt_secret:
     print("WARNING: AXIS_JWT_SECRET not set. Using a random temporary key.")
     print("WARNING: All sessions will be invalidated on restart.")
     print("WARNING: Set AXIS_JWT_SECRET in .env for production use.")
+elif len(_jwt_secret) < 32:
+    # 太短的密鑰可被暴力猜出，等同任何人都能偽造管理員登入
+    sys.exit("ERROR: AXIS_JWT_SECRET 太短（至少 32 字元）。請用 "
+             "python -c \"import secrets; print(secrets.token_hex(32))\" 產生後放進 .env")
 JWT_SECRET = _jwt_secret
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 Days
@@ -39,12 +43,18 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 Days
 PVE_HOST = os.getenv("PVE_HOST", "192.168.0.138")
 PVE_USER = os.getenv("PVE_USER", "root@pam")
 PVE_PASS = os.getenv("PVE_PASS")
+# 建議：最小權限的 API token（例如 axis@pve!axis），設定後 API 呼叫優先使用它，不再用 root 密碼
+PVE_TOKEN_ID = os.getenv("PVE_TOKEN_ID", "")
+PVE_TOKEN_SECRET = os.getenv("PVE_TOKEN_SECRET", "")
+# Proxmox 叢集 CA（/etc/pve/pve-root-ca.pem 的副本）；設定後會驗證 TLS 憑證，未設定則維持舊行為（不驗證）
+PVE_CA_FILE = os.getenv("PVE_CA_FILE", "")
 
 # IoT Config
 BLYNK_TOKEN = os.getenv("BLYNK_TOKEN")
 
 # CORS Config
-ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",")]
+# 預設不開放任何跨來源請求（同網域的前端不受影響）；需要時在 .env 明確列出網域，不要用 *
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 
 QUOTA_PER_USER = 100 * 1024 * 1024 * 1024  # 100GB 配額
 ACTIVE_SESSIONS = {}
