@@ -1,324 +1,219 @@
-// Absolute Axis - Gig Platform Module
+// Absolute Axis - Gig Platform Module（接案中樞）
+// 案件名稱、需求、聯絡方式、拒絕理由、帳號名稱都是使用者輸入（未登入的訪客也能發案）：
+// 一律用 h()／textContent 顯示（dom.js），按鈕用事件綁定，不組 HTML／onclick 字串。
 let currentGigTab = 'active';
 window.allGigsCache = [];
+
+const _GIG_STATUS = {
+    Open: ['info', '開放承接'], Assigned: ['warn', '進行中'], Completed: ['ok', '已完成'], Rejected: ['bad', '已拒絕'],
+};
+
+function _gigDetail(data, fallback) {
+    return typeof (data && data.detail) === 'string' ? data.detail : fallback;
+}
+
+function _gigNote(text) {
+    const container = document.getElementById('gigs-list-container');
+    if (container) container.replaceChildren(h('p', { class: 'w-muted post-empty', text }));
+}
 
 async function loadGigs() {
     const container = document.getElementById('gigs-list-container');
     if (!container) return;
-
     const token = localStorage.getItem('axis_token');
     const gigsNav = document.getElementById('gigs-intro-navbar');
-    if (gigsNav) {
-        gigsNav.style.display = !token ? 'flex' : 'none';
-    }
+    if (gigsNav) gigsNav.style.display = !token ? 'flex' : 'none';
     const contactContainer = document.getElementById('gig-contact-container');
-    if (contactContainer) {
-        contactContainer.style.display = !token ? 'block' : 'none';
-    }
-
+    if (contactContainer) contactContainer.style.display = !token ? 'block' : 'none';
     try {
         const res = await authFetch('/api/gigs');
         if (!res.ok) {
-            container.innerHTML = '<div style="color:var(--text-muted); padding:2rem; text-align:center;">無法取得案件清單</div>';
+            _gigNote('無法取得案件清單');
             return;
         }
-        const gigs = await res.json();
-        window.allGigsCache = gigs;
+        window.allGigsCache = await res.json();
         renderGigsList();
     } catch (e) {
-        container.innerHTML = '<div style="color:var(--text-muted); padding:2rem; text-align:center;">載入案件發生錯誤</div>';
-        console.error("Failed to load gigs:", e);
+        console.error('Failed to load gigs:', e);
+        _gigNote('載入案件時發生錯誤');
     }
 }
 
 function switchGigTab(tab) {
     currentGigTab = tab;
-    const tabActive = document.getElementById('tab-gig-active');
-    const tabCompleted = document.getElementById('tab-gig-completed');
-    if (tabActive && tabCompleted) {
-        if (tab === 'active') {
-            tabActive.classList.add('active');
-            tabCompleted.classList.remove('active');
-        } else {
-            tabActive.classList.remove('active');
-            tabCompleted.classList.add('active');
-        }
-    }
+    const active = document.getElementById('tab-gig-active');
+    const completed = document.getElementById('tab-gig-completed');
+    if (active) active.setAttribute('aria-pressed', String(tab === 'active'));
+    if (completed) completed.setAttribute('aria-pressed', String(tab === 'completed'));
     renderGigsList();
 }
 window.switchGigTab = switchGigTab;
 
+function _gigButton(text, cls, onclick) {
+    return h('button', { type: 'button', class: `btn ${cls} btn-sm`, text, onclick });
+}
+
 function renderGigsList() {
     const container = document.getElementById('gigs-list-container');
     if (!container || !window.allGigsCache) return;
-
-    container.innerHTML = '';
-
-    // 依據頁籤狀態過濾案件
-    const filteredGigs = window.allGigsCache.filter(g => {
-        if (currentGigTab === 'completed') {
-            return g.status === 'Completed';
-        } else {
-            return g.status === 'Open' || g.status === 'Assigned'; // 排除 Completed 與 Rejected
-        }
-    });
-
-    if (filteredGigs.length === 0) {
-        const emptyMsg = currentGigTab === 'completed' ? '目前沒有已完成的委託案件' : '目前沒有進行中的委託案件';
-        container.innerHTML = `<div style="color:var(--text-muted); padding:3rem; text-align:center; font-weight:800;">${emptyMsg}</div>`;
+    const gigs = window.allGigsCache.filter((g) => currentGigTab === 'completed'
+        ? g.status === 'Completed'
+        : g.status === 'Open' || g.status === 'Assigned');
+    if (!gigs.length) {
+        _gigNote(currentGigTab === 'completed' ? '目前沒有已完成的委託。' : '目前沒有進行中的委託。');
         return;
     }
-
     const token = localStorage.getItem('axis_token');
-    const currentUser = localStorage.getItem('axis_user');
+    const me = localStorage.getItem('axis_user');
+    const isAdmin = localStorage.getItem('axis_role') === 'Administrator';
 
-    filteredGigs.forEach(g => {
-        const item = document.createElement('div');
-        item.className = 'file-list-item';
-        item.style = 'display:flex; flex-direction:column; padding:1.5rem; gap:12px; margin-bottom:12px; border-radius:12px; border:1px solid var(--border-color); background:var(--card-bg);';
-        
-        // 狀態與顏色標籤
-        let statusBadge = '';
-        if (g.status === 'Open') {
-            statusBadge = '<span style="background:color-mix(in srgb, var(--accent-color) 15%, transparent); color:var(--accent-color); border:1px solid color-mix(in srgb, var(--accent-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">開放承接</span>';
-        } else if (g.status === 'Assigned') {
-            statusBadge = '<span style="background:color-mix(in srgb, var(--warning-color) 15%, transparent); color:var(--warning-color); border:1px solid color-mix(in srgb, var(--warning-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">進行中</span>';
-        } else if (g.status === 'Completed') {
-            statusBadge = '<span style="background:color-mix(in srgb, var(--success-color) 15%, transparent); color:var(--success-color); border:1px solid color-mix(in srgb, var(--success-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已完成</span>';
-        } else if (g.status === 'Rejected') {
-            statusBadge = '<span style="background:color-mix(in srgb, var(--danger-color) 15%, transparent); color:var(--danger-color); border:1px solid color-mix(in srgb, var(--danger-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已拒絕</span>';
-        }
-
-        // 按鈕與操作控制
-        const isAdmin = localStorage.getItem('axis_role') === 'Administrator';
-        let actionHtml = '';
+    container.replaceChildren(...gigs.map((g) => {
+        const [tone, label] = _GIG_STATUS[g.status] || ['muted', g.status];
+        const actions = h('div', { class: 'post-actions' });
+        const workerNote = (suffix = '') => h('span', { class: 'post-meta', text: `承接人：${g.worker || '—'}${suffix}` });
 
         if (g.status === 'Open') {
             if (!token) {
-                actionHtml = `<button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;" onclick="showLoginOverlay()">登入以承接案件</button>`;
+                actions.append(_gigButton('登入以承接案件', 'btn-outline', () => showLoginOverlay()));
             } else {
-                let buttons = [];
-                if (g.creator === currentUser || isAdmin) {
-                    const btnText = g.creator === currentUser ? "撤回案件" : "刪除案件";
-                    buttons.push(`<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem;" onclick="deleteGig(${g.id})">${btnText}</button>`);
+                if (g.creator === me || isAdmin) {
+                    actions.append(_gigButton(g.creator === me ? '撤回案件' : '刪除案件', 'btn-danger', () => deleteGig(g.id)));
                 }
-                if (g.creator !== currentUser) {
-                    buttons.push(`<button class="btn btn-primary" style="padding:6px 16px; font-size:0.75rem;" onclick="acceptGig(${g.id})">承接委託</button>`);
-                    buttons.push(`<button class="btn btn-danger" style="padding:6px 16px; font-size:0.75rem; margin-left:8px;" onclick="rejectGigPrompt(${g.id})">拒絕承接</button>`);
+                if (g.creator !== me) {
+                    actions.append(
+                        _gigButton('承接委託', 'btn-primary', () => acceptGig(g.id)),
+                        _gigButton('拒絕承接', 'btn-outline', () => rejectGigPrompt(g.id)));
                 }
-                actionHtml = buttons.join(' ');
             }
         } else if (g.status === 'Assigned') {
-            let buttons = [];
-            if (currentUser === g.creator || currentUser === g.worker || isAdmin) {
-                buttons.push(`<button class="btn btn-outline" style="color:var(--success-color); padding:6px 16px; font-size:0.75rem;" onclick="completeGig(${g.id})">標記為已完成</button>`);
+            if (me === g.creator || me === g.worker || isAdmin) {
+                actions.append(_gigButton('標記為已完成', 'btn-primary', () => completeGig(g.id)));
             }
-            if (isAdmin) {
-                buttons.push(`<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem; margin-left:8px;" onclick="deleteGig(${g.id})">刪除案件</button>`);
-            }
-            actionHtml = buttons.join(' ') || `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">承接人: ${g.worker}</span>`;
-            if (buttons.length > 0) {
-                actionHtml += `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-left:12px;">承接人: ${g.worker}</span>`;
-            }
+            if (isAdmin) actions.append(_gigButton('刪除案件', 'btn-danger', () => deleteGig(g.id)));
+            actions.append(workerNote());
         } else if (g.status === 'Completed') {
-            let buttons = [];
-            if (isAdmin) {
-                buttons.push(`<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem;" onclick="deleteGig(${g.id})">刪除案件</button>`);
-            }
-            actionHtml = (buttons.join(' ') + ` <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-left:8px;">承接人: ${g.worker} (已驗收)</span>`).trim();
-        } else if (g.status === 'Rejected') {
-            actionHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;">已拒絕承接</span>`;
+            if (isAdmin) actions.append(_gigButton('刪除案件', 'btn-danger', () => deleteGig(g.id)));
+            actions.append(workerNote('（已驗收）'));
         }
 
-        // 拒絕理由區塊
-        let rejectReasonHtml = '';
-        if (g.status === 'Rejected') {
-            rejectReasonHtml = `<div style="font-size:0.85rem; color:var(--danger-color); margin-top:8px; font-weight:700; border-top:1px dashed color-mix(in srgb, var(--danger-color) 20%, transparent); padding-top:8px;">拒絕原因：${g.reject_reason || '未提供理由'}</div>`;
-        }
-
-        const creatorText = g.creator === 'Guest' && g.contact ? `Guest (聯絡方式: ${g.contact})` : g.creator;
-
-        item.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
-                <div style="font-weight:900; font-size:1.1rem; color:var(--text-main);">${g.title}</div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    ${statusBadge}
-                    <span style="font-weight:900; color:var(--accent-color); font-size:1rem;">$ ${g.budget} TWD</span>
-                </div>
-            </div>
-            <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.6; word-break:break-all;">
-                ${g.description.replace(/\n/g, '<br>')}
-            </div>
-            ${rejectReasonHtml}
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:0.72rem; color:var(--text-muted); font-weight:800;">
-                <div>
-                    <span>發佈者: ${creatorText}</span>
-                    <span style="margin: 0 10px;">|</span>
-                    <span>時間: ${g.created_at.replace('T', ' ').substring(0, 19)}</span>
-                </div>
-                <div>
-                    ${actionHtml}
-                </div>
-            </div>
-        `;
-        container.appendChild(item);
-    });
+        const creator = g.creator === 'Guest' && g.contact ? `訪客（聯絡：${g.contact}）` : g.creator;
+        return h('article', { class: 'post-card' },
+            h('div', { class: 'post-head' },
+                h('h4', { class: 'post-title', text: g.title }),
+                h('span', { class: `pill ${tone}`, text: label }),
+                h('span', { class: 'post-budget', text: `NT$ ${Number(g.budget || 0).toLocaleString('zh-TW')}` })),
+            h('p', { class: 'post-body', text: g.description }),
+            g.status === 'Rejected' ? h('p', { class: 'post-warn', text: `拒絕原因：${g.reject_reason || '未提供理由'}` }) : null,
+            h('div', { class: 'post-meta', text: `${creator} · ${shortTime(g.created_at)}` }),
+            actions.childNodes.length ? actions : null);
+    }));
 }
 
 async function submitGig() {
     const token = localStorage.getItem('axis_token');
-    const titleVal = document.getElementById('gig-title-input').value.trim();
-    const descVal = document.getElementById('gig-desc-input').value.trim();
-    const budgetVal = parseInt(document.getElementById('gig-budget-input').value);
-    let contactVal = null;
-
+    const title = document.getElementById('gig-title-input').value.trim();
+    const description = document.getElementById('gig-desc-input').value.trim();
+    const budget = parseInt(document.getElementById('gig-budget-input').value, 10);
+    let contact = null;
     if (!token) {
-        contactVal = document.getElementById('gig-contact-input').value.trim();
-        if (!contactVal) {
-            if (typeof showToast === 'function') {
-                showToast("未登入訪客請填寫聯絡方式", "error");
-            } else {
-                alert("未登入訪客請填寫聯絡方式");
-            }
+        contact = document.getElementById('gig-contact-input').value.trim();
+        if (!contact) {
+            toastText('未登入的訪客請留下聯絡方式', 'error');
             return;
         }
     }
-
-    if (!titleVal || !descVal || isNaN(budgetVal) || budgetVal <= 0) {
-        if (typeof showToast === 'function') {
-            showToast("請填寫完整的案件名稱、需求描述與有效的預算金額", "error");
-        } else {
-            alert("請填寫完整的案件資訊");
-        }
+    if (!title || !description || isNaN(budget) || budget <= 0) {
+        toastText('請填寫案件名稱、需求內容與有效的預算', 'error');
         return;
     }
-
     try {
         const res = await authFetch('/api/gigs', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title: titleVal,
-                description: descVal,
-                budget: budgetVal,
-                contact: contactVal
-            })
+            body: JSON.stringify({ title, description, budget, contact })
         });
-
         if (res.ok) {
-            if (typeof showToast === 'function') showToast("案件發佈成功", "success");
-            document.getElementById('gig-title-input').value = '';
-            document.getElementById('gig-desc-input').value = '';
-            document.getElementById('gig-budget-input').value = '';
-            if (document.getElementById('gig-contact-input')) {
-                document.getElementById('gig-contact-input').value = '';
+            toastText('案件已發佈', 'success');
+            for (const id of ['gig-title-input', 'gig-desc-input', 'gig-budget-input', 'gig-contact-input']) {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
             }
             loadGigs();
         } else {
-            const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "發佈失敗", "error");
+            toastText(_gigDetail(await res.json().catch(() => null), '發佈失敗'), 'error');
         }
     } catch (err) {
         console.error(err);
+        toastText('連線錯誤，請稍後再試', 'error');
+    }
+}
+
+function _gigNeedLogin() {
+    if (localStorage.getItem('axis_token')) return false;
+    if (typeof showLoginOverlay === 'function') showLoginOverlay();
+    return true;
+}
+
+async function _gigPost(url, body, okText) {
+    try {
+        const res = await authFetch(url, body === undefined ? { method: 'POST' } : {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        });
+        if (res.ok) {
+            toastText(okText, 'success');
+            loadGigs();
+        } else {
+            toastText(_gigDetail(await res.json().catch(() => null), '操作失敗'), 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        toastText('連線錯誤，請稍後再試', 'error');
     }
 }
 
 async function acceptGig(id) {
-    const token = localStorage.getItem('axis_token');
-    if (!token) {
-        if (typeof showLoginOverlay === 'function') showLoginOverlay();
-        return;
-    }
-    try {
-        const res = await authFetch(`/api/gigs/${id}/accept`, { method: 'POST' });
-        if (res.ok) {
-            if (typeof showToast === 'function') showToast("已成功承接該委託案件", "success");
-            loadGigs();
-        } else {
-            const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "承接失敗", "error");
-        }
-    } catch (e) {
-        console.error(e);
-    }
+    if (_gigNeedLogin()) return;
+    await _gigPost(`/api/gigs/${encodeURIComponent(id)}/accept`, undefined, '已承接這個委託');
 }
 
 async function completeGig(id) {
-    const token = localStorage.getItem('axis_token');
-    if (!token) {
-        if (typeof showLoginOverlay === 'function') showLoginOverlay();
-        return;
-    }
-    try {
-        const res = await authFetch(`/api/gigs/${id}/complete`, { method: 'POST' });
-        if (res.ok) {
-            if (typeof showToast === 'function') showToast("案件已標記為完成", "success");
-            loadGigs();
-        } else {
-            const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "操作失敗", "error");
-        }
-    } catch (e) {
-        console.error(e);
-    }
+    if (_gigNeedLogin()) return;
+    if (!(await axisAsk({ title: '把這個案件標記為已完成？', message: '確認成果已交付並通過驗收。', ok: '標記完成' }))) return;
+    await _gigPost(`/api/gigs/${encodeURIComponent(id)}/complete`, undefined, '案件已標記為完成');
 }
 
 async function deleteGig(id) {
-    const token = localStorage.getItem('axis_token');
-    if (!token) {
-        if (typeof showLoginOverlay === 'function') showLoginOverlay();
-        return;
-    }
-    if (!confirm("確定要撤回該案件嗎？")) return;
+    if (_gigNeedLogin()) return;
+    if (!(await axisAsk({ title: '撤回／刪除這個案件？', message: '刪除後無法復原。', ok: '刪除', danger: true }))) return;
     try {
-        const res = await authFetch(`/api/gigs/${id}`, { method: 'DELETE' });
+        const res = await authFetch(`/api/gigs/${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (res.ok) {
-            if (typeof showToast === 'function') showToast("已成功撤回案件", "success");
+            toastText('案件已刪除', 'success');
             loadGigs();
         } else {
-            const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "撤回失敗", "error");
+            toastText(_gigDetail(await res.json().catch(() => null), '刪除失敗'), 'error');
         }
     } catch (e) {
         console.error(e);
+        toastText('連線錯誤，請稍後再試', 'error');
     }
 }
 
 async function rejectGigPrompt(id) {
-    const token = localStorage.getItem('axis_token');
-    if (!token) {
-        if (typeof showLoginOverlay === 'function') showLoginOverlay();
+    if (_gigNeedLogin()) return;
+    const reason = await axisAsk({ title: '拒絕承接這個案件', message: '請寫下原因，發案人會看到。', ok: '拒絕承接',
+                                   danger: true, input: '', placeholder: '拒絕原因' });
+    if (reason === null) return;
+    if (!reason.trim()) {
+        toastText('拒絕原因不能是空的', 'error');
         return;
     }
-    
-    const reason = prompt("請輸入拒絕承接理由：");
-    if (reason === null) return; // 使用者點選取消
-    
-    const trimmedReason = reason.trim();
-    if (!trimmedReason) {
-        if (typeof showToast === 'function') {
-            showToast("拒絕理由不能為空", "error");
-        } else {
-            alert("拒絕理由不能為空");
-        }
-        return;
-    }
-    
-    try {
-        const res = await authFetch(`/api/gigs/${id}/reject`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reason: trimmedReason })
-        });
-        
-        if (res.ok) {
-            if (typeof showToast === 'function') showToast("已成功拒絕承接該案件", "success");
-            loadGigs();
-        } else {
-            const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "操作失敗", "error");
-        }
-    } catch (e) {
-        console.error(e);
-    }
+    await _gigPost(`/api/gigs/${encodeURIComponent(id)}/reject`, { reason: reason.trim() }, '已拒絕承接');
 }
+
+window.loadGigs = loadGigs;
+window.submitGig = submitGig;
+window.acceptGig = acceptGig;
+window.completeGig = completeGig;
+window.deleteGig = deleteGig;
+window.rejectGigPrompt = rejectGigPrompt;

@@ -1,46 +1,38 @@
+<!-- Absolute Axis - 接案中樞（gigs.js 以 DOM＋textContent 產生清單；訪客也能發案，所有文字都不插入 HTML） -->
 <div id="view-gigs" class="view-section">
-    <div style="display:grid; grid-template-columns: 1fr 2fr; gap:2rem; width: 100%;">
-        <!-- 發佈新案件 -->
-        <div>
-            <div class="card" style="position: sticky; top: 2rem;">
-                <h3 style="margin-top: 0; margin-bottom: 1.5rem; color: var(--accent-color); font-weight: 900; letter-spacing: 0.5px;">發佈案件需求</h3>
-                <div style="display:flex; flex-direction:column; gap:1.2rem;">
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">案件名稱</label>
-                        <input type="text" id="gig-title-input" placeholder="請輸入案件名稱" class="t-input">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">需求詳細描述</label>
-                        <textarea id="gig-desc-input" placeholder="請詳細說明案件需求與驗證標準" class="t-input" style="height:120px; resize:none; font-family:inherit;"></textarea>
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">專案預算 (TWD)</label>
-                        <input type="number" id="gig-budget-input" placeholder="例如 5000" class="t-input">
-                    </div>
-                    <div id="gig-contact-container" style="display:none;">
-                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">聯絡方式 (未登入訪客必填)</label>
-                        <input type="text" id="gig-contact-input" placeholder="請留下 Email、手機或 Line ID 等聯絡管道" class="t-input">
-                    </div>
-                    <button class="btn btn-primary" onclick="submitGig()" style="height:48px; width:100%; font-weight:800; margin-top:0.5rem;">確認發佈案件</button>
-                </div>
+    <div class="page-wrap wide">
+        <div class="page-head">
+            <div>
+                <p class="w-muted page-sub page-lead">發佈委託、承接案件與追蹤進度。</p>
             </div>
         </div>
-
-        <!-- 案件列表 -->
-        <div>
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <h3 style="margin:0; color:var(--text-main); font-weight:900; letter-spacing:0.5px;">當前委託案件清單</h3>
-                    <button class="btn btn-outline" style="padding:6px 12px; font-size:0.75rem;" onclick="loadGigs()">重新整理</button>
+        <div class="two-pane">
+            <section class="form-card" aria-labelledby="gig-form-title">
+                <h3 id="gig-form-title" class="card-h">發佈案件</h3>
+                <div class="ios-group ios-form-rows">
+                    <label><span>名稱</span><input type="text" id="gig-title-input" maxlength="100" placeholder="案件名稱"></label>
+                    <label class="ta"><span>需求</span><textarea id="gig-desc-input" rows="5" placeholder="需求內容與驗收標準"></textarea></label>
+                    <label><span>預算</span><input type="number" id="gig-budget-input" min="1" inputmode="numeric" placeholder="新台幣，例如 5000"></label>
                 </div>
-                <div class="pricing-tab-row" style="justify-content: flex-start; padding: 0 0 1rem 0; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
-                    <button class="pricing-tab active" onclick="switchGigTab('active')" id="tab-gig-active" style="padding: 6px 16px; font-size: 0.8rem;">進行中 / 開放中</button>
-                    <button class="pricing-tab" onclick="switchGigTab('completed')" id="tab-gig-completed" style="padding: 6px 16px; font-size: 0.8rem;">已完成委託</button>
+                <div id="gig-contact-container" style="display:none;">
+                    <p class="ios-caption">未登入的訪客請留下聯絡方式</p>
+                    <div class="ios-group ios-form-rows">
+                        <label><span>聯絡</span><input type="text" id="gig-contact-input" maxlength="100" placeholder="Email、手機或 Line ID"></label>
+                    </div>
                 </div>
-                <div id="gigs-list-container" style="display:flex; flex-direction:column; gap:1rem;">
-                    <div style="color:var(--text-muted); padding:2rem; text-align:center;">載入中...</div>
+                <button type="button" class="btn btn-primary btn-block" onclick="submitGig()">發佈</button>
+            </section>
+            <section aria-labelledby="gig-list-title">
+                <div class="list-head">
+                    <h3 id="gig-list-title" class="card-h">委託案件</h3>
+                    <div class="seg" role="group" aria-label="案件狀態">
+                        <button type="button" id="tab-gig-active" aria-pressed="true" onclick="switchGigTab('active')">進行中</button>
+                        <button type="button" id="tab-gig-completed" aria-pressed="false" onclick="switchGigTab('completed')">已完成</button>
+                    </div>
+                    <button type="button" class="round-btn sm" aria-label="重新整理" onclick="loadGigs()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 5v6h-6"></path></svg></button>
                 </div>
-            </div>
+                <div id="gigs-list-container" class="post-list"><p class="w-muted">載入中…</p></div>
+            </section>
         </div>
     </div>
 </div>
