@@ -50,10 +50,10 @@ function _axisAskDialog() {
 }
 
 /**
- * axisAsk({ title, message, ok, danger })              → Promise<boolean>
+ * axisAsk({ title, message, ok, cancel, danger })      → Promise<boolean>（取消鈕文字可自訂）
  * axisAsk({ title, message, ok, input: '', placeholder }) → Promise<string|null>（取消 = null）
  */
-function axisAsk({ title, message = '', ok = '確定', danger = false, input = null, placeholder = '' }) {
+function axisAsk({ title, message = '', ok = '確定', cancel = '取消', danger = false, input = null, placeholder = '' }) {
     const dlg = _axisAskDialog();
     if (typeof dlg.showModal !== 'function') {  // 極舊的瀏覽器：退回原生視窗
         return Promise.resolve(input === null ? window.confirm(`${title}\n\n${message}`) : window.prompt(title, input));
@@ -69,6 +69,7 @@ function axisAsk({ title, message = '', ok = '確定', danger = false, input = n
     field.value = input === null ? '' : input;
     field.placeholder = placeholder;
     okBtn.textContent = ok;
+    cancelBtn.textContent = cancel;
     okBtn.className = danger ? 'btn btn-danger-solid' : 'btn btn-primary';
     return new Promise((resolve) => {
         const done = (value) => {
