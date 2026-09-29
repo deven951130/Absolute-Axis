@@ -288,16 +288,22 @@ async function loadSpecs() {
     const res = await authFetch('/api/sys_config');
     if (!res.ok) return;
     const s = await res.json();
-    const ks = [['OS','os'],['PYTHON','python'],['CPU','cpu_cores'],['RAM','ram_total'],['HOST','hostname'],['UP','boot_time'],['GPU','gpu']];
+    const ks = [['作業系統','os'],['Python','python'],['CPU 核心','cpu_cores'],['記憶體','ram_total'],['主機名稱','hostname'],['開機時間','boot_time'],['GPU','gpu']];
     const el = document.getElementById('sys-specs-grid');
-    if (el) {
-        el.innerHTML = ks.map(([l,k]) => `
-            <div style="background:var(--bg-color);padding:15px;border-radius:8px;border:1px solid var(--border-color);">
-                <div style="font-size:0.6rem;color:var(--text-muted);font-weight:800;margin-bottom:5px;">${l}</div>
-                <div style="font-size:0.85rem;font-weight:600;color:var(--text-main);">${s[k]}</div>
-            </div>
-        `).join('');
-    }
+    if (!el) return;
+    // 設定頁「伺服器規格」：iOS 清單列（名稱／數值），伺服器回傳的字串一律 textContent
+    el.replaceChildren(...ks.map(([label, k]) => {
+        const row = document.createElement('div');
+        row.className = 'ios-row static';
+        const l = document.createElement('span');
+        l.className = 'ios-label';
+        l.textContent = label;
+        const v = document.createElement('span');
+        v.className = 'ios-value';
+        v.textContent = s[k] == null || s[k] === '' ? '—' : String(s[k]);
+        row.append(l, v);
+        return row;
+    }));
 }
 
 async function broadCast() {

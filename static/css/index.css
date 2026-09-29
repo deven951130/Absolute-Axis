@@ -1768,6 +1768,72 @@ select.t-input option { background: var(--card-solid); color: var(--text-main); 
 .ios-group input::placeholder { color: var(--text-muted); }
 @media (max-width: 900px) { .vm-acc-grid { grid-template-columns: minmax(0, 1fr) !important; } }
 
+/* ---------- 智慧宅控「歷史」（history.js） ---------- */
+.hist-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.hist-bar .w-cap { margin-right: auto; }
+.hist-device { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.hist-device select { margin: 0 !important; padding: 7px 12px !important; width: auto; min-width: 160px; }
+.seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 11px; background: var(--fill-2); }
+.seg button { height: 32px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: var(--text-main); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--seg-active); font-weight: 600; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); }
+.hist-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.hist-head #hist-stats { font-size: 14px; }
+.hist-chart-wrap { position: relative; }
+#hist-svg { display: block; width: 100%; height: 280px; font-family: var(--font-num); }
+.hist-tip { position: absolute; top: -6px; transform: translateX(-50%); padding: 6px 10px; border-radius: 10px; font-size: 12px; white-space: nowrap; pointer-events: none;
+    background: color-mix(in srgb, var(--card-solid) 92%, transparent); border: 1px solid var(--glass-border); box-shadow: var(--shadow); }
+#hist-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; }
+#hist-empty[hidden] { display: none; }
+
+/* ---------- 私有雲（像「檔案」App；cloud.html／nas.js） ---------- */
+.files-wrap { flex-direction: row !important; padding: 0 !important; min-height: calc(100vh - 190px); overflow: hidden; }
+.files-side { width: 240px; flex: none; padding: 18px 12px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 2px; }
+.files-heading { margin: 10px 10px 6px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.files-heading:first-child { margin-top: 0; }
+.files-nav, .files-nav.nas-nav.active { height: 42px; display: flex; align-items: center; gap: 12px; padding: 0 10px; border: 0; border-radius: 12px;
+    background: transparent; color: var(--text-main); font: inherit; font-size: 15px; font-weight: 400; text-align: left; cursor: pointer; }
+.files-nav:hover { background: var(--surface-2); }
+.files-nav.nas-nav.active { background: var(--fill); font-weight: 500; }
+.fn-ico { width: 28px; height: 28px; border-radius: 8px; flex: none; display: flex; align-items: center; justify-content: center; }
+.fn-ico svg { width: 16px; height: 16px; fill: none; stroke: #FFFFFF; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.files-quota { margin-top: auto; padding: 14px 10px 4px; }
+.files-main { flex: 1; min-width: 0; padding: 18px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.files-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.files-crumb { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.files-crumb .crumb { border: 0; background: none; padding: 4px 2px; font: inherit; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-main); cursor: pointer; }
+.files-crumb .crumb.muted { font-size: 15px; font-weight: 500; color: var(--accent-color); }
+.files-crumb .crumb-sep { color: var(--text-muted); font-size: 18px; }
+.seg button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+.files-new { position: relative; }
+.files-menu { position: absolute; right: 0; top: 48px; min-width: 190px; z-index: 10001; padding: 6px; border-radius: 16px; }
+.files-menu .context-menu-item { border-radius: 10px; padding: 11px 14px; font-size: 14px; }
+.files-upload { padding: 14px 16px; border-radius: 16px; background: var(--surface-2); }
+.files-hint { margin: auto 0 0; font-size: 12px; }
+.files-empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 56px 16px; text-align: center; color: var(--text-main); }
+.files-empty svg { width: 72px; height: 58px; color: var(--text-muted); }
+.file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 12px; }
+.fx-card { position: relative; padding: 16px 10px 12px !important; border-radius: 20px !important; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+    background: transparent !important; border-color: transparent !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.fx-card:hover, .fx-card:focus-visible { background: var(--surface-2) !important; }
+.fx-card .fx-icon svg { width: 64px; height: 56px; }
+.fx-name { font-size: 14px; font-weight: 500; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-meta { font-size: 12px; color: var(--text-muted); }
+.fx-star { position: absolute; top: 8px; right: 8px; border: 0; background: none; color: var(--text-muted); font-size: 15px; cursor: pointer; opacity: 0; transition: opacity 0.15s; }
+.fx-card:hover .fx-star, .fx-star.on { opacity: 1; }
+.fx-star.on { color: #F2B233; }
+.file-list { display: flex; flex-direction: column; gap: 0; }
+.fx-row { display: grid !important; grid-template-columns: 28px 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 12px !important;
+    background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--border-color) !important; border-radius: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.fx-row:hover { background: var(--surface-2) !important; }
+.fx-row .fx-star { position: static; opacity: 1; }
+.fx-row .fx-icon svg { width: 34px; height: 30px; }
+@media (max-width: 768px) {
+    .files-wrap { flex-direction: column !important; }
+    .files-side { width: auto; border-right: 0; border-bottom: 1px solid var(--border-color); flex-direction: row; flex-wrap: wrap; gap: 6px; }
+    .files-heading, .files-quota { display: none; }
+    .files-nav { height: 36px; font-size: 13px; }
+}
+
 /* =====================================================================
    DeviceHub 模組（智慧宅控 → 首頁；static/js/devicehub.js）
    版面沿用 DeviceHub 網頁（DeviceHub repo docs/design/ui-redesign.md），
@@ -1905,4 +1971,98 @@ select.t-input option { background: var(--card-solid); color: var(--text-main); 
     .dh-vm-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; padding: 14px 18px; }
     .dh-vm-row > :nth-child(3), .dh-vm-row > :nth-child(4) { display: none; }
     .dh-vm-ops { grid-column: 1 / -1; justify-content: flex-start; }
+}
+
+/* =====================================================================
+   系統設定：iOS「設定」風格（settings.html／settings.js；PR #6 ③）
+   個人卡片＋分組清單（彩色圓角小圖示＋文字＋ ›）；子頁面「‹ 設定」返回。
+   ===================================================================== */
+#view-settings { max-width: 720px; }
+/* closeSettingPanel() 會把 #settings-main 設成 display:block，所以用 margin 分組（不用 flex gap） */
+.ios-settings > * + * { margin-top: 22px; }
+.ios-profile, .ios-list {
+    background: var(--card-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); border-radius: 22px;
+}
+.ios-profile { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; }
+.ios-profile:hover { background: color-mix(in srgb, var(--card-bg) 70%, var(--fill)); }
+.ios-avatar { width: 60px; height: 60px; flex: none; border-radius: 50%; object-fit: cover; background: var(--fill); }
+.ios-profile-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ios-profile-name { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ios-profile-sub { font-size: 14px; color: var(--text-muted); }
+.ios-list { display: flex; flex-direction: column; overflow: hidden; }
+.ios-row {
+    position: relative; width: 100%; min-height: 52px; display: flex; align-items: center; gap: 14px; padding: 8px 16px;
+    border: 0; background: transparent; color: var(--text-main); font: inherit; font-size: 16px; text-align: left; cursor: pointer;
+}
+.ios-row + .ios-row::before { content: ""; position: absolute; top: 0; right: 0; left: 58px; border-top: 1px solid var(--border-color); }
+.ios-row.static + .ios-row.static::before { left: 16px; }
+.ios-row:hover { background: var(--surface-2); }
+.ios-row:active { background: var(--fill); }
+.ios-row.static { cursor: default; }
+.ios-row.static:hover, .ios-row.static:active { background: transparent; }
+.ios-label { flex: 1; min-width: 0; }
+.ios-value { max-width: 62%; color: var(--text-muted); font-size: 15px; text-align: right; overflow-wrap: anywhere; }
+.ios-muted { color: var(--text-muted); }
+.ios-chev { width: 15px; height: 15px; flex: none; fill: none; stroke: var(--text-faint); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.ios-back {
+    display: inline-flex; align-items: center; gap: 2px; margin: 0 0 4px -6px; padding: 6px 6px 6px 0;
+    border: 0; background: none; color: var(--accent-color); font: inherit; font-size: 17px; cursor: pointer;
+}
+.ios-back svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ios-title { margin: 0 0 20px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+.ios-caption { margin: 0 16px 8px; font-size: 13px; color: var(--text-muted); }
+.ios-list + .ios-caption { margin-top: 28px; }
+.ios-footnote { margin: 8px 16px 0; font-size: 13px; line-height: 1.5; color: var(--text-muted); }
+.ios-pad { padding: 14px 16px; }
+.ios-seg { display: flex; width: 100%; }
+.ios-seg button { flex: 1; }
+/* iOS 開關（純 CSS；仍是原本的 checkbox，onchange 不變） */
+.ios-switch {
+    -webkit-appearance: none; appearance: none; position: relative; flex: none; margin: 0;
+    width: 51px; height: 31px; border-radius: 16px; background: var(--fill-2); cursor: pointer; transition: background 0.2s;
+}
+.ios-switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%;
+    background: #FFFFFF; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16); transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ios-switch:checked { background: var(--success-color); }
+.ios-switch:checked::after { transform: translateX(20px); }
+.ios-switch:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+label.ios-row { cursor: pointer; }
+.ios-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 14px 6px; }
+.ios-swatch { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 4px 0; border: 0; background: none; color: var(--text-main); font: inherit; font-size: 12px; cursor: pointer; }
+.ios-swatch i { width: 36px; height: 36px; border-radius: 50%; background: var(--sw); transition: box-shadow 0.15s; }
+.ios-swatch[aria-pressed="true"] i { box-shadow: 0 0 0 3px var(--card-solid), 0 0 0 5px var(--sw); }
+.ios-swatch[aria-pressed="true"] { font-weight: 600; }
+.ios-admin { flex-direction: column; gap: 0; margin-top: 28px; }
+.ios-form label span { width: 44px; color: var(--text-muted); }
+.ios-save { align-self: flex-start; margin-top: 14px; }
+#panel-theme .ios-seg button[aria-pressed="true"] { background: var(--seg-active); }
+
+/* =====================================================================
+   手機底部玻璃分頁列（index.html #tabbar／glass.js；PR #6 ④）
+   只在 ≤768px 顯示；「更多」＝開啟側邊欄。
+   ===================================================================== */
+.tabbar { display: none; }
+@media (max-width: 768px) {
+    .tabbar {
+        position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 1000;
+        display: flex; gap: 2px; height: 64px; padding: 6px;
+        border-radius: 28px; background: var(--sidebar-color);
+        -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow), var(--shadow);
+    }
+    .tabbar .tab {
+        flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+        border: 0; border-radius: 22px; background: transparent; color: var(--text-muted);
+        font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .tabbar .tab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+    .tabbar .tab[aria-current="page"] { color: var(--accent-color); background: var(--fill); font-weight: 600; }
+    .tabbar .tab:active { transform: scale(0.96); }
+    body.not-logged-in .tabbar, body.full-screen-view .tabbar { display: none; }
+    /* 內容與通知都讓出分頁列的高度 */
+    .main-content { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important; }
+    #toast-container { bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important; }
 }

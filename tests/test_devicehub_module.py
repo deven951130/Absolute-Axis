@@ -182,3 +182,42 @@ def test_controls_passthrough(dh):
     r = c.get("/api/devicehub/controls", headers=ADMIN)
     assert r.json() == {"ok": True, "devices": [{"id": "desktop", "actions": [], "wake": None}], "proxmox": []}
     assert calls[0]["headers"] == {"Authorization": "Bearer control-tok"}
+
+
+def test_history_proxies_with_read_token(dh):
+    c, calls, state = dh
+    state["resp"] = Resp(200, {"device_id": "esp-server", "field": "temp_c", "hours": 24, "bucket_s": 300,
+                               "points": [{"t": 1, "avg": 28.1, "min": 28.0, "max": 28.2}]})
+    r = c.get("/api/devicehub/history/esp-server?field=temp_c&hours=24", headers=ADMIN)
+    assert r.status_code == 200 and r.json()["ok"] is True and r.json()["points"][0]["avg"] == 28.1
+    assert calls[0]["url"] == "http://192.168.0.50:8080/api/v1/history/esp-server?field=temp_c&hours=24"
+    assert calls[0]["headers"] == {"Authorization": "Bearer read-tok"}
+    assert "read-tok" not in r.text
+
+
+def test_history_validates_and_clamps(dh):
+    c, calls, _ = dh
+    for path in ("/api/devicehub/history/esp-server?field=password",
+                 "/api/devicehub/history/ESP?field=temp_c",
+                 "/api/devicehub/history/esp-server/fields/../x"):
+        r = c.get(path, headers=ADMIN)
+        assert r.status_code in (200, 404)
+        if r.status_code == 200:
+            assert r.json()["error"] == "bad_request"
+    assert calls == []
+    c.get("/api/devicehub/history/esp-server?field=hum&hours=99999", headers=ADMIN)
+    assert calls[-1]["url"].endswith("field=hum&hours=720")
+
+
+def test_history_admin_only(dh):
+    c, calls, _ = dh
+    assert c.get("/api/devicehub/history/esp-server?field=temp_c", headers={"Authorization": "Bearer member"}).status_code == 403
+    assert c.get("/api/devicehub/history/esp-server/fields").status_code == 401
+    assert calls == []
+
+
+def test_history_fields(dh):
+    c, calls, state = dh
+    state["resp"] = Resp(200, {"device_id": "esp-server", "fields": ["temp_c", "hum"]})
+    r = c.get("/api/devicehub/history/esp-server/fields", headers=ADMIN)
+    assert r.json() == {"ok": True, "device_id": "esp-server", "fields": ["temp_c", "hum"]}

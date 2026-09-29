@@ -1,89 +1,133 @@
-<!-- Absolute Axis - Settings View Module -->
+<!-- Absolute Axis - Settings View Module（iOS「設定」風格：個人卡片＋分組清單；settings.js）
+     保留所有 id：settings-main、panel-*、sys-specs-grid、feature-*、os-config-admin-section、cfg-os-* -->
 <div id="view-settings" class="view-section">
-    <div id="settings-main">
-        <div class="settings-list">
-            <div class="settings-item" onclick="openSettingPanel('panel-identity')">🔑 個人身分與安全密碼</div>
-            <div class="settings-item" onclick="openSettingPanel('panel-system')">💻 伺服器規格與核心資訊</div>
-            <div class="settings-item" onclick="openSettingPanel('panel-theme')">🎨 主題色彩實驗室 (Collab)</div>
-            <div class="settings-item" onclick="openSettingPanel('panel-features')">⚙️ 模組化功能控制</div>
+    <div id="settings-main" class="ios-settings">
+        <button type="button" class="ios-profile" onclick="openSettingPanel('panel-identity')">
+            <img id="set-avatar" class="ios-avatar" alt="">
+            <span class="ios-profile-text">
+                <span id="set-name" class="ios-profile-name">—</span>
+                <span id="set-role" class="ios-profile-sub">帳號、密碼與頭像</span>
+            </span>
+            <svg class="ios-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+        </button>
+
+        <div class="ios-list">
+            <button type="button" class="ios-row" onclick="openSettingPanel('panel-theme')">
+                <span class="nav-ico" style="background:#5E5CE6"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path></svg></span>
+                <span class="ios-label">主題與外觀</span>
+                <span id="set-theme-value" class="ios-value"></span>
+                <svg class="ios-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
+            <button type="button" class="ios-row" onclick="openSettingPanel('panel-features')">
+                <span class="nav-ico" style="background:#2FB463"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="10" rx="5"></rect><circle cx="16" cy="12" r="2.5"></circle></svg></span>
+                <span class="ios-label">模組化功能</span>
+                <svg class="ios-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
         </div>
-    </div>
-    
-    <!-- 1. Identity Panel -->
-    <div id="panel-identity" class="settings-panel">
-        <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeSettingPanel()">⬅ 返回首頁</button>
-        <div class="card">
-            <div style="display:flex; flex-direction:column; gap:12px;">
-                <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="window.openProfileEdit()">修改名稱與密碼</button>
-                <button class="btn btn-outline" style="width:100%; padding:12px; border-color:var(--btn-border) !important; background:var(--surface-2);" onclick="window.openAvatarEdit()">更換頭像網址</button>
-            </div>
+
+        <div class="ios-list">
+            <button type="button" class="ios-row" onclick="openSettingPanel('panel-system')">
+                <span class="nav-ico" style="background:#7C7C86"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="7" rx="2"></rect><rect x="3.5" y="13" width="17" height="7" rx="2"></rect><path d="M7.5 7.5h.01M7.5 16.5h.01"></path></svg></span>
+                <span class="ios-label">伺服器規格與核心資訊</span>
+                <svg class="ios-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+
+        <div class="ios-list">
+            <button type="button" class="ios-row" onclick="openSettingPanel('panel-identity')">
+                <span class="nav-ico" style="background:#F2992E"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg></span>
+                <span class="ios-label">個人身分與安全密碼</span>
+                <svg class="ios-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
         </div>
     </div>
 
-    <!-- 2. System Info Panel -->
+    <!-- 1. Identity Panel -->
+    <div id="panel-identity" class="settings-panel">
+        <button type="button" class="ios-back" onclick="closeSettingPanel()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>設定</button>
+        <h2 class="ios-title">個人身分與安全密碼</h2>
+        <div class="ios-list">
+            <button type="button" class="ios-row" onclick="window.openProfileEdit()">
+                <span class="nav-ico" style="background:#3E7BFA"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg></span>
+                <span class="ios-label">修改名稱與密碼</span>
+                <svg class="ios-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
+            <button type="button" class="ios-row" onclick="window.openAvatarEdit()">
+                <span class="nav-ico" style="background:#E5557A"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"></rect><circle cx="9" cy="10" r="2"></circle><path d="M20.5 16l-5-5-8 8"></path></svg></span>
+                <span class="ios-label">更換頭像網址</span>
+                <svg class="ios-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. System Info Panel（loadSpecs() 以 textContent 填入每一列） -->
     <div id="panel-system" class="settings-panel">
-        <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeSettingPanel()">⬅ 返回首頁</button>
-        <div class="card">
-            <div id="sys-specs-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.2rem;">
-                <!-- Auto-injected specs -->
-            </div>
+        <button type="button" class="ios-back" onclick="closeSettingPanel()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>設定</button>
+        <h2 class="ios-title">伺服器規格與核心資訊</h2>
+        <div id="sys-specs-grid" class="ios-list">
+            <div class="ios-row static"><span class="ios-label ios-muted">讀取中…</span></div>
         </div>
     </div>
 
     <!-- 3. Features Control Panel -->
     <div id="panel-features" class="settings-panel">
-        <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeSettingPanel()">⬅ 返回首頁</button>
-        <div class="card">
-            <h2 class="card-title" style="margin-bottom: 1.5rem;">側邊欄模組顯示設定</h2>
-            <div style="display:flex; flex-direction:column; gap:1.5rem; align-items:flex-start; padding: 1rem 0;">
-                <label style="display:flex; align-items:center; gap:12px; font-size:1.1rem; cursor:pointer; color:var(--text-main); user-select:none;">
-                    <input type="checkbox" id="feature-gigs" onchange="window.toggleFeature('gigs', this.checked)" style="width:1.3rem; height:1.3rem; accent-color:var(--accent-color);"> 接案功能
-                </label>
-                <label style="display:flex; align-items:center; gap:12px; font-size:1.1rem; cursor:pointer; color:var(--text-main); user-select:none;">
-                    <input type="checkbox" id="feature-opensource" onchange="window.toggleFeature('opensource', this.checked)" style="width:1.3rem; height:1.3rem; accent-color:var(--accent-color);"> 開源專案分享
-                </label>
-                <label style="display:flex; align-items:center; gap:12px; font-size:1.1rem; cursor:pointer; color:var(--text-main); user-select:none;">
-                    <input type="checkbox" id="feature-multiverse" onchange="window.toggleFeature('multiverse', this.checked)" style="width:1.3rem; height:1.3rem; accent-color:var(--accent-color);"> Minecraft 伺服器
-                </label>
+        <button type="button" class="ios-back" onclick="closeSettingPanel()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>設定</button>
+        <h2 class="ios-title">模組化功能</h2>
+        <p class="ios-caption">側邊欄顯示的功能</p>
+        <div class="ios-list">
+            <label class="ios-row">
+                <span class="nav-ico" style="background:#B8793A"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7" width="17" height="13" rx="2"></rect><path d="M9 7V5h6v2"></path></svg></span>
+                <span class="ios-label">接案功能</span>
+                <input type="checkbox" class="ios-switch" id="feature-gigs" onchange="window.toggleFeature('gigs', this.checked)">
+            </label>
+            <label class="ios-row">
+                <span class="nav-ico" style="background:#4A4A54"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"></path></svg></span>
+                <span class="ios-label">開源專案分享</span>
+                <input type="checkbox" class="ios-switch" id="feature-opensource" onchange="window.toggleFeature('opensource', this.checked)">
+            </label>
+            <label class="ios-row">
+                <span class="nav-ico" style="background:#20A6A6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"></path><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"></path></svg></span>
+                <span class="ios-label">Minecraft 伺服器</span>
+                <input type="checkbox" class="ios-switch" id="feature-multiverse" onchange="window.toggleFeature('multiverse', this.checked)">
+            </label>
+        </div>
+        <p class="ios-footnote">關閉後，該功能會從側邊欄隱藏；目前正在看的頁面若被關閉，會自動回到總覽。</p>
+
+        <!-- 管理者專屬的開源專案設定區塊（ui.js updateFeaturesUI() 對管理員設為 display:flex） -->
+        <div id="os-config-admin-section" class="ios-admin" style="display:none;">
+            <p class="ios-caption">開源專案平台（管理員）</p>
+            <div class="ios-group ios-form">
+                <label><span>帳號</span><input type="text" id="cfg-os-name" placeholder="例如：deven951130" autocomplete="off"></label>
+                <label><span>主頁</span><input type="text" id="cfg-os-url" placeholder="例如：https://github.com/deven951130" autocomplete="off"></label>
+                <label><span>權杖</span><input type="password" id="cfg-os-token" placeholder="留空＝維持現狀；填入新權杖會覆寫" autocomplete="off"></label>
             </div>
-            
-            <!-- 管理者專屬的開源專案設定區塊 -->
-            <div id="os-config-admin-section" style="display:none; border-top:1px dashed var(--border-color); padding-top:1.5rem; margin-top:0.5rem; flex-direction:column; gap:14px; width:100%;">
-                <h3 style="margin:0; font-size:1.05rem; font-weight:900; color:var(--accent-color);">🔗 開源專案平台資訊設定</h3>
-                
-                <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                    <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">開發者 GitHub 帳號名稱</span>
-                    <input type="text" id="cfg-os-name" placeholder="例如: deven951130" class="t-input" style="max-width: 400px; font-weight:800;">
-                </div>
-                
-                <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                    <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">開發者 GitHub 主頁連結</span>
-                    <input type="text" id="cfg-os-url" placeholder="例如: https://github.com/deven951130" class="t-input" style="max-width: 400px; font-weight:800;">
-                </div>
-                
-                <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                    <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">GitHub 個人存取權杖 (GITHUB_TOKEN)</span>
-                    <input type="password" id="cfg-os-token" placeholder="已設定時顯示遮罩。填入新權杖以覆寫，保留空白則維持現狀" class="t-input" style="max-width: 400px; font-weight:800;">
-                </div>
-                
-                <button class="btn btn-primary" style="padding:10px 20px; font-size:0.8rem; font-weight:800; align-self:flex-start; margin-top:6px;" onclick="window.saveOSConfig()">儲存開源專案設定</button>
-            </div>
+            <p class="ios-footnote">GitHub 個人存取權杖（GITHUB_TOKEN）已設定時只顯示遮罩。</p>
+            <button type="button" class="btn btn-primary ios-save" onclick="window.saveOSConfig()">儲存開源專案設定</button>
         </div>
     </div>
 
-    <!-- 4. Theme Lab Panel -->
+    <!-- 4. Theme Panel -->
     <div id="panel-theme" class="settings-panel">
-        <button class="btn btn-outline" style="margin-bottom:1.5rem;" onclick="closeSettingPanel()">⬅ 返回首頁</button>
-        <div class="card">
-            <h2 class="card-title">全域配色方案 (Accent Themes)</h2>
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1.2rem;">
-                <div class="stat-card" style="cursor:pointer; border-color:#e3a857;" onclick="setTheme('default')">🏠 DeviceHub 預設（暗：琥珀／亮：赤陶）</div>
-                <div class="stat-card" style="cursor:pointer; border-color:#f2aa1f;" onclick="setTheme('gold')">☀️ 琥珀金芒 (Gold)</div>
-                <div class="stat-card" style="cursor:pointer; border-color:#ff66b3;" onclick="setTheme('pink')">💖 霓虹粉彩 (Pink)</div>
-                <div class="stat-card" style="cursor:pointer; border-color:#2ecc71;" onclick="setTheme('green')">🍃 矩陣翡翠 (Green)</div>
-                <div class="stat-card" style="cursor:pointer; border-color:#ff4d4d;" onclick="setTheme('red')">🔥 熔岩烈焰 (Red)</div>
-                <div class="stat-card" style="cursor:pointer; border-color:#bd93f9;" onclick="setTheme('purple')">🔮 紫晶皇家 (Purple)</div>
+        <button type="button" class="ios-back" onclick="closeSettingPanel()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>設定</button>
+        <h2 class="ios-title">主題與外觀</h2>
+        <p class="ios-caption">外觀</p>
+        <div class="ios-list ios-pad">
+            <div class="seg ios-seg" role="group" aria-label="外觀">
+                <button type="button" data-mode="dark" onclick="window.setAppearance('dark')">深色</button>
+                <button type="button" data-mode="light" onclick="window.setAppearance('light')">淺色</button>
             </div>
         </div>
+        <p class="ios-caption">強調色</p>
+        <div class="ios-list ios-pad">
+            <div class="ios-swatches" role="group" aria-label="強調色">
+                <button type="button" class="ios-swatch" data-theme="default" style="--sw:#4C8DFF" onclick="window.pickAccent('default')"><i></i>系統藍</button>
+                <button type="button" class="ios-swatch" data-theme="gold" style="--sw:#F2A02E" onclick="window.pickAccent('gold')"><i></i>琥珀</button>
+                <button type="button" class="ios-swatch" data-theme="pink" style="--sw:#FF5C9D" onclick="window.pickAccent('pink')"><i></i>粉紅</button>
+                <button type="button" class="ios-swatch" data-theme="green" style="--sw:#2FB463" onclick="window.pickAccent('green')"><i></i>翡翠</button>
+                <button type="button" class="ios-swatch" data-theme="red" style="--sw:#F04B42" onclick="window.pickAccent('red')"><i></i>熔岩</button>
+                <button type="button" class="ios-swatch" data-theme="purple" style="--sw:#9F6CF0" onclick="window.pickAccent('purple')"><i></i>紫晶</button>
+            </div>
+        </div>
+        <p class="ios-footnote">強調色用在按鈕、選取狀態與圖表；右上角的圓形按鈕也可以快速切換深色／淺色。</p>
     </div>
 </div>

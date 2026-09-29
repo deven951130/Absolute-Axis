@@ -60,14 +60,31 @@ window.filterNav = function (q) {
     document.querySelectorAll('.sidebar .nav-heading').forEach((h) => h.classList.toggle('nav-filtered', needle !== ''));
 };
 
-document.addEventListener('view-switched', (e) => _glassApplyTitle(e.detail && e.detail.view));
+// 手機底部分頁列（index.html #tabbar）：高亮目前頁面；不在四個分頁裡的頁面算「更多」
+const _GLASS_TABS = ['dashboard', 'smart', 'virtual', 'cloud'];
+function _glassTabbar(view) {
+    const target = _GLASS_TABS.includes(view) ? view : 'more';
+    document.querySelectorAll('#tabbar .tab').forEach((t) => {
+        if (t.dataset.view === target) t.setAttribute('aria-current', 'page');
+        else t.removeAttribute('aria-current');
+    });
+}
+
+document.addEventListener('view-switched', (e) => {
+    const view = e.detail && e.detail.view;
+    _glassApplyTitle(view);
+    _glassTabbar(view);
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     _glassToday();
     _glassProfile();
     window.updateThemeIcon();
     const active = document.querySelector('.view-section.active');
-    if (active) _glassApplyTitle(active.id.replace('view-', ''));
+    if (active) {
+        _glassApplyTitle(active.id.replace('view-', ''));
+        _glassTabbar(active.id.replace('view-', ''));
+    }
     const brand = document.querySelector('.sidebar .brand');
     if (brand) brand.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') switchView('dashboard'); });
     setInterval(_glassToday, 60000);
