@@ -1746,6 +1746,28 @@ select.t-input option { background: var(--card-solid); color: var(--text-main); 
     .top-header { align-items: center; }
 }
 
+/* ---------- 虛擬化中心（virtual.html） ---------- */
+.vm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+.vm-card { min-height: 0 !important; gap: 12px; }
+.vm-card.off { background: color-mix(in srgb, var(--card-bg) 75%, transparent) !important; }
+.vm-top { display: flex; align-items: flex-start; }
+.vm-ico { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+.vm-ico svg { width: 24px; height: 24px; fill: none; stroke: #FFFFFF; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.vm-pill { margin-left: auto; height: 26px; padding: 0 10px; border-radius: 13px; background: var(--fill); color: var(--text-muted); font-size: 12px; font-weight: 600; display: flex; align-items: center; }
+.vm-pill.on { background: color-mix(in srgb, var(--success-color) 18%, transparent); color: var(--success-color); }
+.vm-name { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vm-meta { font-size: 13px; margin-top: -8px; }
+.vm-actions { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.vm-actions .btn { padding: 9px 16px; font-size: 14px; }
+.vm-actions .vm-round { width: 40px; padding: 0; justify-content: center; }
+.ios-group { border-radius: 14px; background: var(--fill-2); display: flex; flex-direction: column; overflow: hidden; }
+.ios-group label { height: 46px; display: flex; align-items: center; gap: 10px; padding: 0 14px; font-size: 14px; border-bottom: 1px solid var(--border-color); }
+.ios-group label:last-child { border-bottom: 0; }
+.ios-group label span { width: 58px; flex: none; }
+.ios-group input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--text-main); font: inherit; }
+.ios-group input::placeholder { color: var(--text-muted); }
+@media (max-width: 900px) { .vm-acc-grid { grid-template-columns: minmax(0, 1fr) !important; } }
+
 /* =====================================================================
    DeviceHub 模組（智慧宅控 → 首頁；static/js/devicehub.js）
    版面沿用 DeviceHub 網頁（DeviceHub repo docs/design/ui-redesign.md），

@@ -87,7 +87,7 @@ function toggleAuthMode(mode) {
         if (mode === 'login') {
             loginTab.style.color = 'var(--accent-color)';
             registerTab.style.color = 'var(--text-muted)';
-            actionBtn.innerText = 'Authorize Access';
+            actionBtn.innerText = '登入';
             msgDiv.style.display = 'none';
         } else {
             loginTab.style.color = 'var(--text-muted)';
