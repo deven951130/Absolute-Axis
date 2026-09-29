@@ -1,61 +1,51 @@
-<!-- Absolute Axis - Private Cloud View Module -->
+<!-- Absolute Axis - 私有雲（像「檔案」App 的玻璃版面） -->
 <div id="view-cloud" class="view-section">
-    <div class="nas-view-container">
-        <!-- NAS Sidebar -->
-        <aside class="nas-sidebar">
-            <button id="nas-nav-drive" class="btn btn-outline nas-nav active" onclick="nasNav('drive')" style="justify-content:flex-start; width:100%; border:none;">📂 我的雲端單元</button>
-            <button id="nas-nav-shared" class="btn btn-outline nas-nav" onclick="nasNav('shared')" style="justify-content:flex-start; width:100%; border:none;">👥 與我共用</button>
-            <button id="nas-nav-starred" class="btn btn-outline nas-nav" onclick="nasNav('starred')" style="justify-content:flex-start; width:100%; border:none;">⭐ 已加星號</button>
-            <button id="nas-nav-recent" class="btn btn-outline nas-nav" onclick="nasNav('recent')" style="justify-content:flex-start; width:100%; border:none;">🕒 近期存取</button>
-            <button id="nas-nav-trash" class="btn btn-outline nas-nav" onclick="nasNav('trash')" style="justify-content:flex-start; width:100%; border:none;">🗑️ 回收站</button>
-            
-            <div style="height:1px; background:var(--border-color); margin:1.5rem 0;"></div>
-            <div style="padding:0 15px;">
-                <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px;">個人儲存配額</div>
-                <div id="quota-label" style="font-size:0.7rem; font-weight:800; margin-bottom:8px;">0 GB / 100 GB</div>
-                <div class="progress-bar"><div id="quota-bar" class="progress-fill" style="width:0%"></div></div>
+    <div class="files-wrap widget">
+        <aside class="files-side" aria-label="位置">
+            <p class="files-heading">位置</p>
+            <button type="button" id="nas-nav-drive" class="files-nav nas-nav active" onclick="nasNav('drive')"><span class="fn-ico" style="background:#2E9BF0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></span>我的雲端硬碟</button>
+            <button type="button" id="nas-nav-shared" class="files-nav nas-nav" onclick="nasNav('shared')"><span class="fn-ico" style="background:#2FB463"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"></path></svg></span>與我共用</button>
+            <p class="files-heading">標記</p>
+            <button type="button" id="nas-nav-starred" class="files-nav nas-nav" onclick="nasNav('starred')"><span class="fn-ico" style="background:#F2B233"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"></path></svg></span>已加星號</button>
+            <button type="button" id="nas-nav-recent" class="files-nav nas-nav" onclick="nasNav('recent')"><span class="fn-ico" style="background:#7C7C86"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg></span>最近使用</button>
+            <button type="button" id="nas-nav-trash" class="files-nav nas-nav" onclick="nasNav('trash')"><span class="fn-ico" style="background:#FF6B62"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6 7l1 13h10l1-13"></path></svg></span>最近刪除</button>
+            <div class="files-quota">
+                <div class="w-row" style="font-size: 13px;"><span class="w-muted">我的空間</span><span id="quota-label" class="num">0 GB / 100 GB</span></div>
+                <div class="progress-bar" style="margin-top: 8px;"><div id="quota-bar" class="progress-fill" style="width: 0%;"></div></div>
             </div>
         </aside>
-        
-        <!-- NAS Explorer -->
-        <div class="nas-content">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div id="nas-breadcrumb" style="font-size:0.9rem; font-weight:700;">我的雲端硬碟</div>
-                <div style="display:flex; gap:12px;">
-                    <div style="display:flex; background:var(--surface-2); border-radius:8px; padding:3px;">
-                        <button id="btn-grid" class="btn btn-outline" style="padding:6px 12px; border:none;" onclick="toggleNASView('grid')">🔳</button>
-                        <button id="btn-list" class="btn btn-outline" style="padding:6px 12px; border:none;" onclick="toggleNASView('list')">≡</button>
-                    </div>
-                    <button class="btn btn-primary" onclick="toggleNewMenu()">✚ 建立 / 上傳</button>
-                    <div id="new-menu" style="position:absolute; background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:8px; display:none; right:2.5rem; top:85px; z-index:10001; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-                        <div class="context-menu-item" onclick="promptMkdir()">📁 新增資料夾</div>
-                        <div class="context-menu-item" onclick="triggerUpload(false)">📤 上傳檔案</div>
-                        <div class="context-menu-item" style="color:var(--accent-color); border-top:1px solid var(--border-color); margin-top:5px; padding-top:10px;" onclick="triggerUpload(true)">🔄 上傳並重啟服務</div>
-                        <input type="file" id="nas-up" style="display:none;" onchange="nasUpload()">
+
+        <div class="files-main">
+            <div class="files-toolbar">
+                <div id="nas-breadcrumb" class="files-crumb">我的雲端硬碟</div>
+                <div class="seg" role="group" aria-label="檢視方式">
+                    <button type="button" id="btn-grid" onclick="toggleNASView('grid')" aria-label="圖示檢視"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg></button>
+                    <button type="button" id="btn-list" onclick="toggleNASView('list')" aria-label="列表檢視"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"></path></svg></button>
+                </div>
+                <div class="files-new">
+                    <button type="button" class="btn btn-primary" onclick="toggleNewMenu()" style="padding: 9px 18px;">＋ 新增</button>
+                    <div id="new-menu" class="context-menu files-menu" style="display: none;">
+                        <div class="context-menu-item" onclick="promptMkdir()" role="button" tabindex="0">新增資料夾</div>
+                        <div class="context-menu-item" onclick="triggerUpload(false)" role="button" tabindex="0">上傳檔案</div>
+                        <div class="context-menu-item" style="color: var(--accent-color); border-top: 1px solid var(--border-color);" onclick="triggerUpload(true)" role="button" tabindex="0">上傳並重啟服務</div>
+                        <input type="file" id="nas-up" style="display: none;" onchange="nasUpload()">
                     </div>
                 </div>
-            </div>
-            
-            <div id="upload-monitor" style="display:none; background:var(--sidebar-color); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem; animation:fadeIn 0.3s; margin-top:1.5rem;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span id="up-filename" style="font-weight:700; color:var(--accent-color);">Uploading...</span>
-                    <span id="up-speed" style="font-size:0.75rem; color:var(--text-muted);">0.0 MB/s</span>
-                </div>
-                <div class="progress-bar"><div id="up-bar" class="progress-fill" style="width:0%"></div></div>
-            </div>
-            
-            <div id="nas-explorer" class="file-grid" style="margin-top:1.5rem;">
-                <div style="color:var(--text-muted); padding:2rem; width:100%; text-align:center;">正在載入雲端檔案...</div>
             </div>
 
-            <!-- Upload Hint -->
-            <div style="margin-top:2rem; padding:1.5rem; background:var(--surface-2); border-radius:12px; border:1px dashed var(--border-color); display:flex; align-items:center; gap:15px;">
-                <div style="font-size:1.5rem;">💡</div>
-                <div style="font-size:0.8rem; color:var(--text-muted); line-height:1.6;">
-                    <strong style="color:var(--accent-color);">上傳提示：</strong> 當前透過 Cloudflare 代理連線，單次檔案上傳限制為 <span style="color:var(--danger-color); font-weight:800;">100MB</span>。<br>
-                    若需上傳大型檔案（如 4K 影片、系統映像檔），請切換至 <span style="font-weight:800; color:var(--text-main);">Tailscale 內網 IP</span> 連線以繞過限制。
+            <div id="upload-monitor" class="files-upload" style="display: none;">
+                <div class="w-row" style="margin-bottom: 8px;">
+                    <span id="up-filename" style="font-weight: 600; color: var(--accent-color);">上傳中…</span>
+                    <span id="up-speed" class="w-muted num" style="font-size: 12px;">0.0 MB/s</span>
                 </div>
+                <div class="progress-bar"><div id="up-bar" class="progress-fill" style="width: 0%;"></div></div>
             </div>
+
+            <div id="nas-explorer" class="file-grid">
+                <div class="files-empty w-muted">正在載入…</div>
+            </div>
+
+            <p class="files-hint w-muted">經 Cloudflare 連線時，單一檔案上傳上限 100 MB；大檔案請改用 Tailscale 內網連線。</p>
         </div>
     </div>
 </div>

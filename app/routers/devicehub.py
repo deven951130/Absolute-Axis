@@ -145,3 +145,39 @@ def devicehub_power(vmid: int, action: str, body: PowerBody | None = None, user:
     # 關機最多等 DeviceHub 一段時間（它會等 Proxmox 的工作完成）
     return _call("POST", f"/api/v1/proxmox/{vmid}/{action}", user,
                  {"confirm": bool(body and body.confirm)}, timeout=60)
+
+
+# ---------- 歷史紀錄（DeviceHub integration-api.md §3.1a；智慧宅控「歷史」頁籤） ----------
+_HISTORY_FIELDS = ("temp_c", "hum", "cpu", "ram", "disk", "rssi")
+
+
+def _read_get(path: str, timeout: float = 8) -> dict:
+    token = _read_token()
+    if not token:
+        return _fail("not_configured")
+    try:
+        r = requests.get(f"{DEVICEHUB_URL}{path}", headers={"Authorization": f"Bearer {token}"}, timeout=timeout)
+    except requests.RequestException:
+        return _fail("unreachable")
+    if r.status_code != 200:
+        return _fail(f"http_{r.status_code}", r.status_code)
+    try:
+        data = r.json()
+    except ValueError:
+        return _fail("bad_response")
+    return {"ok": True, **data} if isinstance(data, dict) else _fail("bad_response")
+
+
+@router.get("/api/devicehub/history/{device_id}/fields")
+def devicehub_history_fields(device_id: str, user: dict = Depends(require_admin)):
+    if not _DEVICE_ID.match(device_id):
+        return _fail("bad_request", 400)
+    return _read_get(f"/api/v1/history/{device_id}/fields")
+
+
+@router.get("/api/devicehub/history/{device_id}")
+def devicehub_history(device_id: str, field: str, hours: int = 24, user: dict = Depends(require_admin)):
+    if not _DEVICE_ID.match(device_id) or field not in _HISTORY_FIELDS:
+        return _fail("bad_request", 400)
+    hours = max(1, min(int(hours), 720))
+    return _read_get(f"/api/v1/history/{device_id}?field={field}&hours={hours}")

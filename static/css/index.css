@@ -1768,6 +1768,72 @@ select.t-input option { background: var(--card-solid); color: var(--text-main); 
 .ios-group input::placeholder { color: var(--text-muted); }
 @media (max-width: 900px) { .vm-acc-grid { grid-template-columns: minmax(0, 1fr) !important; } }
 
+/* ---------- 智慧宅控「歷史」（history.js） ---------- */
+.hist-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.hist-bar .w-cap { margin-right: auto; }
+.hist-device { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.hist-device select { margin: 0 !important; padding: 7px 12px !important; width: auto; min-width: 160px; }
+.seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 11px; background: var(--fill-2); }
+.seg button { height: 32px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: var(--text-main); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--seg-active); font-weight: 600; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); }
+.hist-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.hist-head #hist-stats { font-size: 14px; }
+.hist-chart-wrap { position: relative; }
+#hist-svg { display: block; width: 100%; height: 280px; font-family: var(--font-num); }
+.hist-tip { position: absolute; top: -6px; transform: translateX(-50%); padding: 6px 10px; border-radius: 10px; font-size: 12px; white-space: nowrap; pointer-events: none;
+    background: color-mix(in srgb, var(--card-solid) 92%, transparent); border: 1px solid var(--glass-border); box-shadow: var(--shadow); }
+#hist-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; margin: 0; }
+#hist-empty[hidden] { display: none; }
+
+/* ---------- 私有雲（像「檔案」App；cloud.html／nas.js） ---------- */
+.files-wrap { flex-direction: row !important; padding: 0 !important; min-height: calc(100vh - 190px); overflow: hidden; }
+.files-side { width: 240px; flex: none; padding: 18px 12px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 2px; }
+.files-heading { margin: 10px 10px 6px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.files-heading:first-child { margin-top: 0; }
+.files-nav, .files-nav.nas-nav.active { height: 42px; display: flex; align-items: center; gap: 12px; padding: 0 10px; border: 0; border-radius: 12px;
+    background: transparent; color: var(--text-main); font: inherit; font-size: 15px; font-weight: 400; text-align: left; cursor: pointer; }
+.files-nav:hover { background: var(--surface-2); }
+.files-nav.nas-nav.active { background: var(--fill); font-weight: 500; }
+.fn-ico { width: 28px; height: 28px; border-radius: 8px; flex: none; display: flex; align-items: center; justify-content: center; }
+.fn-ico svg { width: 16px; height: 16px; fill: none; stroke: #FFFFFF; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.files-quota { margin-top: auto; padding: 14px 10px 4px; }
+.files-main { flex: 1; min-width: 0; padding: 18px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+.files-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.files-crumb { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.files-crumb .crumb { border: 0; background: none; padding: 4px 2px; font: inherit; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-main); cursor: pointer; }
+.files-crumb .crumb.muted { font-size: 15px; font-weight: 500; color: var(--accent-color); }
+.files-crumb .crumb-sep { color: var(--text-muted); font-size: 18px; }
+.seg button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+.files-new { position: relative; }
+.files-menu { position: absolute; right: 0; top: 48px; min-width: 190px; z-index: 10001; padding: 6px; border-radius: 16px; }
+.files-menu .context-menu-item { border-radius: 10px; padding: 11px 14px; font-size: 14px; }
+.files-upload { padding: 14px 16px; border-radius: 16px; background: var(--surface-2); }
+.files-hint { margin: auto 0 0; font-size: 12px; }
+.files-empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 56px 16px; text-align: center; color: var(--text-main); }
+.files-empty svg { width: 72px; height: 58px; color: var(--text-muted); }
+.file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 12px; }
+.fx-card { position: relative; padding: 16px 10px 12px !important; border-radius: 20px !important; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+    background: transparent !important; border-color: transparent !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.fx-card:hover, .fx-card:focus-visible { background: var(--surface-2) !important; }
+.fx-card .fx-icon svg { width: 64px; height: 56px; }
+.fx-name { font-size: 14px; font-weight: 500; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-meta { font-size: 12px; color: var(--text-muted); }
+.fx-star { position: absolute; top: 8px; right: 8px; border: 0; background: none; color: var(--text-muted); font-size: 15px; cursor: pointer; opacity: 0; transition: opacity 0.15s; }
+.fx-card:hover .fx-star, .fx-star.on { opacity: 1; }
+.fx-star.on { color: #F2B233; }
+.file-list { display: flex; flex-direction: column; gap: 0; }
+.fx-row { display: grid !important; grid-template-columns: 28px 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 12px !important;
+    background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--border-color) !important; border-radius: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.fx-row:hover { background: var(--surface-2) !important; }
+.fx-row .fx-star { position: static; opacity: 1; }
+.fx-row .fx-icon svg { width: 34px; height: 30px; }
+@media (max-width: 768px) {
+    .files-wrap { flex-direction: column !important; }
+    .files-side { width: auto; border-right: 0; border-bottom: 1px solid var(--border-color); flex-direction: row; flex-wrap: wrap; gap: 6px; }
+    .files-heading, .files-quota { display: none; }
+    .files-nav { height: 36px; font-size: 13px; }
+}
+
 /* =====================================================================
    DeviceHub 模組（智慧宅控 → 首頁；static/js/devicehub.js）
    版面沿用 DeviceHub 網頁（DeviceHub repo docs/design/ui-redesign.md），

@@ -24,14 +24,8 @@ const NASManager = {
         const btnGrid = document.getElementById('btn-grid');
         const btnList = document.getElementById('btn-list');
         if (!btnGrid || !btnList) return;
-
-        const isLight = document.body.classList.contains('light-mode');
-        const activeColor = 'var(--on-accent)';
-        
-        btnGrid.style.background = (mode === 'grid' ? 'var(--accent-color)' : 'transparent');
-        btnGrid.style.color = (mode === 'grid' ? activeColor : 'var(--text-main)');
-        btnList.style.background = (mode === 'list' ? 'var(--accent-color)' : 'transparent');
-        btnList.style.color = (mode === 'list' ? activeColor : 'var(--text-main)');
+        btnGrid.setAttribute('aria-pressed', String(mode === 'grid'));
+        btnList.setAttribute('aria-pressed', String(mode === 'list'));
     },
 
     toggleView(mode) {
@@ -85,14 +79,24 @@ const NASManager = {
             this.state.isLoaded = true;
         } catch (err) {
             console.error("NAS Load Error:", err);
-            exp.innerHTML = `
-                <div style="color:var(--danger-color); padding:3rem; width:100%; text-align:center;">
-                    <div style="font-size:2.5rem; margin-bottom:1rem;">⚠️</div>
-                    <div style="font-weight:700; margin-bottom:0.5rem;">載入失敗</div>
-                    <div style="font-size:0.85rem; opacity:0.8; max-width:400px; margin:0 auto; line-height:1.6;">${err.message}</div>
-                    <button class="btn btn-outline" style="margin-top:1.5rem;" onclick="NASManager.loadFiles('${path}')">再次嘗試</button>
-                </div>
-            `;
+            const box = document.createElement('div');
+            box.className = 'files-empty';
+            const t = document.createElement('div');
+            t.style.color = 'var(--danger-color)';
+            t.style.fontWeight = '600';
+            t.textContent = '載入失敗';
+            const msg = document.createElement('div');
+            msg.className = 'w-muted';
+            msg.style.fontSize = '13px';
+            msg.textContent = err.message;
+            const retry = document.createElement('button');
+            retry.type = 'button';
+            retry.className = 'btn btn-outline';
+            retry.style.marginTop = '12px';
+            retry.textContent = '再試一次';
+            retry.addEventListener('click', () => this.loadFiles(path));
+            box.append(t, msg, retry);
+            exp.replaceChildren(box);
         } finally {
             this.state.isLoading = false;
         }
@@ -106,33 +110,52 @@ const NASManager = {
             'drive': '我的雲端硬碟',
             'shared': '與我共用',
             'starred': '已加星號',
-            'recent': '近期存取',
-            'trash': '回收站'
+            'recent': '最近使用',
+            'trash': '最近刪除'
         };
-
-        let html = `<span style="color:var(--text-muted); cursor:pointer;" onclick="NASManager.nav('${this.state.currentMode}')">${modeNames[this.state.currentMode]}</span>`;
-        
+        // 檔名／資料夾名稱來自使用者上傳：一律 textContent，點擊用閉包，不組 HTML 字串
+        const link = (text, onclick, muted) => {
+            const s = document.createElement('button');
+            s.type = 'button';
+            s.className = 'crumb' + (muted ? ' muted' : '');
+            s.textContent = text;
+            s.addEventListener('click', onclick);
+            return s;
+        };
+        const sep = () => { const s = document.createElement('span'); s.className = 'crumb-sep'; s.textContent = '›'; return s; };
+        const nodes = [link(modeNames[this.state.currentMode], () => this.nav(this.state.currentMode), !!path)];
         if (this.state.currentMode === 'drive') {
             const parts = path.split('/').filter(p => p);
             let cum = '';
             parts.forEach((p, i) => {
                 cum += (i === 0 ? '' : '/') + p;
-                html += ` <span style="color:var(--text-muted);">/</span> <span style="cursor:pointer;" onclick="NASManager.loadFiles('${cum}')">${p}</span>`;
+                const target = cum;
+                nodes.push(sep(), link(p, () => this.loadFiles(target), i < parts.length - 1));
             });
         }
-        bc.innerHTML = html;
+        bc.replaceChildren(...nodes);
     },
 
     renderExplorer(data) {
         const exp = document.getElementById('nas-explorer');
         exp.className = (this.state.viewMode === 'grid' ? 'file-grid' : 'file-list');
-        
+
         if (!data.files || data.files.length === 0) {
-            exp.innerHTML = '<div style="color:var(--text-muted); padding:3rem; width:100%; text-align:center;">此目錄為空</div>';
+            const empty = document.createElement('div');
+            empty.className = 'files-empty';
+            empty.innerHTML = '<svg viewBox="0 0 64 52" aria-hidden="true"><path d="M4 10a6 6 0 0 1 6-6h14l6 6h24a6 6 0 0 1 6 6v26a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6z" fill="currentColor" opacity=".35"></path></svg>';
+            const t = document.createElement('div');
+            t.textContent = this.state.currentMode === 'trash' ? '沒有最近刪除的項目' : '這裡還沒有檔案';
+            const sub = document.createElement('div');
+            sub.className = 'w-muted';
+            sub.style.fontSize = '13px';
+            sub.textContent = this.state.currentMode === 'drive' ? '按右上角「＋ 新增」上傳檔案或建立資料夾' : '';
+            empty.append(t, sub);
+            exp.replaceChildren(empty);
             return;
         }
 
-        exp.innerHTML = '';
+        exp.replaceChildren();
         data.files.forEach(f => {
             const icon = f.is_dir ? '📁' : this.getFileIcon(f.ext);
             const fullPath = (this.state.currentMode === 'shared' ? f.path : ((this.state.currentPath ? this.state.currentPath + '/' : '') + f.name));
@@ -153,34 +176,63 @@ const NASManager = {
         return '📄';
     },
 
-    createFileItem(f, icon, fullPath, owner) {
-        const item = document.createElement('div');
-        const starIcon = f.starred ? '⭐' : '☆';
-        const sizeText = f.is_dir ? '資料夾' : (f.size / 1024 / 1024).toFixed(1) + ' MB';
-
-        if (this.state.viewMode === 'grid') {
-            item.className = 'card file-card';
-            item.onclick = f.is_dir ? () => this.loadFiles(fullPath) : () => this.previewFile(fullPath, f.ext, owner);
-            item.oncontextmenu = (e) => this.showContextMenu(e, fullPath, f.is_dir, f.ext, owner);
-            item.innerHTML = `
-                <div style="position:absolute; top:12px; left:12px; cursor:pointer; font-size:1.1rem;" onclick="event.stopPropagation(); NASManager.toggleStar('${fullPath}')">${this.state.currentMode === 'drive' ? starIcon : ''}</div>
-                <div style="font-size:2rem; margin-bottom:12px;">${icon}</div>
-                <div style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center; color:var(--text-main);">${f.name}</div>
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:8px;">${sizeText}</div>
-            `;
-        } else {
-            item.className = 'file-list-item';
-            item.onclick = f.is_dir ? () => this.loadFiles(fullPath) : () => this.previewFile(fullPath, f.ext, owner);
-            item.oncontextmenu = (e) => this.showContextMenu(e, fullPath, f.is_dir, f.ext, owner);
-            item.innerHTML = `
-                <div style="display:flex; align-items:center; gap:18px; flex:1; min-width:0;">
-                    <span style="font-size:1.1rem; flex-shrink:0; cursor:pointer;" onclick="event.stopPropagation(); NASManager.toggleStar('${fullPath}')">${this.state.currentMode === 'drive' ? starIcon : ''}</span>
-                    <div style="font-size:1.5rem; flex-shrink:0;">${icon}</div>
-                    <div style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; color:var(--text-main);">${f.name}</div>
-                </div>
-                <div style="font-size:0.8rem; color:var(--text-muted); min-width:100px; text-align:right;">${sizeText}</div>
-            `;
+    // 像「檔案」App 的圖示：資料夾是藍色資料夾；檔案是一張紙，下方色帶寫副檔名
+    fileIconSvg(f) {
+        if (f.is_dir) {
+            return '<svg viewBox="0 0 64 52" aria-hidden="true"><path d="M4 10a6 6 0 0 1 6-6h14l6 6h24a6 6 0 0 1 6 6v26a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6z" fill="#6BBDFA"></path><path d="M4 18a6 6 0 0 1 6-6h44a6 6 0 0 1 6 6v24a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6z" fill="#3E9BF0"></path></svg>';
         }
+        const e = (f.ext || '').toLowerCase();
+        const kinds = [
+            [['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.svg'], '#2FB463'],
+            [['.mp4', '.webm', '.mkv', '.avi', '.mov'], '#A45DE0'],
+            [['.mp3', '.wav', '.flac', '.m4a'], '#FF375F'],
+            [['.pdf'], '#FF453A'],
+            [['.zip', '.rar', '.7z', '.tar', '.gz'], '#A2845E'],
+            [['.txt', '.md', '.json', '.py', '.js', '.html', '.css', '.log', '.yml', '.yaml'], '#3E7BFA'],
+        ];
+        const color = (kinds.find(([exts]) => exts.includes(e)) || [null, '#8E8E93'])[1];
+        const label = e.replace('.', '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4) || 'FILE';
+        return `<svg viewBox="0 0 48 60" aria-hidden="true"><path d="M6 2h26l12 12v40a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4z" fill="#F5F5F7"></path><path d="M32 2v10a2 2 0 0 0 2 2h10z" fill="#D5D5DB"></path><rect x="2" y="36" width="44" height="13" fill="${color}"></rect><text x="24" y="45.6" text-anchor="middle" font-size="8.5" font-weight="700" fill="#FFFFFF" font-family="-apple-system, Geist, sans-serif">${label}</text></svg>`;
+    },
+
+    formatSize(bytes) {
+        if (bytes >= 1073741824) return (bytes / 1073741824).toFixed(1) + ' GB';
+        if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
+        if (bytes >= 1024) return Math.round(bytes / 1024) + ' KB';
+        return (bytes || 0) + ' B';
+    },
+
+    createFileItem(f, icon, fullPath, owner) {
+        const grid = this.state.viewMode === 'grid';
+        const item = document.createElement('div');
+        item.className = grid ? 'card file-card fx-card' : 'file-list-item fx-row';
+        item.tabIndex = 0;
+        item.setAttribute('role', 'button');
+        const open = f.is_dir ? () => this.loadFiles(fullPath) : () => this.previewFile(fullPath, f.ext, owner);
+        item.addEventListener('click', open);
+        item.addEventListener('keydown', (e) => { if (e.key === 'Enter') open(); });
+        item.oncontextmenu = (e) => this.showContextMenu(e, fullPath, f.is_dir, f.ext, owner);
+
+        const star = document.createElement('button');
+        star.type = 'button';
+        star.className = 'fx-star' + (f.starred ? ' on' : '');
+        star.textContent = f.starred ? '★' : '☆';
+        star.setAttribute('aria-label', f.starred ? '移除星號' : '加上星號');
+        star.hidden = this.state.currentMode !== 'drive';
+        star.addEventListener('click', (e) => { e.stopPropagation(); this.toggleStar(fullPath); });
+
+        const ic = document.createElement('div');
+        ic.className = 'fx-icon';
+        ic.innerHTML = this.fileIconSvg(f);
+        const name = document.createElement('div');
+        name.className = 'fx-name';
+        name.textContent = f.name;
+        name.title = f.name;
+        const meta = document.createElement('div');
+        meta.className = 'fx-meta';
+        meta.textContent = f.is_dir ? '資料夾' : this.formatSize(f.size);
+
+        item.append(star, ic, name, meta);
         return item;
     },
 

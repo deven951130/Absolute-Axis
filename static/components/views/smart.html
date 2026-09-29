@@ -195,59 +195,32 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- TAB 2: 歷史數據 (Chart.js 折線圖) -->
+    <!-- TAB 2: 歷史（DeviceHub 真實紀錄；integration-api.md §3.1a） -->
     <!-- ============================================== -->
-    <div id="smart-tab-data" class="smart-tab-content" style="display:none; animation: fadeIn 0.3s ease;">
-        
-        <!-- 設備與時間選擇器 -->
-        <div class="card" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem;">
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <label style="font-weight: 800; font-size: 0.85rem;">設備編號：</label>
-                <select id="smart-device-select" class="t-input" style="width: 250px; padding: 6px 12px; border-radius: 8px;">
-                    <option value="m12345678901">M系列: m12345678901 (主客廳)</option>
-                    <option value="m12345678902">M系列: m12345678902 (機房)</option>
-                    <option value="p12345678901">P系列: p12345678901 (總電源)</option>
-                </select>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-primary" style="padding: 6px 15px; border-radius: 8px; font-weight:800;" onclick="updateSmartCharts('3d')">3 天</button>
-                <button class="btn btn-outline" style="padding: 6px 15px; border-radius: 8px; font-weight:800;" onclick="updateSmartCharts('7d')">7 天</button>
-            </div>
-        </div>
-
-        <!-- 圖表網格佈局 -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-            <div class="card" style="padding: 1rem;">
-                <div class="card-title" style="font-size:0.9rem; margin-bottom: 10px;">溫度變化 (攝氏)</div>
-                <div style="position: relative; height: 250px; width: 100%;">
-                    <canvas id="chart-temp"></canvas>
+    <div id="smart-tab-data" class="smart-tab-content" style="display:none;">
+        <p id="hist-admin-only" class="w-muted" hidden>歷史紀錄只有管理員可以查看。</p>
+        <section id="hist-panel" class="widget" aria-labelledby="hist-title" style="min-height: 0; gap: 16px;">
+            <div class="hist-bar">
+                <h2 id="hist-title" class="w-cap" style="color: #FF9F43; font-size: 15px;"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>歷史紀錄</h2>
+                <label class="hist-device"><span class="w-muted">設備</span><select id="hist-device" class="t-input" aria-label="設備"></select></label>
+                <div id="hist-fields" class="seg" role="group" aria-label="數值"></div>
+                <div id="hist-range" class="seg" role="group" aria-label="時間範圍">
+                    <button type="button" data-hours="1">1 小時</button>
+                    <button type="button" data-hours="24" aria-pressed="true">24 小時</button>
+                    <button type="button" data-hours="168">7 天</button>
+                    <button type="button" data-hours="720">30 天</button>
                 </div>
             </div>
-            <div class="card" style="padding: 1rem;">
-                <div class="card-title" style="font-size:0.9rem; margin-bottom: 10px;">濕度變化 (%)</div>
-                <div style="position: relative; height: 250px; width: 100%;">
-                    <canvas id="chart-humid"></canvas>
-                </div>
+            <div class="hist-head">
+                <span id="hist-now" class="w-big" style="font-size: 48px;">—</span>
+                <span id="hist-stats" class="w-muted"></span>
             </div>
-            <div class="card" style="padding: 1rem;">
-                <div class="card-title" style="font-size:0.9rem; margin-bottom: 10px;">CO2 二氧化碳 (ppm)</div>
-                <div style="position: relative; height: 250px; width: 100%;">
-                    <canvas id="chart-co2"></canvas>
-                </div>
+            <div class="hist-chart-wrap">
+                <svg id="hist-svg" role="img" aria-label="歷史曲線"></svg>
+                <div id="hist-tip" class="hist-tip" hidden></div>
+                <p id="hist-empty" class="w-muted" hidden>這段時間沒有資料。</p>
             </div>
-            <div class="card" style="padding: 1rem;">
-                <div class="card-title" style="font-size:0.9rem; margin-bottom: 10px;">有害氣體 TVOC (ppm)</div>
-                <div style="position: relative; height: 250px; width: 100%;">
-                    <canvas id="chart-tvoc"></canvas>
-                </div>
-            </div>
-            <div class="card" style="padding: 1rem; grid-column: span 2;">
-                <div class="card-title" style="font-size:0.9rem; margin-bottom: 10px;">總電流負載 (A)</div>
-                <div style="position: relative; height: 250px; width: 100%;">
-                    <canvas id="chart-current"></canvas>
-                </div>
-            </div>
-        </div>
+        </section>
     </div>
 
     <!-- ============================================== -->
