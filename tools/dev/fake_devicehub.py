@@ -1,4 +1,4 @@
-"""Local stand-in for the DeviceHub integration API v0.2 (for viewing the Axis UI only).
+"""Local stand-in for the DeviceHub integration API v0.4 (for viewing the Axis UI only).
 Shapes follow DeviceHub docs/spec/integration-api.md; commands change a little state so the
 UI can be exercised. Run: python fake_devicehub.py  (listens on 127.0.0.1:18080)"""
 import time
@@ -119,6 +119,60 @@ async def power(vmid: int, action: str, request: Request, authorization: str = H
     g["status"] = "running" if action in ("start", "reboot") else "stopped"
     notice(x_dh_operator, f"{g['name']}（{vmid}）", f"pve.{action}", "ok")
     return {"id": "01FAKE", "result": "ok", "error": None}
+
+
+# ---- v0.4 §3.8 裝置帳號（綁定裝置頁籤） ----
+accounts = {"esp-server", "desktop", "laptop"}
+
+
+@app.get("/api/v1/accounts")
+def list_accounts(authorization: str = Header(None)):
+    if not auth(authorization, control=True):
+        return err(401, "unauthorized")
+    out = []
+    for i in sorted(accounts):
+        d = devices.get(i)
+        out.append({"id": i, "name": d["name"] if d else i, "type": d["type"] if d else None,
+                    "status": d["status"] if d else "unknown", "last_seen": d.get("last_seen") if d else None,
+                    "connected": bool(d and d["status"] != "unknown")})
+    return {"accounts": out}
+
+
+@app.post("/api/v1/accounts")
+async def add_account(request: Request, authorization: str = Header(None), x_dh_operator: str = Header(None)):
+    if not auth(authorization, control=True):
+        return err(401, "unauthorized")
+    body = await request.json()
+    i = body["id"]
+    if i in ("hub", "owner"):
+        return err(403, "reserved")
+    if i in accounts:
+        return err(409, "exists")
+    accounts.add(i)
+    name = (body.get("name") or i).strip()
+    devices[i] = {"id": i, "name": name, "type": "esp32" if body["kind"] == "esp32" else "host",
+                  "status": "unknown", "telemetry": {}}
+    alerts.insert(0, {"ts": now(), "level": "notice", "message": f"🛰️ axis（{x_dh_operator}）新增裝置帳號「{i}」：ok"})
+    return JSONResponse({"id": i, "name": name, "kind": body["kind"], "password": "fake-pw-" + i,
+                         "mqtt": {"lan": "192.168.0.50", "tailnet": "100.88.245.58", "port": 1883}}, status_code=201)
+
+
+@app.delete("/api/v1/accounts/{device_id}")
+async def delete_account(device_id: str, request: Request, authorization: str = Header(None),
+                         x_dh_operator: str = Header(None)):
+    if not auth(authorization, control=True):
+        return err(401, "unauthorized")
+    body = await request.json()
+    if not body.get("confirm"):
+        return err(428, "confirm_required")
+    if device_id == "esp-server":
+        return err(409, "protected")
+    if device_id not in accounts:
+        return err(404, "unknown_account")
+    accounts.discard(device_id)
+    devices.pop(device_id, None)
+    alerts.insert(0, {"ts": now(), "level": "notice", "message": f"🛰️ axis（{x_dh_operator}）移除裝置帳號「{device_id}」：ok"})
+    return {"id": device_id, "removed": True}
 
 
 if __name__ == "__main__":

@@ -224,53 +224,56 @@
     </div>
 
     <!-- ============================================== -->
-    <!-- TAB 3: 綁定裝置 (詳細數據與新增) -->
+    <!-- TAB 3: 綁定裝置（DeviceHub 裝置帳號；binding.js；DeviceHub integration-api.md §3.8、FR-18） -->
     <!-- ============================================== -->
-    <div id="smart-tab-devices" class="smart-tab-content" style="display:none; animation: fadeIn 0.3s ease;">
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.8rem;">
-            
-            <!-- 左側：已綁定裝置詳細狀態 -->
-            <div>
-                <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-main);">M 系列環境感測</h3>
-                <div class="card" style="margin-bottom: 1.5rem; ">
-                    <div style="font-size:1.1rem; font-weight:900; color:var(--accent-color); margin-bottom:1rem;">m12345678901</div>
-                    <div style="display:flex; flex-direction:column; gap:10px;">
-                        <div class="smart-info-row"><span class="smart-label">攝氏 (°C)</span><span class="smart-value">27.1</span></div>
-                        <div class="smart-info-row"><span class="smart-label">華氏 (°F)</span><span class="smart-value">80.8</span></div>
-                        <div class="smart-info-row"><span class="smart-label">濕度 (%)</span><span class="smart-value">63.7</span></div>
-                        <div class="smart-info-row"><span class="smart-label">TVOC (ppm)</span><span class="smart-value">183.0</span></div>
-                        <div class="smart-info-row"><span class="smart-label">CO2 (ppm)</span><span class="smart-value">819.0</span></div>
-                        <div class="smart-info-row"><span class="smart-label">有害氣體 (ppm)</span><span class="smart-value">867.0</span></div>
-                        <div class="smart-info-row"><span class="smart-label">天氣</span><span class="smart-value">晴/陰天</span></div>
-                    </div>
+    <div id="smart-tab-devices" class="smart-tab-content" style="display:none;">
+        <div class="bind-wrap">
+            <div class="bind-head">
+                <div>
+                    <h2 class="bind-title">已綁定的裝置</h2>
+                    <p class="w-muted bind-sub">連上 DeviceHub 的 ESP32 與電腦。新增裝置會建立它專屬的連線帳號，並告訴你怎麼設定。</p>
                 </div>
-
-                <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-main); margin-top: 2rem;">P 系列電源感測</h3>
-                <div class="card" style="">
-                    <div style="font-size:1.1rem; font-weight:900; color:var(--danger-color); margin-bottom:1rem;">p12345678901</div>
-                    <div class="smart-info-row"><span class="smart-label">電流負載 (A)</span><span class="smart-value">10636.7</span></div>
-                </div>
+                <button id="bind-add" type="button" class="btn btn-primary" onclick="openBindAdd()">＋ 新增裝置</button>
             </div>
-
-            <!-- 右側：新增產品編號 -->
-            <div>
-                <div class="card" style="position: sticky; top: 20px;">
-                    <div class="card-title" style="font-size:1.05rem; margin-bottom:1rem;">📝 產品編號綁定</div>
-                    <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
-                        <input type="text" class="t-input" placeholder="請輸入產品編號" style="flex:1;">
-                        <button class="btn btn-primary" style="padding: 0 15px;">➤</button>
-                    </div>
-                    
-                    <div style="font-size:0.8rem; font-weight:800; color:var(--text-muted); margin-bottom:10px;">已新增的產品編號：</div>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <div style="padding: 12px; border: 1px solid var(--accent-color); border-radius: 8px; text-align: center; font-weight: 900; background: color-mix(in srgb, var(--accent-color) 5%, transparent);">m12345678901</div>
-                        <div style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; text-align: center; font-weight: 900;">m12345678902</div>
-                        <div style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; text-align: center; font-weight: 900;">p12345678901</div>
-                    </div>
-                </div>
-            </div>
-
+            <p id="bind-msg" class="w-muted bind-msg" hidden></p>
+            <div id="bind-list" class="ios-list" aria-live="polite"></div>
         </div>
+
+        <dialog id="bind-dialog" class="bind-dialog" aria-labelledby="bind-dialog-title">
+            <form id="bind-form" onsubmit="event.preventDefault(); submitBindAdd();">
+                <h3 id="bind-dialog-title" class="bind-dlg-title">新增裝置</h3>
+                <p class="ios-caption">類型</p>
+                <div id="bind-kind" class="seg ios-seg" role="group" aria-label="裝置類型">
+                    <button type="button" data-kind="esp32" aria-pressed="true">ESP32 節點</button>
+                    <button type="button" data-kind="windows" aria-pressed="false">Windows 電腦</button>
+                    <button type="button" data-kind="linux" aria-pressed="false">Linux 電腦</button>
+                </div>
+                <div class="ios-group ios-form bind-fields">
+                    <label><span>代號</span><input id="bind-id" type="text" required maxlength="31" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="例如 esp-living"></label>
+                    <label><span>名稱</span><input id="bind-name" type="text" maxlength="40" autocomplete="off" placeholder="例如 客廳感測器（選填）"></label>
+                </div>
+                <p class="ios-footnote">代號：小寫英文、數字與「-」，2–31 字、英文開頭；建立後不能改（名稱之後可以改）。</p>
+                <p id="bind-error" class="bind-error" role="alert"></p>
+                <div class="bind-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeBindDialog()">取消</button>
+                    <button id="bind-submit" type="submit" class="btn btn-primary">建立</button>
+                </div>
+            </form>
+            <div id="bind-result" hidden>
+                <h3 class="bind-dlg-title">「<span id="bind-r-name"></span>」已建立</h3>
+                <p class="bind-warn">密碼只會顯示這一次。請現在把下面的設定複製到裝置裡；關掉這個視窗後就看不到了。</p>
+                <div class="ios-group ios-form">
+                    <label><span>帳號</span><input id="bind-r-id" type="text" readonly></label>
+                    <label><span>密碼</span><input id="bind-r-pw" type="text" readonly></label>
+                </div>
+                <p id="bind-r-file" class="ios-caption bind-file"></p>
+                <pre id="bind-r-snippet" class="bind-snippet"></pre>
+                <div class="bind-copyrow"><button type="button" class="btn btn-outline" onclick="copyBindSnippet()">複製設定</button></div>
+                <p class="ios-caption bind-file">接下來</p>
+                <ol id="bind-r-steps" class="bind-steps"></ol>
+                <div class="bind-actions"><button type="button" class="btn btn-primary" onclick="closeBindDialog()">我已記下，完成</button></div>
+            </div>
+        </dialog>
     </div>
 
     <!-- DeviceHub 確認視窗：不用原生 confirm()，有些內嵌瀏覽器會擋掉它，危險操作就被默默取消 -->
