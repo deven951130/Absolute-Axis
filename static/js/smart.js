@@ -187,4 +187,9 @@ window.switchSmartTab = function(tabId) {
     if (tabId === 'home' && typeof loadDeviceHub === 'function') {
         loadDeviceHub();
     }
+
+    // 綁定裝置：DeviceHub 的裝置帳號（binding.js）
+    if (tabId === 'devices' && typeof loadDeviceBinding === 'function') {
+        loadDeviceBinding();
+    }
 };

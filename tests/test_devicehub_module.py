@@ -221,3 +221,66 @@ def test_history_fields(dh):
     state["resp"] = Resp(200, {"device_id": "esp-server", "fields": ["temp_c", "hum"]})
     r = c.get("/api/devicehub/history/esp-server/fields", headers=ADMIN)
     assert r.json() == {"ok": True, "device_id": "esp-server", "fields": ["temp_c", "hum"]}
+
+
+# ---------- 裝置綁定（DeviceHub integration-api.md §3.8） ----------
+
+def test_accounts_admin_only(dh):
+    c, calls, _ = dh
+    member = {"Authorization": "Bearer member"}
+    assert c.get("/api/devicehub/accounts", headers=member).status_code == 403
+    assert c.post("/api/devicehub/accounts", headers=member, json={"id": "node1", "kind": "esp32"}).status_code == 403
+    assert c.request("DELETE", "/api/devicehub/accounts/node1", headers=member, json={"confirm": True}).status_code == 403
+    assert calls == []
+
+
+def test_account_list_only_passes_known_fields(dh):
+    c, calls, state = dh
+    state["resp"] = Resp(200, {"accounts": [
+        {"id": "desktop", "name": "桌機", "type": "host", "status": "online", "last_seen": 1, "connected": True,
+         "secret": "x"}]})
+    body = c.get("/api/devicehub/accounts", headers=ADMIN).json()
+    assert body == {"ok": True, "accounts": [{"id": "desktop", "name": "桌機", "type": "host", "status": "online",
+                                               "last_seen": 1, "connected": True}]}
+    assert calls[0]["headers"]["Authorization"] == "Bearer control-tok"
+
+
+def test_account_add_forwards_and_returns_password_uncached(dh):
+    c, calls, state = dh
+    state["resp"] = Resp(201, {"id": "node1", "name": "客廳", "kind": "esp32", "password": "s3cret",
+                               "mqtt": {"lan": "192.168.0.50", "tailnet": "100.88.245.58", "port": 1883}})
+    r = c.post("/api/devicehub/accounts", headers=ADMIN, json={"id": "node1", "name": " 客廳 ", "kind": "esp32"})
+    assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
+    assert r.json() == {"ok": True, "id": "node1", "name": "客廳", "kind": "esp32", "password": "s3cret",
+                        "mqtt": {"lan": "192.168.0.50", "tailnet": "100.88.245.58", "port": 1883}}
+    call = calls[0]
+    assert (call["method"], call["url"].endswith("/api/v1/accounts")) == ("POST", True)
+    assert call["json"] == {"id": "node1", "name": "客廳", "kind": "esp32"}
+    assert call["headers"]["X-DH-Operator"] == "sparkle"
+
+
+@pytest.mark.parametrize("body", [
+    {"id": "Node1", "kind": "esp32"}, {"id": "n", "kind": "esp32"}, {"id": "node1;x", "kind": "esp32"},
+    {"id": "node1", "kind": "toaster"},
+])
+def test_account_add_validates_before_devicehub(dh, body):
+    c, calls, _ = dh
+    assert c.post("/api/devicehub/accounts", headers=ADMIN, json=body).json()["error"] == "bad_request"
+    assert calls == []
+
+
+def test_account_errors_stay_http_200_with_code(dh):
+    c, _, state = dh
+    state["resp"] = Resp(409, {"error": "exists", "detail": None})
+    r = c.post("/api/devicehub/accounts", headers=ADMIN, json={"id": "desktop", "kind": "windows"})
+    assert r.status_code == 200 and r.json() == {"ok": False, "error": "exists", "http": 409}
+
+
+def test_account_delete_sends_confirm(dh):
+    c, calls, state = dh
+    state["resp"] = Resp(200, {"id": "node1", "removed": True})
+    r = c.request("DELETE", "/api/devicehub/accounts/node1", headers=ADMIN, json={"confirm": True})
+    assert r.json() == {"ok": True, "id": "node1", "removed": True}
+    assert calls[0]["method"] == "DELETE" and calls[0]["json"] == {"confirm": True}
+    r = c.request("DELETE", "/api/devicehub/accounts/node1", headers=ADMIN)
+    assert calls[1]["json"] == {"confirm": False}

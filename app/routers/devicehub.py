@@ -1,7 +1,7 @@
 """DeviceHub 模組：智慧宅控的設備、電源與虛擬機（讀取＋控制）。
 
 Absolute-Axis 是主入口，DeviceHub 是設備／電源管理模組（DeviceHub repo:
-docs/spec/integration-api.md v0.2、architecture AD-10）。
+docs/spec/integration-api.md v0.4、architecture AD-10／AD-11）。
 
 - 只由 Axis 後端呼叫 DeviceHub；DEVICEHUB_TOKEN（讀取）與 DEVICEHUB_CONTROL_TOKEN（控制）
   只放在 .env，不會送到瀏覽器。
@@ -16,6 +16,7 @@ import time
 
 import requests
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from app.utils import require_admin
@@ -181,3 +182,76 @@ def devicehub_history(device_id: str, field: str, hours: int = 24, user: dict = 
         return _fail("bad_request", 400)
     hours = max(1, min(int(hours), 720))
     return _read_get(f"/api/v1/history/{device_id}?field={field}&hours={hours}")
+
+
+# ---------- 裝置綁定（DeviceHub integration-api.md §3.8、FR-18；智慧宅控「綁定裝置」頁籤） ----------
+_ACCOUNT_ID = re.compile(r"^[a-z][a-z0-9-]{1,30}$")
+_ACCOUNT_KINDS = ("esp32", "windows", "linux")
+
+
+class AccountBody(BaseModel):
+    id: str = Field(max_length=64)
+    name: str | None = Field(default=None, max_length=80)
+    kind: str = Field(max_length=16)
+
+
+def _account_call(method: str, path: str, user: dict, body: dict | None = None) -> tuple[dict, int | None]:
+    """(DeviceHub 的 JSON, 狀態碼)；錯誤時 JSON 是 _fail(...)。只轉送白名單欄位。"""
+    if not DEVICEHUB_CONTROL_TOKEN:
+        return _fail("control_not_configured"), None
+    try:
+        r = requests.request(method, f"{DEVICEHUB_URL}{path}", json=body, timeout=20,
+                             headers={"Authorization": f"Bearer {DEVICEHUB_CONTROL_TOKEN}",
+                                      "X-DH-Operator": _operator(user)})
+    except requests.RequestException:
+        return _fail("unreachable"), None
+    try:
+        data = r.json()
+    except ValueError:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    if r.status_code not in (200, 201):
+        code = data.get("error") if isinstance(data.get("error"), str) else None
+        return _fail((code or f"http_{r.status_code}")[:40], r.status_code), r.status_code
+    return data, r.status_code
+
+
+@router.get("/api/devicehub/accounts")
+def devicehub_accounts(user: dict = Depends(require_admin)):
+    data, _ = _account_call("GET", "/api/v1/accounts", user)
+    if data.get("ok") is False:
+        return data
+    keep = ("id", "name", "type", "status", "last_seen", "connected")
+    accounts = [{k: a.get(k) for k in keep} for a in data.get("accounts", []) if isinstance(a, dict)]
+    return {"ok": True, "accounts": accounts}
+
+
+@router.post("/api/devicehub/accounts")
+def devicehub_account_add(body: AccountBody, user: dict = Depends(require_admin)):
+    if not _ACCOUNT_ID.match(body.id) or body.kind not in _ACCOUNT_KINDS:
+        return _fail("bad_request", 400)
+    name = (body.name or "").strip() or None
+    data, _ = _account_call("POST", "/api/v1/accounts", user, {"id": body.id, "name": name, "kind": body.kind})
+    if data.get("ok") is False:
+        return data
+    _cache.update(ts=0.0, data=None)
+    mqtt = data.get("mqtt") if isinstance(data.get("mqtt"), dict) else {}
+    out = {
+        "ok": True, "id": data.get("id"), "name": data.get("name"), "kind": data.get("kind"),
+        "password": data.get("password"),  # 只出現這一次；不寫日誌、不快取
+        "mqtt": {k: mqtt.get(k) for k in ("lan", "tailnet", "port")},
+    }
+    return JSONResponse(out, headers={"Cache-Control": "no-store"})
+
+
+@router.delete("/api/devicehub/accounts/{device_id}")
+def devicehub_account_delete(device_id: str, body: PowerBody | None = None, user: dict = Depends(require_admin)):
+    if not _ACCOUNT_ID.match(device_id):
+        return _fail("bad_request", 400)
+    data, _ = _account_call("DELETE", f"/api/v1/accounts/{device_id}", user,
+                            {"confirm": bool(body and body.confirm)})
+    if data.get("ok") is False:
+        return data
+    _cache.update(ts=0.0, data=None)
+    return {"ok": True, "id": data.get("id"), "removed": bool(data.get("removed"))}
