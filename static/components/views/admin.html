@@ -1,33 +1,18 @@
-<!-- Absolute Axis - Admin View Module -->
+<!-- Absolute Axis - Admin View Module（帳號管理；admin.js 以 DOM＋textContent 產生清單，帳號名稱不插入 HTML） -->
 <div id="view-admin" class="view-section">
-    <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.8rem;">
-            <h2 class="card-title" style="margin-bottom:0;">👥 系統用戶權限管理</h2>
-            <button class="btn btn-primary" style="padding:8px 16px;" onclick="document.getElementById('modal-create-user').style.display='flex'">+ 新增核心成員</button>
+    <div class="page-wrap">
+        <div class="page-head">
+            <div>
+                <p class="w-muted page-sub page-lead">核准註冊申請、調整角色與儲存空間。</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('modal-create-user').style.display='flex'">＋ 新增成員</button>
         </div>
-        <!-- 狀態篩選標籤列 -->
-        <div class="admin-tab-row" style="display:flex; gap:1.5rem; align-items:center; margin-bottom:1.8rem; background:var(--surface-2); padding:10px 20px; border-radius:10px; border:1px solid var(--border-color);">
-            <span style="color:var(--text-muted); font-size:1.2rem; cursor:default;">•</span>
-            <button class="admin-tab active" onclick="filterUsers('all', this)" style="background:var(--card-bg); border:none; color:var(--text-main); padding:6px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s; outline:none;">所有成員</button>
-            <button class="admin-tab" onclick="filterUsers('Pending', this)" style="background:transparent; border:none; color:var(--text-muted); padding:6px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s; outline:none;" onmouseover="this.style.color='var(--text-main)'" onmouseout="if(!this.classList.contains('active')) this.style.color='var(--text-muted)'">等待中</button>
-            <button class="admin-tab" onclick="filterUsers('Rejected', this)" style="background:transparent; border:none; color:var(--text-muted); padding:6px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s; outline:none;" onmouseover="this.style.color='var(--text-main)'" onmouseout="if(!this.classList.contains('active')) this.style.color='var(--text-muted)'">已拒絕</button>
-            <button class="admin-tab" onclick="filterUsers('Approved', this)" style="background:transparent; border:none; color:var(--text-muted); padding:6px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9rem; transition:0.2s; outline:none;" onmouseover="this.style.color='var(--text-main)'" onmouseout="if(!this.classList.contains('active')) this.style.color='var(--text-muted)'">已核准</button>
+        <div class="seg page-seg" role="group" aria-label="依狀態篩選">
+            <button type="button" class="admin-tab" data-filter="all" aria-pressed="true" onclick="filterUsers('all', this)">全部</button>
+            <button type="button" class="admin-tab" data-filter="Pending" aria-pressed="false" onclick="filterUsers('Pending', this)">等待中<span id="admin-pending-count" class="seg-count" hidden></span></button>
+            <button type="button" class="admin-tab" data-filter="Approved" aria-pressed="false" onclick="filterUsers('Approved', this)">已核准</button>
+            <button type="button" class="admin-tab" data-filter="Rejected" aria-pressed="false" onclick="filterUsers('Rejected', this)">已拒絕</button>
         </div>
-        <div style="overflow-x:auto;">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>用戶識別</th>
-                        <th>核心角色</th>
-                        <th>頭像預覽</th>
-                        <th>儲存配額</th>
-                        <th>安全操作</th>
-                    </tr>
-                </thead>
-                <tbody id="user-table-body">
-                    <!-- Dynamic injection from admin.js -->
-                </tbody>
-            </table>
-        </div>
+        <div id="user-table-body" class="ios-list" aria-live="polite"></div>
     </div>
 </div>

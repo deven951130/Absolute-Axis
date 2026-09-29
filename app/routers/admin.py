@@ -4,6 +4,7 @@ import shutil
 import os
 
 from app.models import CreateUserRequest, AdminUserUpdate
+from app.naming import USERNAME_RULE, valid_username
 from app.utils import get_current_user_obj, get_password_hash, log_event
 from app.config import NAS_ROOT, QUOTA_PER_USER
 from app.database import get_db, User, FileStar, FileShare
@@ -19,9 +20,11 @@ def list_users(user: dict = Depends(get_current_user_obj), db: Session = Depends
 
 @router.post("/create_user")
 def create_user(req: CreateUserRequest, user: dict = Depends(get_current_user_obj), db: Session = Depends(get_db)):
-    if user["role"] != "Administrator": 
+    if user["role"] != "Administrator":
         raise HTTPException(status_code=403)
-        
+    if not valid_username(req.username):
+        raise HTTPException(status_code=400, detail=USERNAME_RULE)
+
     u = shutil.disk_usage(NAS_ROOT)
     # Convert GB to Bytes
     requested_quota = req.quota_gb * 1073741824 if req.quota_gb else QUOTA_PER_USER

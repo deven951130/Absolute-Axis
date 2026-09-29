@@ -4,6 +4,7 @@ from collections import defaultdict
 from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 from app.models import LoginRequest
+from app.naming import USERNAME_RULE, valid_username
 from app.utils import verify_password, create_access_token, log_event, get_password_hash
 from app.database import get_db, User
 
@@ -74,6 +75,9 @@ def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)):
 
 @router.post("/register")
 def register(req: LoginRequest, db: Session = Depends(get_db)):
+    # 帳號名稱會出現在管理員的帳號管理頁：不接受可被當成 HTML／程式碼的字元（app/naming.py）
+    if not valid_username(req.username):
+        raise HTTPException(status_code=400, detail=USERNAME_RULE)
     existing = db.query(User).filter(User.username == req.username).first()
     if existing:
         raise HTTPException(status_code=400, detail="此帳號名稱已被註冊")

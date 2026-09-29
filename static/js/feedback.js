@@ -1,154 +1,108 @@
-// Absolute Axis - Feedback Hub Module
+// Absolute Axis - Feedback Hub Module（問題反饋）
+// 反饋的標題、內容、提交者、管理員回覆都是使用者輸入：一律用 h()／textContent 顯示（dom.js），不插入 HTML。
+
+const _FB_CATEGORY = { Bug: '系統錯誤', Suggestion: '功能建議', Other: '其他' };
+
+function _fbDetail(data, fallback) {
+    return typeof (data && data.detail) === 'string' ? data.detail : fallback;
+}
+
 async function loadFeedbacks() {
     const container = document.getElementById('feedbacks-list-container');
     if (!container) return;
-
+    const note = (text) => container.replaceChildren(h('p', { class: 'w-muted post-empty', text }));
     try {
         const res = await authFetch('/api/feedbacks');
         if (!res.ok) {
-            container.innerHTML = '<div style="color:var(--text-muted); padding:2rem; text-align:center;">無法取得意見反饋紀錄</div>';
+            note('無法取得反饋紀錄');
             return;
         }
         const feedbacks = await res.json();
-        
-        container.innerHTML = '';
-        if (feedbacks.length === 0) {
-            container.innerHTML = '<div style="color:var(--text-muted); padding:3rem; text-align:center; font-weight:800;">目前沒有任何意見反饋紀錄</div>';
+        if (!feedbacks.length) {
+            note('目前沒有任何反饋。');
             return;
         }
-
         const isAdmin = localStorage.getItem('axis_role') === 'Administrator';
-
-        feedbacks.forEach(f => {
-            const item = document.createElement('div');
-            item.className = 'file-list-item';
-            item.style = 'display:flex; flex-direction:column; padding:1.5rem; gap:12px; margin-bottom:12px; border-radius:12px; border:1px solid var(--border-color); background:var(--card-bg);';
-            
-            // 分類與狀態標籤
-            let cateText = '其他';
-            if (f.category === 'Bug') cateText = '系統錯誤';
-            else if (f.category === 'Suggestion') cateText = '功能建議';
-            
-            const cateBadge = `<span style="background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border-color); padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:800; margin-right:8px;">${cateText}</span>`;
-            
-            const statusBadge = f.status === 'Resolved' ?
-                '<span style="background:color-mix(in srgb, var(--success-color) 15%, transparent); color:var(--success-color); border:1px solid color-mix(in srgb, var(--success-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已處置</span>' :
-                '<span style="background:color-mix(in srgb, var(--danger-color) 15%, transparent); color:var(--danger-color); border:1px solid color-mix(in srgb, var(--danger-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">待處置</span>';
-
-            // 管理員回覆區塊
-            let adminActionHtml = '';
-            if (f.status === 'Pending' && isAdmin) {
-                adminActionHtml = `
-                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-color); display:flex; gap:10px;">
-                        <input type="text" id="fb-reply-${f.id}" placeholder="請輸入回覆內容" class="t-input" style="flex:1; height:36px;">
-                        <button class="btn btn-primary" style="padding:0 16px; font-size:0.75rem; height:36px;" onclick="resolveFeedback(${f.id})">回覆並處置</button>
-                    </div>
-                `;
+        container.replaceChildren(...feedbacks.map((f) => {
+            const resolved = f.status === 'Resolved';
+            let replyForm = null;
+            if (!resolved && isAdmin) {
+                const input = h('input', { type: 'text', id: `fb-reply-${f.id}`, class: 't-input', placeholder: '回覆內容' });
+                input.addEventListener('keydown', (e) => { if (e.key === 'Enter') resolveFeedback(f.id); });
+                replyForm = h('div', { class: 'post-reply-form' }, input,
+                    h('button', { type: 'button', class: 'btn btn-primary btn-sm', text: '回覆並處置', onclick: () => resolveFeedback(f.id) }));
             }
-
-            // 顯示管理員的回覆
-            let responseHtml = '';
-            if (f.response) {
-                responseHtml = `
-                    <div style="background:color-mix(in srgb, var(--accent-color) 5%, transparent); border-left:3px solid var(--accent-color); padding:10px 15px; border-radius:4px; margin-top:8px;">
-                        <div style="font-size:0.7rem; font-weight:800; color:var(--accent-color); margin-bottom:4px;">系統管理員回覆</div>
-                        <div style="font-size:0.8rem; color:var(--text-main); line-height:1.5;">${f.response}</div>
-                    </div>
-                `;
-            }
-
-            item.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
-                    <div style="display:flex; align-items:center;">
-                        ${cateBadge}
-                        <span style="font-weight:900; font-size:1rem; color:var(--text-main);">${f.title}</span>
-                    </div>
-                    <div>
-                        ${statusBadge}
-                    </div>
-                </div>
-                <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.6; word-break:break-all;">
-                    ${f.content.replace(/\n/g, '<br>')}
-                </div>
-                ${responseHtml}
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; font-size:0.72rem; color:var(--text-muted); font-weight:800;">
-                    <div>
-                        <span>提交者: ${f.creator}</span>
-                        <span style="margin: 0 10px;">|</span>
-                        <span>時間: ${f.created_at.replace('T', ' ').substring(0, 19)}</span>
-                    </div>
-                </div>
-                ${adminActionHtml}
-            `;
-            container.appendChild(item);
-        });
+            return h('article', { class: 'post-card' },
+                h('div', { class: 'post-head' },
+                    h('span', { class: 'pill muted', text: _FB_CATEGORY[f.category] || '其他' }),
+                    h('h4', { class: 'post-title', text: f.title }),
+                    h('span', { class: `pill ${resolved ? 'ok' : 'warn'}`, text: resolved ? '已處置' : '待處置' })),
+                h('p', { class: 'post-body', text: f.content }),
+                f.response ? h('div', { class: 'post-reply' },
+                    h('span', { class: 'post-reply-label', text: '管理員回覆' }),
+                    h('p', { text: f.response })) : null,
+                h('div', { class: 'post-meta', text: `${f.creator} · ${shortTime(f.created_at)}` }),
+                replyForm);
+        }));
     } catch (e) {
-        console.error("Failed to load feedbacks:", e);
+        console.error('Failed to load feedbacks:', e);
+        note('載入反饋時發生錯誤');
     }
 }
 
 async function submitFeedback() {
-    const categoryVal = document.getElementById('feedback-category-input').value;
-    const titleVal = document.getElementById('feedback-title-input').value.strip ? document.getElementById('feedback-title-input').value.strip() : document.getElementById('feedback-title-input').value.trim();
-    const contentVal = document.getElementById('feedback-content-input').value.strip ? document.getElementById('feedback-content-input').value.strip() : document.getElementById('feedback-content-input').value.trim();
-
-    if (!titleVal || !contentVal) {
-        if (typeof showToast === 'function') {
-            showToast("請填寫完整的反饋主題與詳細描述", "error");
-        } else {
-            alert("請填寫完整資訊");
-        }
+    const category = document.getElementById('feedback-category-input').value;
+    const title = document.getElementById('feedback-title-input').value.trim();
+    const content = document.getElementById('feedback-content-input').value.trim();
+    if (!title || !content) {
+        toastText('請填寫標題與內容', 'error');
         return;
     }
-
     try {
         const res = await authFetch('/api/feedbacks', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title: titleVal,
-                content: contentVal,
-                category: categoryVal
-            })
+            body: JSON.stringify({ title, content, category })
         });
-
         if (res.ok) {
-            if (typeof showToast === 'function') showToast("意見反饋送出成功", "success");
+            toastText('反饋已送出，謝謝！', 'success');
             document.getElementById('feedback-title-input').value = '';
             document.getElementById('feedback-content-input').value = '';
             loadFeedbacks();
         } else {
-            const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "提交失敗", "error");
+            toastText(_fbDetail(await res.json().catch(() => null), '送出失敗'), 'error');
         }
     } catch (err) {
         console.error(err);
+        toastText('連線錯誤，請稍後再試', 'error');
     }
 }
 
 async function resolveFeedback(id) {
-    const replyInput = document.getElementById(`fb-reply-${id}`);
-    const replyVal = replyInput.value.strip ? replyInput.value.strip() : replyInput.value.trim();
-    if (!replyVal) {
-        if (typeof showToast === 'function') showToast("請輸入回覆內容", "error");
+    const input = document.getElementById(`fb-reply-${id}`);
+    const response = input ? input.value.trim() : '';
+    if (!response) {
+        toastText('請輸入回覆內容', 'error');
         return;
     }
-
     try {
-        const res = await authFetch(`/api/feedbacks/${id}/resolve`, {
+        const res = await authFetch(`/api/feedbacks/${encodeURIComponent(id)}/resolve`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ response: replyVal })
+            body: JSON.stringify({ response })
         });
-
         if (res.ok) {
-            if (typeof showToast === 'function') showToast("處置意見反饋成功", "success");
+            toastText('已回覆並標記為已處置', 'success');
             loadFeedbacks();
         } else {
-            const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "操作失敗", "error");
+            toastText(_fbDetail(await res.json().catch(() => null), '操作失敗'), 'error');
         }
     } catch (err) {
         console.error(err);
+        toastText('連線錯誤，請稍後再試', 'error');
     }
 }
+
+window.loadFeedbacks = loadFeedbacks;
+window.submitFeedback = submitFeedback;
+window.resolveFeedback = resolveFeedback;
