@@ -1,139 +1,120 @@
-<!-- Absolute Axis - Dashboard View Module -->
+<!-- Absolute Axis - 總覽（玻璃小工具版面；設計：Claude Design「Absolute Axis 版面重設計」） -->
 <div id="view-dashboard" class="view-section active">
-    <!-- Stat Grid -->
-    <div class="stat-grid">
-        <div class="stat-card" style="cursor:pointer;" onclick="switchView('metrics')" title="點擊查看詳細負載曲線">
-            <div class="gauge-container">
-                <svg class="gauge-svg" viewBox="0 0 100 50">
-                    <path class="gauge-bg" d="M10 45 A 35 35 0 0 1 90 45" />
-                    <path id="cpu-gauge" class="gauge-fill" d="M10 45 A 35 35 0 0 1 90 45" />
-                </svg>
-                <span class="gauge-label" id="cpu-val">--%</span>
-            </div>
-            <div style="font-size:0.65rem;font-weight:800;color:var(--text-muted);margin-top:10px;">CPU 總體負載 (Metrics Link)</div>
-        </div>
-        <div class="stat-card" style="cursor:pointer;" onclick="switchView('metrics')" title="點擊查看詳細負載曲線">
-            <div class="gauge-container">
-                <svg class="gauge-svg" viewBox="0 0 100 50">
-                    <path class="gauge-bg" d="M10 45 A 35 35 0 0 1 90 45" />
-                    <path id="ram-gauge" class="gauge-fill" d="M10 45 A 35 35 0 0 1 90 45" />
-                </svg>
-                <span class="gauge-label" id="ram-val">--%</span>
-            </div>
-            <div style="font-size:0.65rem;font-weight:800;color:var(--text-muted);margin-top:10px;">RAM 使用率 (Metrics Link)</div>
-        </div>
-        <div class="stat-card">
-            <div style="font-size:1.8rem;">🌡️</div>
-            <div id="sensor-temp" style="font-weight:900; font-size:1.2rem; margin:8px 0;">--°C</div>
-            <div style="font-size:0.6rem; color:var(--text-muted); font-weight:800;">主機環境溫度</div>
-        </div>
-        <div class="stat-card">
-            <div style="font-size:1.8rem;">💧</div>
-            <div id="sensor-humid" style="font-weight:900; font-size:1.2rem; margin:8px 0;">--%</div>
-            <div style="font-size:0.6rem; color:var(--text-muted); font-weight:800;">環境相對濕度</div>
-        </div>
-        <div class="stat-card">
-            <div style="font-size:1.8rem;">📶</div>
-            <div style="text-align:center;">
-                <div style="font-size:0.75rem;"><span style="color:var(--success-color)">▲</span> <span id="bw-up">0.0 Mbps</span></div>
-                <div style="font-size:0.75rem;"><span style="color:var(--danger-color)">▼</span> <span id="bw-dn">0.0 Mbps</span></div>
-            </div>
-            <div style="font-size:0.6rem; color:var(--text-muted); font-weight:800; margin-top:5px;">網際網路測速 (每 5 分鐘)</div>
-        </div>
-    </div>
+    <div class="widgets">
 
-    <!-- Main Grid -->
-    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:2rem;">
-        <div class="card terminal-card" style="display:flex; flex-direction:column; height:480px; padding:0;">
-            <div class="card-title" style="padding:1.2rem 1.8rem 0.5rem 1.8rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid var(--border-color); margin-bottom:0;">
-                <div style="display:flex; gap:18px;">
-                    <span id="tab-log-title" onclick="window.switchTerminalTab('log')" style="cursor:pointer; font-weight:900; color:var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 6px; font-size: 0.95rem; transition:0.2s;">🖥️ 系統動作紀錄</span>
-                    <span id="tab-ann-title" onclick="window.switchTerminalTab('ann')" style="cursor:pointer; font-weight:900; color:var(--text-muted); padding-bottom: 6px; font-size: 0.95rem; transition:0.2s;">📢 系統公告看板</span>
-                </div>
-                <input type="text" id="log-search-input" placeholder="篩選日誌..." class="t-input" style="width:160px; padding:6px 12px; font-size:0.75rem; margin-bottom:0;" oninput="filterLogs()">
+        <!-- 此刻的家：溫濕度與網路 -->
+        <section class="widget w2" aria-labelledby="w-home-cap" style="flex-direction: row; gap: 24px;">
+            <div style="display: flex; flex-direction: column; min-width: 180px;">
+                <h2 id="w-home-cap" class="w-cap" style="color: #FF9F43;"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11l8.5-7 8.5 7"></path><path d="M6 10v10h12V10"></path></svg>此刻的家</h2>
+                <div id="sensor-temp" class="w-big" style="font-size: 72px; margin-top: 12px;">--°C</div>
+                <div style="margin-top: 10px; font-size: 15px; font-weight: 500;">室內環境</div>
+                <div style="margin-top: 2px; font-size: 14px;" class="w-muted">濕度 <span id="sensor-humid" class="num">--%</span></div>
             </div>
-            
-            <!-- Tab 1: System Logs -->
-            <div id="terminal-log-content" style="display:flex; flex-direction:column; flex:1; height:0; width:100%;">
-                <div id="terminal-logs" class="terminal-logs-box">
-                    <div>[SYSTEM] 初始化終端機介面...</div>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; min-width: 0;">
+                <div class="w-row" style="padding: 12px 14px; border-radius: 16px; background: var(--surface-2);">
+                    <span class="w-muted">下載</span><span id="bw-dn" style="font-size: 20px; font-weight: 500;">0.0 Mbps</span>
                 </div>
-                <div id="broadcast-sec" class="terminal-broadcast-sec" style="display:flex;">
-                    <input type="text" id="msg-input" placeholder="發送系統廣播訊息..." class="t-input" style="flex:1; margin-bottom:0; padding:10px 15px;" onkeypress="if(event.key==='Enter') broadCast()">
-                    <button class="btn btn-primary" style="padding:8px 20px; font-size:0.85rem; font-weight:800;" onclick="broadCast()">📡 發送廣播</button>
+                <div class="w-row" style="padding: 12px 14px; border-radius: 16px; background: var(--surface-2);">
+                    <span class="w-muted">上傳</span><span id="bw-up" style="font-size: 20px; font-weight: 500;">0.0 Mbps</span>
                 </div>
+                <div class="w-muted" style="font-size: 12px; text-align: right;">網路測速每 5 分鐘一次</div>
             </div>
+        </section>
 
-            <!-- Tab 2: Announcements -->
-            <div id="terminal-ann-content" style="display:none; flex-direction:column; flex:1; height:0; width:100%;">
-                <div id="terminal-announcements" class="terminal-logs-box">
-                    <div>[SYSTEM] 初始化公告看板...</div>
+        <!-- 伺服器：CPU / 記憶體 -->
+        <section class="widget card-interactive" aria-labelledby="w-srv-cap" style="cursor: pointer;" onclick="switchView('metrics')">
+            <h2 id="w-srv-cap" class="w-cap" style="color: #8C8AF5;"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="7" rx="2"></rect><rect x="3.5" y="13" width="17" height="7" rx="2"></rect></svg>伺服器<span class="w-more">詳細</span></h2>
+            <div style="flex: 1; display: flex; justify-content: space-around; align-items: center; margin-top: 10px;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <div class="ring"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="ring-bg" cx="24" cy="24" r="20"></circle><circle id="cpu-gauge" class="ring-fill" cx="24" cy="24" r="20" style="stroke: #34D17A;"></circle></svg><b id="cpu-val">--%</b></div>
+                    <span class="w-muted" style="font-size: 13px;">CPU</span>
                 </div>
-                <div id="announcement-post-sec" class="terminal-broadcast-sec" style="display:none;">
-                    <input type="text" id="ann-input" placeholder="發布新公告內容..." class="t-input" style="flex:1; margin-bottom:0; padding:10px 15px;" onkeypress="if(event.key==='Enter') window.publishAnnouncement()">
-                    <button class="btn btn-primary" style="padding:8px 20px; font-size:0.85rem; font-weight:800;" onclick="window.publishAnnouncement()">📢 發佈公告</button>
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                    <div class="ring"><svg viewBox="0 0 48 48" aria-hidden="true"><circle class="ring-bg" cx="24" cy="24" r="20"></circle><circle id="ram-gauge" class="ring-fill" cx="24" cy="24" r="20" style="stroke: #4C8DFF;"></circle></svg><b id="ram-val">--%</b></div>
+                    <span class="w-muted" style="font-size: 13px;">記憶體</span>
                 </div>
             </div>
-        </div>
-        
-        <div style="display:flex; flex-direction:column; gap:1.5rem;">
-            <!-- 儲存配額 (優先級 #1) -->
-            <div class="card card-interactive" style="cursor:pointer; padding: 1.2rem;" onclick="switchView('nas-mgnt')" title="點擊查看實體儲存空間細節">
-                <div class="card-title" style="margin-bottom:1rem; font-size:0.85rem;">🗄️ 系統儲存配額 (Storage Link)</div>
-                <div style="margin-bottom:1rem;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:5px;">
-                        <span>SSD 系統硬碟</span><span id="sys-label">-- / --</span>
-                    </div>
-                    <div class="progress-bar" style="height:6px;"><div id="sys-bar" class="progress-fill" style="width:0%"></div></div>
+        </section>
+
+        <!-- 快速控制（管理員；DeviceHub） -->
+        <section class="widget" id="dash-quick" aria-label="快速控制" hidden>
+            <h2 class="w-cap" style="color: #F2992E;"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8"></path><path d="M6.3 6.8a8 8 0 1 0 11.4 0"></path></svg>快速控制</h2>
+            <div id="dash-quick-grid" class="quick-grid"></div>
+        </section>
+
+        <!-- 設備（管理員；DeviceHub） -->
+        <section class="widget w2" id="dash-devices" aria-labelledby="w-dev-cap" hidden>
+            <h2 id="w-dev-cap" class="w-cap" style="color: #34D17A;"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8"></path></svg><span id="dash-dev-title">設備</span><button type="button" class="w-more" onclick="switchView('smart')">智慧宅控</button></h2>
+            <div id="dash-dev-list" class="dev-rings"></div>
+        </section>
+
+        <!-- 儲存空間 -->
+        <section class="widget card-interactive" aria-labelledby="w-disk-cap" style="cursor: pointer;" onclick="switchView('nas-mgnt')">
+            <h2 id="w-disk-cap" class="w-cap" style="color: #5AB0F5;"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6 9.5 4.25 4.25 0 0 0 7 18z"></path></svg>儲存空間<span class="w-more">NAS</span></h2>
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px;">
+                <div>
+                    <div class="w-row" style="margin-bottom: 8px;"><span>SSD 系統碟</span><span id="sys-label" class="num w-muted">-- / --</span></div>
+                    <div class="progress-bar" style="margin: 0;"><div id="sys-bar" class="progress-fill" style="width: 0%; background: #5AB0F5;"></div></div>
                 </div>
                 <div>
-                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; margin-bottom:5px;">
-                        <span>HDD 雲端資料碟</span><span id="nas-label">-- / --</span>
-                    </div>
-                    <div class="progress-bar" style="height:6px;"><div id="nas-bar" class="progress-fill" style="width:0%"></div></div>
+                    <div class="w-row" style="margin-bottom: 8px;"><span>HDD 雲端資料碟</span><span id="nas-label" class="num w-muted">-- / --</span></div>
+                    <div class="progress-bar" style="margin: 0;"><div id="nas-bar" class="progress-fill" style="width: 0%; background: #8C8AF5;"></div></div>
                 </div>
             </div>
+        </section>
 
-            <!-- 遊戲伺服器 (Minecraft) -->
-            <div class="card" style="padding: 1.2rem; ">
-                <div class="card-title" style="margin-bottom:1rem; font-size:0.85rem;">💥多元宇宙伺服器</div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="font-size:0.8rem; font-weight:800;">狀態</span>
-                    <span id="mc-status" class="status-badge" style="background:var(--off-color); padding:2px 8px; border-radius:12px; font-size:0.7rem;">檢測中...</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:0.8rem; font-weight:800;">實體 IP</span>
-                    <span id="mc-ip" style="font-size:0.8rem; font-family:monospace; color:var(--accent-color);">--</span>
-                </div>
-                <div style="margin-top:10px; font-size:0.65rem; color:var(--text-muted);" id="mc-config">
-                    配置：加載中...
-                </div>
-            </div>
+        <!-- 多重宇宙 -->
+        <section class="widget" aria-labelledby="w-mv-cap">
+            <h2 id="w-mv-cap" class="w-cap" style="color: #3CC8C8;"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"></path></svg>多重宇宙</h2>
+            <span style="margin-top: 14px; width: 52px; height: 52px; border-radius: 15px; background: color-mix(in srgb, #3CC8C8 20%, transparent); color: #3CC8C8; display: flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"></path><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"></path></svg></span>
+            <div style="margin-top: 12px; font-size: 17px; font-weight: 600;">Minecraft</div>
+            <div class="w-row" style="margin-top: 8px;"><span class="w-muted">狀態</span><span id="mc-status" class="status-badge" style="padding: 3px 10px; border-radius: 999px; font-size: 12px; background: var(--fill);">檢測中…</span></div>
+            <div class="w-row" style="margin-top: 6px;"><span class="w-muted">位址</span><span id="mc-ip" class="num" style="font-size: 13px;">--</span></div>
+            <div id="mc-config" class="w-muted" style="margin-top: auto; font-size: 12px;">配置：載入中…</div>
+        </section>
 
-            <!-- 核心服務 (優先級 #2 - 從底層提拔) -->
-            <div class="card" style="padding: 1.2rem;">
-                <div class="card-title" style="margin-bottom:1rem; font-size:0.85rem;">⚙️ 基礎核心服務狀態</div>
-                <div id="svc-list" style="display:flex; flex-direction:column; gap:4px;"></div>
+        <!-- 動態：系統紀錄與公告 -->
+        <section class="widget w2 terminal-card" aria-label="動態" style="padding: 0; height: 430px;">
+            <div style="padding: 18px 22px 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; gap: 18px;">
+                    <span id="tab-log-title" onclick="window.switchTerminalTab('log')" role="button" tabindex="0" style="cursor: pointer; font-weight: 700; color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 6px; font-size: 15px;">系統紀錄</span>
+                    <span id="tab-ann-title" onclick="window.switchTerminalTab('ann')" role="button" tabindex="0" style="cursor: pointer; font-weight: 700; color: var(--text-muted); padding-bottom: 6px; font-size: 15px;">公告</span>
+                </div>
+                <input type="search" id="log-search-input" placeholder="篩選紀錄" aria-label="篩選紀錄" class="t-input" style="width: 180px; padding: 7px 12px; font-size: 13px; margin-bottom: 0;" oninput="filterLogs()">
             </div>
+            <div id="terminal-log-content" style="display: flex; flex-direction: column; flex: 1; height: 0; width: 100%;">
+                <div id="terminal-logs" class="terminal-logs-box">
+                    <div>[SYSTEM] 載入中…</div>
+                </div>
+                <div id="broadcast-sec" class="terminal-broadcast-sec" style="display: flex;">
+                    <input type="text" id="msg-input" placeholder="發送系統廣播" aria-label="廣播內容" class="t-input" style="flex: 1; margin-bottom: 0; padding: 10px 15px;" onkeypress="if(event.key==='Enter') broadCast()">
+                    <button class="btn btn-primary" style="padding: 8px 20px; font-size: 14px;" onclick="broadCast()">發送</button>
+                </div>
+            </div>
+            <div id="terminal-ann-content" style="display: none; flex-direction: column; flex: 1; height: 0; width: 100%;">
+                <div id="terminal-announcements" class="terminal-logs-box">
+                    <div>[SYSTEM] 載入中…</div>
+                </div>
+                <div id="announcement-post-sec" class="terminal-broadcast-sec" style="display: none;">
+                    <input type="text" id="ann-input" placeholder="發布新公告" aria-label="公告內容" class="t-input" style="flex: 1; margin-bottom: 0; padding: 10px 15px;" onkeypress="if(event.key==='Enter') window.publishAnnouncement()">
+                    <button class="btn btn-primary" style="padding: 8px 20px; font-size: 14px;" onclick="window.publishAnnouncement()">發布</button>
+                </div>
+            </div>
+        </section>
 
-            <!-- GitHub 監控眼 (優先級 #3 - 移至下方) -->
-            <div class="card gh-card" style="position:relative; overflow:hidden; padding: 1.2rem;">
-                <div class="card-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; font-size:0.85rem;">
-                    <span>🚀 GitHub Vitality Monitor</span>
-                    <span id="gh-dot" class="status-dot"></span>
-                </div>
-                <div style="padding:0;">
-                    <div style="font-size:0.85rem; font-weight:900; color:var(--accent-color); display:flex; align-items:center; gap:8px;">
-                        <svg height="14" width="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
-                        <span id="gh-repo" style="font-size:0.8rem;">Absolute-Axis</span>
-                    </div>
-                    <div style="font-size:0.7rem; color:var(--text-muted); margin-top:5px; line-height:1.3; border-left:2px solid var(--border-color); padding-left:8px; font-style:italic;" id="gh-commit">同步中...</div>
-                    <div style="font-size:0.6rem; color:var(--text-muted); margin-top:8px; display:flex; justify-content:space-between; font-weight:800;">
-                        <span id="gh-time">Last Sync: --</span>
-                        <span id="gh-stars" style="color:var(--warning-color);">⭐ --</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- 核心服務 -->
+        <section class="widget" aria-labelledby="w-svc-cap">
+            <h2 id="w-svc-cap" class="w-cap" style="color: #34D17A;"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path></svg>核心服務</h2>
+            <div id="svc-list" class="w-scroll" style="display: flex; flex-direction: column; gap: 6px; margin-top: 12px;"></div>
+        </section>
+
+        <!-- GitHub -->
+        <section class="widget gh-card" aria-labelledby="w-gh-cap">
+            <h2 id="w-gh-cap" class="w-cap" style="color: var(--text-main);"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"></path></svg>GitHub<span id="gh-dot" class="status-dot" style="margin-left: auto;"></span></h2>
+            <div id="gh-repo" style="margin-top: 14px; font-size: 17px; font-weight: 600;">Absolute-Axis</div>
+            <div id="gh-commit" class="w-muted" style="margin-top: 6px; font-size: 13px; line-height: 1.45;">同步中…</div>
+            <div class="w-row" style="margin-top: auto; font-size: 12px;"><span id="gh-time" class="w-muted">上次同步：--</span><span id="gh-stars" style="color: var(--warning-color);">★ --</span></div>
+        </section>
+
     </div>
 </div>

@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark light">
+    <meta name="theme-color" content="#07080C">
     <title>Absolute Axis 絕對軸心</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- 與 DeviceHub 同一套字體：標題 Fraunces／Noto Serif TC、內文 IBM Plex Sans／Noto Sans TC、數字 IBM Plex Mono -->
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@500;700&amp;display=swap" rel="stylesheet">
+    <!-- 字體：Apple 裝置用系統字（SF／蘋方）；其他裝置用 Geist＋Noto Sans TC -->
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=Noto+Sans+TC:wght@400;500;700&amp;display=swap" rel="stylesheet">
     <!-- Core Styles -->
     <link rel="stylesheet" href="/static/css/index.css?v=AXIS_VER">
     <!-- Third-party scripts -->
@@ -37,53 +38,54 @@
     </div>
 
     <!-- 左側導覽列 -->
-    <aside class="sidebar">
-        <div class="brand" onclick="switchView('dashboard')" style="cursor: pointer; user-select: none;">
-            <div class="logo-box" style="overflow:hidden;">
-                <img src="/logo.jpg" style="width:100%; height:100%; object-fit:cover;">
-            </div>
-            ABSOLUTE AXIS
+    <aside class="sidebar" aria-label="導覽">
+        <div class="brand" onclick="switchView('dashboard')" role="link" tabindex="0" aria-label="回到總覽">
+            <div class="logo-box"><img src="/logo.jpg" alt=""></div>
+            <span class="brand-name">Absolute Axis</span>
         </div>
+        <label class="side-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+            <input type="search" id="nav-search" placeholder="搜尋" aria-label="搜尋功能" oninput="filterNav(this.value)">
+        </label>
         <div class="sidebar-nav-container">
             <ul class="nav-menu">
-                <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">🏘️ 首頁</li>
-                <li class="nav-item" id="nav-virtual" onclick="switchView('virtual')">🖥️ 虛擬化中心</li>
-                <li class="nav-item" id="nav-smart" onclick="switchView('smart')">🏡 智慧宅控</li>
-                <li class="nav-item" id="nav-cloud" onclick="switchView('cloud')">☁️ 私有雲儲存</li>
-                <li class="nav-item" id="nav-nas-mgnt" onclick="switchView('nas-mgnt')">🗄️ NAS 管理</li>
-                <li class="nav-item" id="nav-metrics" onclick="switchView('metrics')">📊 實時數據分析</li>
-                <li class="nav-item" id="nav-ai" onclick="switchView('ai')">🤖 核心助手</li>
-                <li class="nav-item" id="nav-multiverse" onclick="switchView('multiverse')">🌌 多重宇宙</li>
-                <li class="nav-item" id="nav-gigs" onclick="switchView('gigs')">接案中樞</li>
-                <li class="nav-item" id="nav-opensource" onclick="switchView('opensource')">開源代碼分享</li>
-                <div class="nav-separator"></div>
-                <li class="nav-item" id="nav-admin" onclick="switchView('admin')" style="display:none">👥 帳號管理</li>
-                <li class="nav-item" id="nav-settings" onclick="switchView('settings')">⚙️ 系統設定</li>
+                <li class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')"><span class="nav-row"><span class="nav-ico" style="background:#3E7BFA"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"></rect></svg></span><span class="nav-label">總覽</span></span></li>
+                <li class="nav-item" id="nav-smart" onclick="switchView('smart')"><span class="nav-row"><span class="nav-ico" style="background:#F2992E"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11l8.5-7 8.5 7"></path><path d="M6 10v10h12V10"></path></svg></span><span class="nav-label">智慧宅控</span></span></li>
+                <li class="nav-item" id="nav-virtual" onclick="switchView('virtual')"><span class="nav-row"><span class="nav-ico" style="background:#5E5CE6"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="7" rx="2"></rect><rect x="3.5" y="13" width="17" height="7" rx="2"></rect><path d="M7.5 7.5h.01M7.5 16.5h.01"></path></svg></span><span class="nav-label">虛擬化中心</span></span></li>
+                <li class="nav-item" id="nav-cloud" onclick="switchView('cloud')"><span class="nav-row"><span class="nav-ico" style="background:#2E9BF0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6 9.5 4.25 4.25 0 0 0 7 18z"></path></svg></span><span class="nav-label">私有雲</span></span></li>
+                <li class="nav-item" id="nav-nas-mgnt" onclick="switchView('nas-mgnt')"><span class="nav-row"><span class="nav-ico" style="background:#7C7C86"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="13" width="17" height="7" rx="2"></rect><path d="M5.5 13l2.5-8h8l2.5 8"></path></svg></span><span class="nav-label">NAS 管理</span></span></li>
+                <li class="nav-item" id="nav-metrics" onclick="switchView('metrics')"><span class="nav-row"><span class="nav-ico" style="background:#2FB463"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg></span><span class="nav-label">實時數據</span></span></li>
+                <li class="nav-item" id="nav-ai" onclick="switchView('ai')"><span class="nav-row"><span class="nav-ico" style="background:#A45DE0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg></span><span class="nav-label">核心助手</span></span></li>
+                <li class="nav-item" id="nav-multiverse" onclick="switchView('multiverse')"><span class="nav-row"><span class="nav-ico" style="background:#20A6A6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"></path><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"></path></svg></span><span class="nav-label">多重宇宙</span></span></li>
+                <li class="nav-item" id="nav-gigs" onclick="switchView('gigs')"><span class="nav-row"><span class="nav-ico" style="background:#B8793A"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7" width="17" height="13" rx="2"></rect><path d="M9 7V5h6v2"></path></svg></span><span class="nav-label">接案中樞</span></span></li>
+                <li class="nav-item" id="nav-opensource" onclick="switchView('opensource')"><span class="nav-row"><span class="nav-ico" style="background:#4A4A54"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"></path></svg></span><span class="nav-label">開源分享</span></span></li>
+                <li class="nav-heading" aria-hidden="true">系統</li>
+                <li class="nav-item" id="nav-admin" onclick="switchView('admin')" style="display:none"><span class="nav-row"><span class="nav-ico" style="background:#7C7C86"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"></path></svg></span><span class="nav-label">帳號管理</span></span></li>
+                <li class="nav-item" id="nav-settings" onclick="switchView('settings')"><span class="nav-row"><span class="nav-ico" style="background:#7C7C86"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"></path><circle cx="16" cy="6" r="2"></circle><circle cx="10" cy="12" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg></span><span class="nav-label">系統設定</span></span></li>
+                <li class="nav-item" id="nav-feedback" onclick="switchView('feedback')"><span class="nav-row"><span class="nav-ico" style="background:#E5557A"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"></path></svg></span><span class="nav-label">問題反饋</span></span></li>
             </ul>
         </div>
-        <div class="sidebar-footer" style="padding: 18px 28px; border-top: 1px solid var(--border-color); flex-shrink: 0; background: var(--sidebar-color);">
-            <a id="footer-feedback-btn" href="javascript:void(0)" onclick="switchView('feedback')" class="footer-feedback-link">
-                💬 問題反饋
-            </a>
+        <div class="sidebar-footer">
+            <a id="footer-feedback-btn" href="javascript:void(0)" hidden></a>
+            <button type="button" class="side-profile" onclick="toggleAxisPopover(event)" aria-label="帳號選單">
+                <span class="side-avatar" id="side-avatar">S</span>
+                <span class="side-who"><span id="side-user-name">—</span><span id="side-user-role">—</span></span>
+            </button>
         </div>
     </aside>
- 
+
     <!-- 主要內容區 (動態注入容器) -->
     <main class="main-content">
         <header class="top-header">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <button id="menu-btn" class="menu-btn" onclick="toggleSidebar(event)">☰</button>
-                <div>
-                    <h2 id="page-title-text" style="font-size:1.5rem; font-weight:900; letter-spacing:0.5px; margin:0;">戰情總覽</h2>
-                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-top:5px; text-transform:uppercase;">
-                        Network Control Center / <span id="clock" style="color:var(--accent-color);">--:--:--</span>
-                    </div>
-                </div>
+            <button id="menu-btn" class="menu-btn" onclick="toggleSidebar(event)" aria-label="開啟選單"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+            <div class="title-block">
+                <p class="page-eyebrow"><span id="today-date"></span> · <span id="clock">--:--:--</span></p>
+                <h1 id="page-title-text">總覽</h1>
             </div>
-            <div style="display:flex; gap:18px; align-items:center;">
-                <button id="theme-toggle" class="btn btn-outline" style="width:45px; height:45px; padding:0; border-radius:50%;" onclick="toggleTheme()">☀️</button>
-                <div id="avatar-btn" style="width:45px; height:45px; border-radius:50%; overflow:hidden; border:2px solid var(--accent-color); cursor:pointer; background:var(--card-bg);" onclick="toggleAxisPopover(event)">
-                    <img id="top-avatar" src="" style="width:100%; height:100%; object-fit:cover;">
+            <div class="header-actions">
+                <button id="theme-toggle" class="round-btn" type="button" onclick="toggleTheme()" aria-label="切換亮／暗主題"></button>
+                <div id="avatar-btn" class="round-btn avatar-btn" onclick="toggleAxisPopover(event)" role="button" tabindex="0" aria-label="帳號選單">
+                    <img id="top-avatar" src="" alt="">
                 </div>
             </div>
         </header>
@@ -111,6 +113,7 @@
     <script src="/static/js/feedback.js?v=AXIS_VER"></script>
  
     <!-- Application Entry Point (Modular Core) -->
+    <script src="/static/js/glass.js?v=AXIS_VER"></script>
     <script src="/static/js/app.js?v=AXIS_VER"></script>
 </body>
 </html>
