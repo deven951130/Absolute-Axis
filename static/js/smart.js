@@ -1,14 +1,11 @@
 /**
  * Absolute Axis - Smart Control Module
- * Handles ESP32 environment data rendering and simulation controls.
+ * Handles ESP32 environment data rendering (Blynk) and, for administrators, the DeviceHub
+ * home tab (devicehub.js): server power, devices, VMs, alerts.
  */
 
 // 自動刷新 Timer handle
 let _smartRefreshTimer = null;
-
-// 模擬設備狀態
-let _smartLights = { 1: false, 2: false };
-let _smartFanSpeed = 'AUTO';
 
 /**
  * 載入並渲染智慧宅控頁面數據。
@@ -36,6 +33,8 @@ async function loadSmart() {
     } catch (e) {
         _smartRenderError(`連線失敗：${e.message}`);
     } finally {
+        // DeviceHub 跟著同一個週期刷新（只有管理員會發請求；只在首頁可見時）
+        if (typeof loadDeviceHub === 'function') loadDeviceHub();
         // 排程下一次的數據刷新 (5 秒週期)
         if (_smartRefreshTimer) clearTimeout(_smartRefreshTimer);
         _smartRefreshTimer = setTimeout(loadSmart, 5000);
@@ -142,141 +141,6 @@ function _smartRenderError(msg) {
     }
 }
 
-/**
- * 實體電腦開機控制 (繼電器點接模擬)
- */
-window.triggerPCPower = function() {
-    const btn = document.getElementById('btn-pc-power');
-    if (!btn || btn.disabled) return;
-
-    btn.disabled = true;
-    const originalText = btn.innerHTML;
-    let countdown = 3;
-
-    // 模擬物理點接脈衝之倒數計時
-    const timer = setInterval(() => {
-        countdown--;
-        if (countdown > 0) {
-            btn.textContent = `發送中 (${countdown} 秒)...`;
-        } else {
-            clearInterval(timer);
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-            
-            // 寫入全域系統記錄
-            if (typeof logEvent === 'function') {
-                logEvent('SYSTEM', '使用者發送實體電腦主機開機脈衝訊號。');
-            }
-        }
-    }, 1000);
-
-    btn.textContent = `發送中 (${countdown} 秒)...`;
-    btn.style.background = 'var(--danger-color)';
-    btn.style.color = '#fff';
-
-    // 觸發一個暫時的提示樣式
-    setTimeout(() => {
-        btn.style.background = '';
-        btn.style.color = '';
-    }, 3000);
-};
-
-/**
- * 智慧照明切換 (模擬)
- */
-window.toggleSmartLight = function(id) {
-    const btn = document.getElementById(`btn-smart-light-${id}`);
-    if (!btn) return;
-
-    _smartLights[id] = !_smartLights[id];
-
-    if (_smartLights[id]) {
-        btn.style.background = 'var(--accent-glow)';
-        btn.style.borderColor = 'var(--accent-color)';
-        btn.style.color = 'var(--accent-color)';
-        btn.style.fontWeight = '900';
-    } else {
-        btn.style.background = '';
-        btn.style.borderColor = '';
-        btn.style.color = '';
-        btn.style.fontWeight = '';
-    }
-
-    // 更新總體燈光狀態文字
-    const statusEl = document.getElementById('smart-light-status');
-    if (statusEl) {
-        const onCount = Object.values(_smartLights).filter(Boolean).length;
-        if (onCount === 0) {
-            statusEl.textContent = 'ALL OFF';
-            statusEl.style.background = '#444';
-            statusEl.style.color = '#fff';
-            statusEl.style.borderColor = 'transparent';
-        } else if (onCount === 2) {
-            statusEl.textContent = 'ALL ON';
-            statusEl.style.background = 'rgba(46,204,113,0.15)';
-            statusEl.style.color = '#2ecc71';
-            statusEl.style.borderColor = 'rgba(46,204,113,0.3)';
-        } else {
-            statusEl.textContent = `${onCount} ON`;
-            statusEl.style.background = 'rgba(88,166,255,0.15)';
-            statusEl.style.color = 'var(--accent-color)';
-            statusEl.style.borderColor = 'rgba(88,166,255,0.3)';
-        }
-    }
-};
-
-/**
- * 中樞自動排風排濕系統控制 (模擬)
- */
-window.setSmartFan = function(speed) {
-    const btnLow = document.getElementById('btn-smart-fan-low');
-    const btnHigh = document.getElementById('btn-smart-fan-high');
-    if (!btnLow || !btnHigh) return;
-
-    const statusEl = document.getElementById('smart-fan-status');
-
-    if (_smartFanSpeed === speed) {
-        // 如果再次點擊已選中的速度，則重置為自動模式
-        _smartFanSpeed = 'AUTO';
-        btnLow.style.borderColor = '';
-        btnLow.style.color = '';
-        btnHigh.style.borderColor = '';
-        btnHigh.style.color = '';
-        
-        if (statusEl) {
-            statusEl.textContent = 'AUTO MODE';
-            statusEl.style.background = 'rgba(242,170,31,0.15)';
-            statusEl.style.color = '#f2aa1f';
-            statusEl.style.borderColor = 'rgba(242,170,31,0.3)';
-        }
-    } else {
-        _smartFanSpeed = speed;
-        if (speed === 'LOW') {
-            btnLow.style.borderColor = 'var(--accent-color)';
-            btnLow.style.color = 'var(--accent-color)';
-            btnHigh.style.borderColor = '';
-            btnHigh.style.color = '';
-            if (statusEl) {
-                statusEl.textContent = 'SPEED: LOW';
-                statusEl.style.background = 'rgba(88,166,255,0.15)';
-                statusEl.style.color = 'var(--accent-color)';
-                statusEl.style.borderColor = 'rgba(88,166,255,0.3)';
-            }
-        } else if (speed === 'HIGH') {
-            btnHigh.style.borderColor = 'var(--accent-color)';
-            btnHigh.style.color = 'var(--accent-color)';
-            btnLow.style.borderColor = '';
-            btnLow.style.color = '';
-            if (statusEl) {
-                statusEl.textContent = 'SPEED: HIGH';
-                statusEl.style.background = 'rgba(46,204,113,0.15)';
-                statusEl.style.color = '#2ecc71';
-                statusEl.style.borderColor = 'rgba(46,204,113,0.3)';
-            }
-        }
-    }
-};
-
 // 監聽全局視圖切換事件，實現節能的定時器控制與即時加載
 document.addEventListener('view-switched', (e) => {
     if (e.detail.view === 'smart') {
@@ -316,6 +180,11 @@ window.switchSmartTab = function(tabId) {
     // 若切換到數據頁，初始化圖表
     if (tabId === 'data' && !window._smartChartsInitialized) {
         initSmartCharts();
+    }
+
+    // 回到首頁：立即刷新 DeviceHub
+    if (tabId === 'home' && typeof loadDeviceHub === 'function') {
+        loadDeviceHub();
     }
 };
 

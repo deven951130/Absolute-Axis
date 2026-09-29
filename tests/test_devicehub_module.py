@@ -1,0 +1,184 @@
+"""DeviceHub 模組（app/routers/devicehub.py）的測試。
+
+app.utils 會連資料庫與 JWT，所以這裡用假的 require_admin 取代，只測本模組自己的行為。
+執行：在 repo 根目錄 `python -m pytest tests`
+"""
+import sys
+import types
+
+import pytest
+from fastapi import FastAPI, Header, HTTPException
+from fastapi.testclient import TestClient
+
+USERS = {
+    "Bearer admin": {"username": "sparkle", "role": "Administrator"},
+    "Bearer admin-zh": {"username": "管理員", "role": "Administrator"},
+    "Bearer member": {"username": "friend", "role": "Member"},
+}
+
+
+def fake_require_admin(authorization: str = Header(None)):
+    user = USERS.get(authorization)
+    if user is None:
+        raise HTTPException(401)
+    if user["role"] not in ("admin", "Administrator"):
+        raise HTTPException(403)
+    return user
+
+
+_utils = types.ModuleType("app.utils")
+_utils.require_admin = fake_require_admin
+sys.modules["app.utils"] = _utils
+
+from app.routers import devicehub  # noqa: E402
+
+ADMIN = {"Authorization": "Bearer admin"}
+
+
+class Resp:
+    def __init__(self, status_code, body):
+        self.status_code = status_code
+        self._body = body
+
+    def json(self):
+        if isinstance(self._body, Exception):
+            raise self._body
+        return self._body
+
+
+@pytest.fixture
+def dh(monkeypatch):
+    calls = []
+    state = {"resp": Resp(200, {"id": "01J", "result": "ok", "error": None})}
+
+    def fake_request(method, url, json=None, timeout=None, headers=None):
+        calls.append({"method": method, "url": url, "json": json, "headers": headers, "timeout": timeout})
+        return state["resp"]
+
+    def fake_get(url, headers=None, timeout=None):
+        calls.append({"method": "GET", "url": url, "headers": headers})
+        return state["resp"]
+
+    monkeypatch.setattr(devicehub, "DEVICEHUB_TOKEN", "read-tok")
+    monkeypatch.setattr(devicehub, "DEVICEHUB_CONTROL_TOKEN", "control-tok")
+    monkeypatch.setattr(devicehub.requests, "request", fake_request)
+    monkeypatch.setattr(devicehub.requests, "get", fake_get)
+    devicehub._cache.update(ts=0.0, data=None)
+    app = FastAPI()
+    app.include_router(devicehub.router)
+    return TestClient(app), calls, state
+
+
+def test_admin_only(dh):
+    c, calls, _ = dh
+    for path in ("/api/devicehub/summary", "/api/devicehub/controls"):
+        assert c.get(path).status_code == 401
+        assert c.get(path, headers={"Authorization": "Bearer member"}).status_code == 403
+    r = c.post("/api/devicehub/devices/desktop/commands", headers={"Authorization": "Bearer member"},
+               json={"action": "host.sleep", "confirm": True})
+    assert r.status_code == 403
+    assert calls == []
+
+
+def test_summary_uses_read_token_and_never_leaks_it(dh):
+    c, calls, state = dh
+    state["resp"] = Resp(200, {"generated_at": 1, "ui_url": "https://dh.ts.net", "devices": [],
+                               "proxmox": {}, "alerts": []})
+    r = c.get("/api/devicehub/summary", headers=ADMIN)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["configured"] and body["error"] is None and body["control"] is True
+    assert "read-tok" not in r.text and "control-tok" not in r.text
+    assert calls[0]["url"] == "http://192.168.0.50:8080/api/v1/summary"
+    assert calls[0]["headers"] == {"Authorization": "Bearer read-tok"}
+    c.get("/api/devicehub/summary", headers=ADMIN)
+    assert len(calls) == 1  # 5 秒快取
+
+
+def test_summary_not_configured(dh, monkeypatch):
+    c, calls, _ = dh
+    monkeypatch.setattr(devicehub, "DEVICEHUB_TOKEN", "")
+    monkeypatch.setattr(devicehub, "DEVICEHUB_CONTROL_TOKEN", "")
+    assert c.get("/api/devicehub/summary", headers=ADMIN).json() == {"configured": False}
+    r = c.post("/api/devicehub/devices/desktop/commands", headers=ADMIN, json={"action": "ping"})
+    assert r.json() == {"ok": False, "error": "control_not_configured", "http": None}
+    assert calls == []
+
+
+def test_command_is_forwarded_with_control_token_and_operator(dh):
+    c, calls, _ = dh
+    r = c.post("/api/devicehub/devices/desktop/commands", headers=ADMIN,
+               json={"action": "host.sleep", "confirm": True})
+    assert r.status_code == 200 and r.json() == {"ok": True, "id": "01J", "result": "ok", "error": None}
+    (call,) = calls
+    assert call["method"] == "POST" and call["url"] == "http://192.168.0.50:8080/api/v1/devices/desktop/commands"
+    assert call["headers"] == {"Authorization": "Bearer control-tok", "X-DH-Operator": "sparkle"}
+    assert call["json"] == {"action": "host.sleep", "params": {}, "confirm": True}
+    assert "control-tok" not in r.text
+
+
+def test_non_ascii_username_is_sanitized(dh):
+    c, calls, _ = dh
+    c.post("/api/devicehub/devices/desktop/commands", headers={"Authorization": "Bearer admin-zh"},
+           json={"action": "ping"})
+    assert calls[0]["headers"]["X-DH-Operator"] == "___"
+
+
+def test_devicehub_errors_do_not_become_axis_401(dh):
+    """authFetch 遇到 401 會登出使用者：DeviceHub 的 401／403／428 一律回 200 + ok:false。"""
+    c, _, state = dh
+    for code, err in ((401, "unauthorized"), (403, "not_allowed"), (428, "confirm_required"),
+                      (429, "rate_limited")):
+        state["resp"] = Resp(code, {"error": err, "detail": None})
+        r = c.post("/api/devicehub/devices/desktop/commands", headers=ADMIN, json={"action": "host.sleep"})
+        assert r.status_code == 200 and r.json() == {"ok": False, "error": err, "http": code}
+    state["resp"] = Resp(500, ValueError("not json"))
+    r = c.post("/api/devicehub/devices/desktop/commands", headers=ADMIN, json={"action": "ping"})
+    assert r.json() == {"ok": False, "error": "http_500", "http": 500}
+
+
+def test_unreachable(dh, monkeypatch):
+    c, _, _ = dh
+
+    def boom(*a, **k):
+        raise devicehub.requests.ConnectionError("down")
+
+    monkeypatch.setattr(devicehub.requests, "request", boom)
+    r = c.post("/api/devicehub/devices/desktop/wake", headers=ADMIN)
+    assert r.json() == {"ok": False, "error": "unreachable", "http": None}
+
+
+@pytest.mark.parametrize("path,body", [
+    ("/api/devicehub/devices/..%2Fadmin/commands", {"action": "ping"}),
+    ("/api/devicehub/devices/Desktop/commands", {"action": "ping"}),
+    ("/api/devicehub/devices/desktop/commands", {"action": "../x"}),
+    ("/api/devicehub/devices/desktop/wake", {"via": "a/b"}),
+    ("/api/devicehub/proxmox/100/destroy", {"confirm": True}),
+    ("/api/devicehub/proxmox/5/start", {}),
+])
+def test_bad_input_never_reaches_devicehub(dh, path, body):
+    c, calls, _ = dh
+    r = c.post(path, headers=ADMIN, json=body)
+    assert r.status_code in (200, 404) and calls == []
+    if r.status_code == 200:
+        assert r.json()["error"] == "bad_request"
+
+
+def test_wake_and_proxmox_paths(dh):
+    c, calls, _ = dh
+    c.post("/api/devicehub/devices/desktop/wake", headers=ADMIN, json={"via": "esp-server"})
+    c.post("/api/devicehub/proxmox/101/start", headers=ADMIN, json={})
+    c.post("/api/devicehub/proxmox/100/shutdown", headers=ADMIN, json={"confirm": True})
+    assert [(x["url"].split(":8080")[1], x["json"]) for x in calls] == [
+        ("/api/v1/devices/desktop/wake", {"via": "esp-server"}),
+        ("/api/v1/proxmox/101/start", {"confirm": False}),
+        ("/api/v1/proxmox/100/shutdown", {"confirm": True}),
+    ]
+
+
+def test_controls_passthrough(dh):
+    c, calls, state = dh
+    state["resp"] = Resp(200, {"devices": [{"id": "desktop", "actions": [], "wake": None}], "proxmox": []})
+    r = c.get("/api/devicehub/controls", headers=ADMIN)
+    assert r.json() == {"ok": True, "devices": [{"id": "desktop", "actions": [], "wake": None}], "proxmox": []}
+    assert calls[0]["headers"] == {"Authorization": "Bearer control-tok"}
