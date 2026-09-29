@@ -86,17 +86,17 @@ function _mvRenderStatus(data) {
     const banner = document.getElementById('mv-status-banner');
 
     if (online) {
-        dot.style.background = '#4CAF50';
-        dot.style.boxShadow = '0 0 8px rgba(76,175,80,0.7)';
+        dot.style.background = 'var(--success-color)';
+        dot.style.boxShadow = '0 0 8px color-mix(in srgb, var(--success-color) 70%, transparent)';
         title.textContent = '🌌 Absolute-Axis MC — 伺服器線上';
         sub.textContent = '連線正常，Minecraft Java Edition 運行中';
-        banner.style.borderLeftColor = '#4CAF50';
+        banner.style.borderLeftColor = 'var(--success-color)';
     } else {
-        dot.style.background = '#da3633';
-        dot.style.boxShadow = '0 0 8px rgba(218,54,51,0.7)';
+        dot.style.background = 'var(--danger-color)';
+        dot.style.boxShadow = '0 0 8px color-mix(in srgb, var(--danger-color) 70%, transparent)';
         title.textContent = '🌌 Absolute-Axis MC — 伺服器離線';
         sub.textContent = 'TCP 連線失敗，服務可能已停止或正在引導中';
-        banner.style.borderLeftColor = '#da3633';
+        banner.style.borderLeftColor = 'var(--danger-color)';
     }
 
     // 更新時間
@@ -129,17 +129,17 @@ function _mvRenderStatus(data) {
     const ring = document.getElementById('mv-pulse-ring');
     const ringLabel = document.getElementById('mv-pulse-label');
     if (online) {
-        ring.style.border = '3px solid #4CAF50';
-        ring.style.boxShadow = '0 0 12px rgba(76,175,80,0.5)';
+        ring.style.border = '3px solid var(--success-color)';
+        ring.style.boxShadow = '0 0 12px color-mix(in srgb, var(--success-color) 50%, transparent)';
         ring.style.animation = 'mv-pulse-anim 2s infinite';
         ringLabel.textContent = 'ONLINE';
-        ringLabel.style.color = '#4CAF50';
+        ringLabel.style.color = 'var(--success-color)';
     } else {
-        ring.style.border = '3px solid #da3633';
+        ring.style.border = '3px solid var(--danger-color)';
         ring.style.boxShadow = 'none';
         ring.style.animation = 'none';
         ringLabel.textContent = 'OFFLINE';
-        ringLabel.style.color = '#da3633';
+        ringLabel.style.color = 'var(--danger-color)';
     }
 
     // --- 管理員限定面板顯示控制 ---
@@ -172,7 +172,7 @@ window.mvCopy = function(id) {
     const textToCopy = el.getAttribute('data-copy') || el.textContent;
     navigator.clipboard.writeText(textToCopy).then(() => {
         const orig = el.style.color;
-        el.style.color = '#4CAF50';
+        el.style.color = 'var(--success-color)';
         setTimeout(() => { el.style.color = orig; }, 800);
     });
 };
@@ -202,7 +202,7 @@ window.sendMCCommand = async function() {
     // 立即在 log 顯示送出記錄
     const ts = new Date().toLocaleTimeString('zh-TW');
     const pendingLine = document.createElement('div');
-    pendingLine.innerHTML = `<span style="color:#8b949e">[${ts}]</span> <span style="color:#bd93f9">></span> <span style="color:#fff;">${escapeHtml(command)}</span> <span style="color:#8b949e">— 發送中...</span>`;
+    pendingLine.innerHTML = `<span style="color:var(--text-muted)">[${ts}]</span> <span style="color:var(--accent-color)">></span> <span style="color:var(--text-main);">${escapeHtml(command)}</span> <span style="color:var(--text-muted)">— 發送中...</span>`;
     log.appendChild(pendingLine);
     log.scrollTop = log.scrollHeight;
     input.value = '';
@@ -217,12 +217,12 @@ window.sendMCCommand = async function() {
         const data = await res.json();
 
         if (res.ok) {
-            pendingLine.innerHTML = `<span style="color:#8b949e">[${ts}]</span> <span style="color:#4CAF50">✓</span> <span style="color:#7ee787;">${escapeHtml(command)}</span>`;
+            pendingLine.innerHTML = `<span style="color:var(--text-muted)">[${ts}]</span> <span style="color:var(--success-color)">✓</span> <span style="color:var(--success-color);">${escapeHtml(command)}</span>`;
         } else {
-            pendingLine.innerHTML = `<span style="color:#8b949e">[${ts}]</span> <span style="color:#da3633">✗</span> <span style="color:#f85149;">${escapeHtml(command)}</span> — ${data.detail || '未知錯誤'}`;
+            pendingLine.innerHTML = `<span style="color:var(--text-muted)">[${ts}]</span> <span style="color:var(--danger-color)">✗</span> <span style="color:var(--danger-color);">${escapeHtml(command)}</span> — ${data.detail || '未知錯誤'}`;
         }
     } catch (e) {
-        pendingLine.innerHTML = `<span style="color:#8b949e">[${ts}]</span> <span style="color:#da3633">✗</span> <span style="color:#f85149;">${escapeHtml(command)}</span> — 網路錯誤：${e.message}`;
+        pendingLine.innerHTML = `<span style="color:var(--text-muted)">[${ts}]</span> <span style="color:var(--danger-color)">✗</span> <span style="color:var(--danger-color);">${escapeHtml(command)}</span> — 網路錯誤：${e.message}`;
     }
     log.scrollTop = log.scrollHeight;
 };
@@ -237,7 +237,7 @@ if (!document.getElementById('mv-style')) {
     style.id = 'mv-style';
     style.textContent = `
         @keyframes mv-pulse-anim {
-            0% { box-shadow: 0 0 0 0 rgba(76,175,80,0.4); }
+            0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success-color) 40%, transparent); }
             70% { box-shadow: 0 0 0 10px rgba(76,175,80,0); }
             100% { box-shadow: 0 0 0 0 rgba(76,175,80,0); }
         }
@@ -246,7 +246,7 @@ if (!document.getElementById('mv-style')) {
             justify-content: space-between;
             align-items: center;
             padding: 5px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+            border-bottom: 1px solid var(--border-color);
         }
         .mv-label {
             font-size: 0.7rem;
@@ -261,7 +261,7 @@ if (!document.getElementById('mv-style')) {
             max-width: 60%;
         }
         #mv-cmd-log::-webkit-scrollbar { width: 6px; }
-        #mv-cmd-log::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+        #mv-cmd-log::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
     `;
     document.head.appendChild(style);
 }
@@ -329,13 +329,13 @@ async function loadPackLibrary() {
     try {
         const res = await authFetch('/api/minecraft/packs');
         if (!res.ok) {
-            container.innerHTML = '<div style="color:#f85149; font-size:0.82rem; text-align:center; padding:0.8rem;">載入失敗</div>';
+            container.innerHTML = '<div style="color:var(--danger-color); font-size:0.82rem; text-align:center; padding:0.8rem;">載入失敗</div>';
             return;
         }
         const data = await res.json();
         renderPackList(data.packs || []);
     } catch (e) {
-        container.innerHTML = `<div style="color:#f85149; font-size:0.82rem; text-align:center; padding:0.8rem;">錯誤：${e.message}</div>`;
+        container.innerHTML = `<div style="color:var(--danger-color); font-size:0.82rem; text-align:center; padding:0.8rem;">錯誤：${e.message}</div>`;
     }
 }
 
@@ -357,35 +357,35 @@ function renderPackList(packs) {
         // 邊框顏色
         let borderStyle, bgStyle;
         if (pack.active && inLibrary) {
-            borderStyle = 'border-color:#4CAF50;';
-            bgStyle = 'background:rgba(76,175,80,0.08);';
+            borderStyle = 'border-color:var(--success-color);';
+            bgStyle = 'background:color-mix(in srgb, var(--success-color) 8%, transparent);';
         } else if (pack.active && !inLibrary) {
-            borderStyle = 'border-color:#f39c12;';
-            bgStyle = 'background:rgba(243,156,18,0.08);';
+            borderStyle = 'border-color:var(--warning-color);';
+            bgStyle = 'background:color-mix(in srgb, var(--warning-color) 8%, transparent);';
         } else {
-            borderStyle = 'border-color:#30363d;';
-            bgStyle = 'background:rgba(255,255,255,0.02);';
+            borderStyle = 'border-color:var(--border-color);';
+            bgStyle = 'background:var(--surface-2);';
         }
 
         // 啟用徽章
         let badge = '';
         if (pack.active && inLibrary) {
-            badge = '<span style="font-size:0.6rem; background:rgba(76,175,80,0.2); color:#4CAF50; border:1px solid rgba(76,175,80,0.5); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中</span>';
+            badge = '<span style="font-size:0.6rem; background:color-mix(in srgb, var(--success-color) 20%, transparent); color:var(--success-color); border:1px solid color-mix(in srgb, var(--success-color) 50%, transparent); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中</span>';
         } else if (pack.active && !inLibrary) {
-            badge = '<span style="font-size:0.6rem; background:rgba(243,156,18,0.2); color:#f39c12; border:1px solid rgba(243,156,18,0.5); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中・未存入庫</span>';
+            badge = '<span style="font-size:0.6rem; background:color-mix(in srgb, var(--warning-color) 20%, transparent); color:var(--warning-color); border:1px solid color-mix(in srgb, var(--warning-color) 50%, transparent); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中・未存入庫</span>';
         }
 
         // 地圖狀態標籤
         const worldBadge = inLibrary
             ? (pack.has_world
-                ? '<span style="font-size:0.6rem; background:rgba(100,181,246,0.15); color:#64b5f6; border:1px solid rgba(100,181,246,0.4); border-radius:8px; padding:2px 8px; font-weight:700; margin-left:6px;">🗺 有地圖存檔</span>'
-                : '<span style="font-size:0.6rem; background:rgba(255,255,255,0.06); color:var(--text-muted); border:1px solid #30363d; border-radius:8px; padding:2px 8px; font-weight:700; margin-left:6px;">✨ 全新地圖</span>')
+                ? '<span style="font-size:0.6rem; background:var(--accent-soft); color:var(--accent-color); border:1px solid color-mix(in srgb, var(--accent-color) 40%, transparent); border-radius:8px; padding:2px 8px; font-weight:700; margin-left:6px;">🗺 有地圖存檔</span>'
+                : '<span style="font-size:0.6rem; background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border-color); border-radius:8px; padding:2px 8px; font-weight:700; margin-left:6px;">✨ 全新地圖</span>')
             : '';
 
         // 右側動作
         let actions = '';
         if (pack.active) {
-            actions = '<span style="font-size:0.75rem; color:#4CAF50; font-weight:700;">✓ 已部署</span>';
+            actions = '<span style="font-size:0.75rem; color:var(--success-color); font-weight:700;">✓ 已部署</span>';
         } else {
             actions = `
                 <button class="btn btn-outline" style="padding:5px 14px; font-size:0.75rem; border-color:var(--accent-color) !important; color:var(--accent-color);" onclick="window.switchPack('${escapeHtml(pack.name)}', ${pack.has_world})">⚡ 切換部署</button>
@@ -394,7 +394,7 @@ function renderPackList(packs) {
         }
 
         const sizeText = pack.size_mb != null ? `${pack.size_mb} MB` : '檔案不在函式庫中（需重新上傳才能保存至庫）';
-        const sizeColor = pack.size_mb != null ? 'color:var(--text-muted);' : 'color:#f39c12;';
+        const sizeColor = pack.size_mb != null ? 'color:var(--text-muted);' : 'color:var(--warning-color);';
 
         return `
             <div style="display:flex; align-items:center; gap:12px; padding:10px 14px;
@@ -563,40 +563,40 @@ function _mvShowProgress(pct, label) {
         overlay.id = 'mv-upload-overlay';
         overlay.style.cssText = `
             position: fixed; inset: 0; z-index: 9999;
-            background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+            background: var(--backdrop); backdrop-filter: blur(4px);
             display: flex; align-items: center; justify-content: center;
         `;
         overlay.innerHTML = `
             <div style="
-                background: linear-gradient(135deg, rgba(20,20,35,0.98), rgba(13,17,23,0.98));
-                border: 1px solid #30363d; border-radius: 16px;
+                background: var(--card-bg);
+                border: 1px solid var(--border-color); border-radius: 16px;
                 padding: 2rem 2.5rem; min-width: 420px; max-width: 90vw;
                 box-shadow: 0 20px 60px rgba(0,0,0,0.5);
                 text-align: center;
             ">
                 <div style="font-size: 2rem; margin-bottom: 1rem;">📤</div>
                 <div id="mv-prog-label" style="
-                    font-size: 0.85rem; font-weight: 700; color: #ccc;
+                    font-size: 0.85rem; font-weight: 700; color: var(--text-muted);
                     margin-bottom: 1.2rem; min-height: 1.2em;
                 ">準備上傳...</div>
                 <div style="
-                    background: rgba(255,255,255,0.06); border-radius: 8px;
+                    background: var(--surface-2); border-radius: 8px;
                     height: 12px; overflow: hidden; margin-bottom: 0.8rem;
-                    border: 1px solid #30363d;
+                    border: 1px solid var(--border-color);
                 ">
                     <div id="mv-prog-bar" style="
                         height: 100%; width: 0%;
-                        background: linear-gradient(90deg, var(--accent-color, #7c3aed), #bd93f9);
+                        background: var(--accent-color);
                         border-radius: 8px;
                         transition: width 0.3s ease;
-                        box-shadow: 0 0 12px rgba(124,58,237,0.5);
+                        box-shadow: none;
                     "></div>
                 </div>
                 <div id="mv-prog-pct" style="
                     font-size: 1.4rem; font-weight: 900;
-                    color: var(--accent-color, #bd93f9); margin-bottom: 0.5rem;
+                    color: var(--accent-color, var(--accent-color)); margin-bottom: 0.5rem;
                 ">0%</div>
-                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 0.5rem;">
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">
                     上傳完成後伺服器會自動停止並重新部署，請勿關閉頁面
                 </div>
             </div>

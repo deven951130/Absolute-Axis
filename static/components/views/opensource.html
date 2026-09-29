@@ -1,6 +1,6 @@
 <div id="view-opensource" class="view-section">
     <!-- 頂部 GitHub 帳戶卡片 -->
-    <div class="card" style="margin-bottom: 2rem; border-left: 4px solid var(--accent-color); padding: 1.5rem 2rem;">
+    <div class="card" style="margin-bottom: 2rem; padding: 1.5rem 2rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
             <div>
                 <h2 style="margin:0; font-weight:900; color:var(--text-main); font-size:1.4rem; letter-spacing:0.5px;">GitHub 程式碼開源平台</h2>
@@ -21,9 +21,9 @@
     </div>
 
     <!-- 新增專案彈窗 (Modal Overlay) -->
-    <div id="os-add-repo-modal" class="login-overlay" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6);" onclick="if(event.target === this) window.hideAddRepoModal()">
-        <div style="background:#161b22; width:450px; padding:2.5rem; border-radius:18px; border:1px solid #30363d; position:relative; display:flex; flex-direction:column; gap:14px;" onclick="event.stopPropagation()">
-            <span onclick="window.hideAddRepoModal()" style="position:absolute; top:15px; right:20px; cursor:pointer; color:var(--text-muted); font-size:1.5rem; font-weight:bold; transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
+    <div id="os-add-repo-modal" class="login-overlay" style="display:none; align-items:center; justify-content:center; background:var(--backdrop);" onclick="if(event.target === this) window.hideAddRepoModal()">
+        <div style="background:var(--card-bg); width:450px; padding:2.5rem; border-radius:18px; border:1px solid var(--border-color); position:relative; display:flex; flex-direction:column; gap:14px;" onclick="event.stopPropagation()">
+            <span onclick="window.hideAddRepoModal()" style="position:absolute; top:15px; right:20px; cursor:pointer; color:var(--text-muted); font-size:1.5rem; font-weight:bold; transition:color 0.2s;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
             
             <h3 style="margin-top:0; margin-bottom:0.5rem; font-weight:900; color:var(--text-main); text-align:center;">➕ 新增開源專案</h3>
             

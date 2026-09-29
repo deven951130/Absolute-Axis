@@ -1,6 +1,11 @@
 // Absolute Axis - Dashboard, Metrics & Stats Module
 let cpuChart, ramChart;
 
+// Chart.js 需要實際的顏色字串（不認 var(--…)），所以從目前主題的 CSS 變數讀出來
+function cssVar(name) {
+    return getComputedStyle(document.body).getPropertyValue(name).trim() || '#888888';
+}
+
 function initCharts() {
     if (cpuChart) return;
     const ctxCpu = document.getElementById('chart-cpu');
@@ -14,13 +19,13 @@ function initCharts() {
             responsive: true,
             maintainAspectRatio: false,
             animation: { duration: 0 },
-            scales: { y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { display: false } },
+            scales: { y: { min: 0, max: 100, grid: { color: cssVar('--border-color') } }, x: { display: false } },
             plugins: { legend: { display: false } }
         }
     });
 
-    cpuChart = new Chart(ctxCpu.getContext('2d'), config('CPU %', '#00d2ff'));
-    ramChart = new Chart(ctxRam.getContext('2d'), config('RAM %', '#00ff88'));
+    cpuChart = new Chart(ctxCpu.getContext('2d'), config('CPU %', cssVar('--accent-color')));
+    ramChart = new Chart(ctxRam.getContext('2d'), config('RAM %', cssVar('--success-color')));
 }
 
 // ==================== 拆分後的三段獨立輪詢 ====================
@@ -113,11 +118,11 @@ async function pollSensors() {
                     if (d.minecraft.online) {
                         mcStatus.innerText = '● 連線中 (Online)';
                         mcStatus.style.background = 'var(--success-color)';
-                        mcStatus.style.color = '#000';
+                        mcStatus.style.color = 'var(--on-accent)';
                     } else {
                         mcStatus.innerText = '○ 離線 (Offline)';
-                        mcStatus.style.background = '#444';
-                        mcStatus.style.color = '#fff';
+                        mcStatus.style.background = 'var(--off-color)';
+                        mcStatus.style.color = 'var(--text-main)';
                     }
                 }
                 if (mcIp) mcIp.innerText = d.minecraft.ip !== 'Unknown' ? `${d.minecraft.ip}:${d.minecraft.port}` : '--';
@@ -355,7 +360,7 @@ async function loadAnnouncements() {
             }
             
             annBox.innerHTML = anns.map(x => `
-                <div style="margin-bottom:12px; line-height:1.6; border-bottom:1px dashed rgba(255,255,255,0.05); padding-bottom:10px;">
+                <div style="margin-bottom:12px; line-height:1.6; border-bottom:1px dashed var(--border-color); padding-bottom:10px;">
                     <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:800; color:var(--accent-color); margin-bottom:6px;">
                         <span>📢 [ANNOUNCEMENT] By ${x.author}</span>
                         <span>${x.timestamp}</span>

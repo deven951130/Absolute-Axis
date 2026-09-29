@@ -72,7 +72,7 @@ function _smartRenderStatus(data) {
         }
         if (blynkDotEl) {
             blynkDotEl.style.background = 'var(--danger-color)';
-            blynkDotEl.style.boxShadow = '0 0 8px rgba(218,54,51,0.7)';
+            blynkDotEl.style.boxShadow = '0 0 8px color-mix(in srgb, var(--danger-color) 70%, transparent)';
         }
     } else {
         if (blynkStatusEl) {
@@ -80,8 +80,8 @@ function _smartRenderStatus(data) {
             blynkStatusEl.style.color = 'var(--success-color)';
         }
         if (blynkDotEl) {
-            blynkDotEl.style.background = '#2ecc71';
-            blynkDotEl.style.boxShadow = '0 0 8px rgba(46,204,113,0.7)';
+            blynkDotEl.style.background = 'var(--success-color)';
+            blynkDotEl.style.boxShadow = '0 0 8px color-mix(in srgb, var(--success-color) 70%, transparent)';
         }
     }
 
@@ -98,24 +98,24 @@ function _smartRenderStatus(data) {
     if (comfortEl) {
         if (temp === 99.9 || temp === 88.8) {
             comfortEl.textContent = '無法評估';
-            comfortEl.style.background = '#444';
-            comfortEl.style.color = '#fff';
+            comfortEl.style.background = 'var(--off-color)';
+            comfortEl.style.color = 'var(--text-main)';
         } else if (temp > 28) {
             comfortEl.textContent = '環境偏熱';
-            comfortEl.style.background = 'rgba(231,76,60,0.15)';
-            comfortEl.style.color = '#e74c3c';
+            comfortEl.style.background = 'color-mix(in srgb, var(--danger-color) 15%, transparent)';
+            comfortEl.style.color = 'var(--danger-color)';
         } else if (temp < 18) {
             comfortEl.textContent = '環境偏冷';
-            comfortEl.style.background = 'rgba(52,152,219,0.15)';
-            comfortEl.style.color = '#3498db';
+            comfortEl.style.background = 'var(--accent-soft)';
+            comfortEl.style.color = 'var(--accent-color)';
         } else if (humid > 65) {
             comfortEl.textContent = '環境潮濕';
-            comfortEl.style.background = 'rgba(242,170,31,0.15)';
-            comfortEl.style.color = '#f2aa1f';
+            comfortEl.style.background = 'color-mix(in srgb, var(--warning-color) 15%, transparent)';
+            comfortEl.style.color = 'var(--warning-color)';
         } else {
             comfortEl.textContent = '舒適宜人';
-            comfortEl.style.background = 'rgba(46,204,113,0.15)';
-            comfortEl.style.color = '#2ecc71';
+            comfortEl.style.background = 'color-mix(in srgb, var(--success-color) 15%, transparent)';
+            comfortEl.style.color = 'var(--success-color)';
         }
     }
 }
@@ -174,7 +174,7 @@ window.switchSmartTab = function(tabId) {
     if (activeBtn) {
         activeBtn.classList.add('active');
         activeBtn.style.background = 'var(--accent-color)';
-        activeBtn.style.color = '#fff';
+        activeBtn.style.color = 'var(--on-accent)';
     }
 
     // 若切換到數據頁，初始化圖表
@@ -298,7 +298,7 @@ if (!document.getElementById('smart-style')) {
             justify-content: space-between;
             align-items: center;
             padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+            border-bottom: 1px solid var(--border-color);
         }
         .smart-label {
             font-size: 0.72rem;

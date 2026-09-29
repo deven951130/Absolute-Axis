@@ -59,14 +59,14 @@ async function loadDocker(){
         const statusClr = up ? 'var(--success-color)' : 'var(--text-muted)';
         const item = document.createElement('div');
         item.className = 'file-list-item';
-        item.style = `display:flex; align-items:center; justify-content:space-between; padding:15px 25px; border-left:4px solid ${statusClr};`;
+        item.style = `display:flex; align-items:center; justify-content:space-between; padding:15px 25px; `;
         
         const names = c.Names;
         const isHeavyOS = c.Image.includes("dockurr") || c.Image.includes("linuxserver") || c.Image.includes("sickcodes") || c.Image.includes("android");
         
         let vncHtml = "";
         if(up && isHeavyOS && c.vnc_port) {
-            vncHtml = `<button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem; background:var(--success-color); color:#0d1117;" onclick="openVNC('${window.location.hostname}', '${c.vnc_port}')">🖥️ WebVNC 桌面</button>`;
+            vncHtml = `<button class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem; background:var(--success-color); color:var(--on-accent);" onclick="openVNC('${window.location.hostname}', '${c.vnc_port}')">🖥️ WebVNC 桌面</button>`;
         } else if(up && isHeavyOS) {
             vncHtml = `<span style="font-size:0.75rem; color:var(--text-muted);">正在初始化 WebVNC...</span>`;
         }

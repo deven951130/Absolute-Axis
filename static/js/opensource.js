@@ -44,11 +44,11 @@ async function loadGitHubRepos() {
         repos.forEach(repo => {
             const card = document.createElement('div');
             card.className = 'card';
-            card.style = 'display:flex; flex-direction:column; justify-content:space-between; gap:15px; border-radius:12px; transition: transform 0.2s, border-color 0.2s; background: rgba(22, 27, 34, 0.4);';
+            card.style = 'display:flex; flex-direction:column; justify-content:space-between; gap:15px; border-radius:12px; transition: transform 0.2s, border-color 0.2s; background: var(--card-bg);';
             
             // 當前語言的背景顏色提示
             const lang = repo.language || 'Unknown';
-            let langColor = '#8b949e';
+            let langColor = 'var(--text-muted)';
             if (lang === 'Python') langColor = '#3572A5';
             else if (lang === 'JavaScript') langColor = '#f1e05a';
             else if (lang === 'TypeScript') langColor = '#3178c6';
@@ -79,8 +79,8 @@ async function loadGitHubRepos() {
                 </div>
                 <div>
                     <!-- Clone 命令複製面板 -->
-                    <div style="display:flex; align-items:center; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); padding:6px 12px; border-radius:6px; margin-bottom:12px;">
-                        <code style="font-family:monospace; font-size:0.72rem; color:#7ee787; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cloneCmd}</code>
+                    <div style="display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--border-color); padding:6px 12px; border-radius:6px; margin-bottom:12px;">
+                        <code style="font-family:monospace; font-size:0.72rem; color:var(--success-color); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cloneCmd}</code>
                         <button class="btn btn-outline" style="padding:2px 8px; font-size:0.65rem; font-weight:800; margin-left:8px;" onclick="copyCloneCommand('${cloneCmd}')">複製</button>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding-top:10px; font-size:0.7rem; color:var(--text-muted); font-weight:800;">

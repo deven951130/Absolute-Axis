@@ -4,16 +4,16 @@
     <!-- 頂部狀態橫幅 -->
     <div id="mv-status-banner" style="
         display: flex; align-items: center; gap: 16px;
-        background: linear-gradient(135deg, rgba(20, 20, 35, 0.9), rgba(13, 17, 23, 0.95));
-        border: 1px solid #30363d; border-left: 4px solid #4CAF50;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color); 
         border-radius: 12px; padding: 1.2rem 1.8rem; margin-bottom: 2rem;
         position: relative; overflow: hidden;
     ">
         <div style="position:absolute; top:-30px; right:-30px; width:120px; height:120px;
-            background: radial-gradient(circle, rgba(76,175,80,0.15), transparent);
+            background: radial-gradient(circle, color-mix(in srgb, var(--success-color) 15%, transparent), transparent);
             border-radius:50%; pointer-events:none;"></div>
         <div id="mv-banner-dot" style="width:14px; height:14px; border-radius:50%;
-            background:#666; flex-shrink:0; transition:0.3s;"></div>
+            background:var(--off-color); flex-shrink:0; transition:0.3s;"></div>
         <div>
             <div style="font-size:1rem; font-weight:900; letter-spacing:0.5px;" id="mv-banner-title">
                 🌌 Absolute-Axis MC — 狀態偵測中...
@@ -33,7 +33,7 @@
     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
 
         <!-- 伺服器資訊卡 -->
-        <div class="card" style="border-left:4px solid var(--accent-color);">
+        <div class="card" style="">
             <div class="card-title" style="font-size:0.9rem; margin-bottom:1.2rem;">
                 🖥️ 伺服器基本資訊
             </div>
@@ -52,7 +52,7 @@
                 </div>
                 <div class="mv-info-row">
                     <span class="mv-label">Screen Session</span>
-                    <span id="mv-screen" class="mv-value" style="font-family:monospace; color:#f1c40f;">--</span>
+                    <span id="mv-screen" class="mv-value" style="font-family:monospace; color:var(--warning-color);">--</span>
                 </div>
                 <div class="mv-info-row">
                     <span class="mv-label">執行狀態</span>
@@ -62,7 +62,7 @@
         </div>
 
         <!-- 連線資訊卡 -->
-        <div class="card" style="border-left:4px solid #4CAF50;">
+        <div class="card" style="">
             <div class="card-title" style="font-size:0.9rem; margin-bottom:1.2rem;">
                 連線資訊
             </div>
@@ -71,7 +71,7 @@
                     <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); margin-bottom:4px;">內網連線（LAN）</div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <code id="mv-lan" style="
-                            background:rgba(255,255,255,0.06); border:1px solid #30363d;
+                            background:var(--surface-2); border:1px solid var(--border-color);
                             padding:6px 12px; border-radius:6px; font-size:0.85rem;
                             color:var(--accent-color); flex:1; text-align:center;
                         ">--</code>
@@ -83,9 +83,9 @@
                     <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); margin-bottom:4px;">動態外網（WAN）</div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <code id="mv-wan" style="
-                            background:rgba(255,255,255,0.06); border:1px solid #30363d;
+                            background:var(--surface-2); border:1px solid var(--border-color);
                             padding:6px 12px; border-radius:6px; font-size:0.85rem;
-                            color:#2ecc71; flex:1; text-align:center;
+                            color:var(--success-color); flex:1; text-align:center;
                         ">--</code>
                         <button class="btn btn-outline" style="padding:5px 10px; font-size:0.72rem; flex-shrink:0;"
                             onclick="mvCopy('mv-wan')">複製</button>
@@ -95,9 +95,9 @@
                     <div style="font-size:0.65rem; font-weight:800; color:var(--text-muted); margin-bottom:4px;">固定域名連線（DDNS）</div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <code id="mv-ddns" style="
-                            background:rgba(255,255,255,0.06); border:1px solid #30363d;
+                            background:var(--surface-2); border:1px solid var(--border-color);
                             padding:6px 12px; border-radius:6px; font-size:0.85rem;
-                            color:#e67e22; flex:1; text-align:center;
+                            color:var(--warning-color); flex:1; text-align:center;
                         ">--</code>
                         <button class="btn btn-outline" style="padding:5px 10px; font-size:0.72rem; flex-shrink:0;"
                             onclick="mvCopy('mv-ddns')">複製</button>
@@ -107,14 +107,14 @@
         </div>
 
         <!-- 硬體規格卡 -->
-        <div class="card" style="border-left:4px solid #bd93f9;">
+        <div class="card" style="">
             <div class="card-title" style="font-size:0.9rem; margin-bottom:1.2rem;">
                 ⚙️ 硬體規格
             </div>
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <div class="mv-info-row">
                     <span class="mv-label">容器記憶體</span>
-                    <span class="mv-value" style="color:#bd93f9;" id="mv-ram">--</span>
+                    <span class="mv-value" style="color:var(--accent-color);" id="mv-ram">--</span>
                 </div>
                 <div class="mv-info-row">
                     <span class="mv-label">JVM 堆積</span>
@@ -133,7 +133,7 @@
             <div style="margin-top:1.2rem; padding-top:1rem; border-top:1px solid var(--border-color); text-align:center;">
                 <div id="mv-pulse-ring" style="
                     display:inline-block; width:36px; height:36px; border-radius:50%;
-                    border:3px solid #666; transition:0.3s;
+                    border:3px solid var(--off-color); transition:0.3s;
                 "></div>
                 <div id="mv-pulse-label" style="font-size:0.65rem; color:var(--text-muted); margin-top:6px; font-weight:800;">
                     OFFLINE
@@ -146,7 +146,7 @@
     <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
         
         <!-- 模組包簡介 -->
-        <div class="card" style="border-left:4px solid #e67e22; display:flex; flex-direction:column; min-height: 250px;">
+        <div class="card" style="display:flex; flex-direction:column; min-height: 250px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; width: 100%;">
                 <div class="card-title" style="font-size:0.9rem; margin-bottom:0;">
                     📦 模組包簡介與說明
@@ -157,7 +157,7 @@
             
             <!-- 顯示簡介區 -->
             <div id="mv-desc-display" style="
-                background:rgba(0,0,0,0.2); border:1px solid #30363d;
+                background:var(--surface-2); border:1px solid var(--border-color);
                 padding:1.2rem; border-radius:8px; font-size:0.9rem;
                 line-height:1.7; color:var(--text-main); flex:1;
                 min-height:120px; white-space:pre-wrap;
@@ -168,9 +168,9 @@
             <!-- 編輯簡介區（預設隱藏） -->
             <div id="mv-desc-edit-area" style="display:none; flex-direction:column; gap:10px; flex:1;">
                 <textarea id="mv-desc-textarea" class="t-input" style="
-                    width:100%; height:120px; background:rgba(0,0,0,0.3);
-                    border:1px solid #30363d; border-radius:8px; padding:10px;
-                    color:#fff; font-family:inherit; font-size:0.9rem; resize:vertical;
+                    width:100%; height:120px; background:var(--surface-2);
+                    border:1px solid var(--border-color); border-radius:8px; padding:10px;
+                    color:var(--text-main); font-family:inherit; font-size:0.9rem; resize:vertical;
                 "></textarea>
                 <div style="display:flex; gap:10px; justify-content:flex-end;">
                     <button class="btn btn-outline" style="padding:6px 14px; font-size:0.8rem;" onclick="window.toggleEditDesc(false)">取消</button>
@@ -180,7 +180,7 @@
         </div>
 
         <!-- 檔案與模組包下載/管理 -->
-        <div class="card" style="border-left:4px solid #bd93f9; display:flex; flex-direction:column;">
+        <div class="card" style="display:flex; flex-direction:column;">
             <div class="card-title" style="font-size:0.9rem; margin-bottom:1.2rem;">
                 💾 模組包下載與管理
             </div>
@@ -194,7 +194,7 @@
                 
                 <div>
                     <div style="font-size:0.75rem; color:var(--text-muted); font-weight:800; margin-bottom:6px;">當前客戶端模組包：</div>
-                    <div style="font-size:0.85rem; font-weight:800; color:#2ecc71; word-break:break-all;" id="mv-client-pack-name">--</div>
+                    <div style="font-size:0.85rem; font-weight:800; color:var(--success-color); word-break:break-all;" id="mv-client-pack-name">--</div>
                 </div>
 
                 <!-- 下載按鈕 (一般使用者與管理員皆可見) -->
@@ -210,7 +210,7 @@
                         📤 上傳伺服器包 (.zip)
                     </button>
                     
-                    <button class="btn btn-outline" style="width:100%; height:38px; border-color:#2ecc71 !important; color:#2ecc71;" onclick="window.triggerUpload('client')">
+                    <button class="btn btn-outline" style="width:100%; height:38px; border-color:var(--success-color) !important; color:var(--success-color);" onclick="window.triggerUpload('client')">
                         📤 上傳客戶端包 (.zip)
                     </button>
                     
@@ -228,12 +228,12 @@
 
     <!-- 模組包函式庫（管理員限定，由 JS 控制顯示） -->
     <div id="mv-pack-library-section" style="display:none; margin-bottom:1.5rem;">
-        <div class="card" style="border-left:4px solid #f39c12;">
+        <div class="card" style="">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
                 <div class="card-title" style="font-size:0.9rem; margin-bottom:0;">
                     📚 模組包函式庫
-                    <span style="font-size:0.65rem; background:rgba(248,81,73,0.15); color:#f85149;
-                        border:1px solid rgba(248,81,73,0.4); border-radius:10px; padding:2px 8px;
+                    <span style="font-size:0.65rem; background:color-mix(in srgb, var(--danger-color) 15%, transparent); color:var(--danger-color);
+                        border:1px solid color-mix(in srgb, var(--danger-color) 40%, transparent); border-radius:10px; padding:2px 8px;
                         margin-left:8px; font-weight:800;">ADMIN ONLY</span>
                 </div>
                 <div style="font-size:0.72rem; color:var(--text-muted); font-weight:700;">
@@ -251,13 +251,13 @@
 
     <!-- MC 指令控制台（管理員限定，由 JS 控制顯示） -->
     <div id="mv-console-section" style="display:none;">
-        <div class="card" style="padding:0; overflow:hidden; border-color:#bd93f9;">
+        <div class="card" style="padding:0; overflow:hidden; border-color:var(--accent-color);">
             <div style="padding:1.2rem 1.5rem; border-bottom:1px solid var(--border-color);
                 display:flex; align-items:center; justify-content:space-between;">
                 <div class="card-title" style="margin-bottom:0; font-size:0.9rem;">
                     🎛️ MC 指令控制台
-                    <span style="font-size:0.65rem; background:rgba(248,81,73,0.15); color:#f85149;
-                        border:1px solid rgba(248,81,73,0.4); border-radius:10px; padding:2px 8px;
+                    <span style="font-size:0.65rem; background:color-mix(in srgb, var(--danger-color) 15%, transparent); color:var(--danger-color);
+                        border:1px solid color-mix(in srgb, var(--danger-color) 40%, transparent); border-radius:10px; padding:2px 8px;
                         margin-left:8px; font-weight:800;">ADMIN ONLY</span>
                 </div>
                 <div style="font-size:0.7rem; color:var(--text-muted); font-weight:700;">
@@ -267,25 +267,25 @@
 
             <!-- 指令紀錄區 -->
             <div id="mv-cmd-log" style="
-                background:#0a0d11; padding:1rem 1.2rem;
+                background:var(--surface-2); padding:1rem 1.2rem;
                 font-family:'Courier New', monospace; font-size:0.8rem;
-                color:#7ee787; line-height:1.7; min-height:180px; max-height:280px;
+                color:var(--success-color); line-height:1.7; min-height:180px; max-height:280px;
                 overflow-y:auto;
             ">
-                <div style="color:#8b949e;">[SYSTEM] MC 指令控制台已就緒。輸入 Minecraft 伺服器指令並按下 Enter 或點擊發送。</div>
-                <div style="color:#8b949e;">[SYSTEM] 所有操作均會記錄至稽核日誌。</div>
+                <div style="color:var(--text-muted);">[SYSTEM] MC 指令控制台已就緒。輸入 Minecraft 伺服器指令並按下 Enter 或點擊發送。</div>
+                <div style="color:var(--text-muted);">[SYSTEM] 所有操作均會記錄至稽核日誌。</div>
             </div>
 
             <!-- 輸入區 -->
             <div style="display:flex; gap:10px; padding:12px 15px;
-                background:#0d1117; border-top:1px solid #30363d;">
-                <span style="font-family:monospace; font-size:0.9rem; color:#bd93f9;
+                background:var(--bg-color); border-top:1px solid var(--border-color);">
+                <span style="font-family:monospace; font-size:0.9rem; color:var(--accent-color);
                     line-height:38px; flex-shrink:0;">></span>
                 <input type="text" id="mv-cmd-input"
                     placeholder="輸入 Minecraft 指令（例如：say Hello / time set day / kick playerName）"
                     style="
                         flex:1; background:transparent; border:none; outline:none;
-                        color:#fff; font-family:'Courier New', monospace; font-size:0.85rem;
+                        color:var(--text-main); font-family:'Courier New', monospace; font-size:0.85rem;
                     "
                     onkeypress="if(event.key==='Enter') sendMCCommand()"
                 >

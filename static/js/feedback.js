@@ -22,18 +22,18 @@ async function loadFeedbacks() {
         feedbacks.forEach(f => {
             const item = document.createElement('div');
             item.className = 'file-list-item';
-            item.style = 'display:flex; flex-direction:column; padding:1.5rem; gap:12px; margin-bottom:12px; border-radius:12px; border:1px solid var(--border-color); background:rgba(22, 27, 34, 0.4);';
+            item.style = 'display:flex; flex-direction:column; padding:1.5rem; gap:12px; margin-bottom:12px; border-radius:12px; border:1px solid var(--border-color); background:var(--card-bg);';
             
             // 分類與狀態標籤
             let cateText = '其他';
             if (f.category === 'Bug') cateText = '系統錯誤';
             else if (f.category === 'Suggestion') cateText = '功能建議';
             
-            const cateBadge = `<span style="background:rgba(255,255,255,0.06); color:var(--text-muted); border:1px solid var(--border-color); padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:800; margin-right:8px;">${cateText}</span>`;
+            const cateBadge = `<span style="background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border-color); padding:2px 8px; border-radius:4px; font-size:0.65rem; font-weight:800; margin-right:8px;">${cateText}</span>`;
             
             const statusBadge = f.status === 'Resolved' ?
-                '<span style="background:rgba(46, 160, 67, 0.15); color:#3fb950; border:1px solid rgba(46, 160, 67, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已處置</span>' :
-                '<span style="background:rgba(248, 81, 73, 0.15); color:#f85149; border:1px solid rgba(248, 81, 73, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">待處置</span>';
+                '<span style="background:color-mix(in srgb, var(--success-color) 15%, transparent); color:var(--success-color); border:1px solid color-mix(in srgb, var(--success-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已處置</span>' :
+                '<span style="background:color-mix(in srgb, var(--danger-color) 15%, transparent); color:var(--danger-color); border:1px solid color-mix(in srgb, var(--danger-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">待處置</span>';
 
             // 管理員回覆區塊
             let adminActionHtml = '';
@@ -50,7 +50,7 @@ async function loadFeedbacks() {
             let responseHtml = '';
             if (f.response) {
                 responseHtml = `
-                    <div style="background:rgba(56, 139, 253, 0.05); border-left:3px solid var(--accent-color); padding:10px 15px; border-radius:4px; margin-top:8px;">
+                    <div style="background:color-mix(in srgb, var(--accent-color) 5%, transparent); border-left:3px solid var(--accent-color); padding:10px 15px; border-radius:4px; margin-top:8px;">
                         <div style="font-size:0.7rem; font-weight:800; color:var(--accent-color); margin-bottom:4px;">系統管理員回覆</div>
                         <div style="font-size:0.8rem; color:var(--text-main); line-height:1.5;">${f.response}</div>
                     </div>
