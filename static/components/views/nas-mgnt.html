@@ -1,64 +1,51 @@
-<!-- Absolute Axis - NAS Management View Module -->
+<!-- Absolute Axis - NAS 管理（玻璃小工具；nas-mgnt.js 每 30 秒更新，所有值用 textContent） -->
 <div id="view-nas-mgnt" class="view-section">
-    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.8rem;">
-        <div class="card">
-            <div class="card-title">🗄️ 實體磁碟狀態與 S.M.A.R.T 健康報告</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.2rem;">
-                <!-- Physical Disk 0 (System) -->
-                <div style="background:var(--surface-2); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;" id="disk-0-dev">[DEVICE_0]</span>
-                        <span style="color:var(--success-color); font-size:0.7rem; font-weight:900;" id="disk-0-status">--</span>
-                    </div>
-                    <div style="font-size:1.05rem; font-weight:800; margin:10px 0; color:var(--accent-color);" id="disk-0-name">Loading Drive...</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px;" id="disk-0-info">偵測中...</div>
-                    <div class="progress-bar" style="height:4px;"><div id="disk-0-bar" class="progress-fill" style="width:0%"></div></div>
-                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem;">
-                        <span id="disk-0-temp" style="display:none;">TEMP: --°C</span><span id="disk-0-val">--%</span>
-                    </div>
-                </div>
-                <!-- Physical Disk 1 (Storage) -->
-                <div style="background:var(--surface-2); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem; border-left: 2px solid var(--accent-color);">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:800;" id="disk-1-dev">[DEVICE_1]</span>
-                        <span style="color:var(--success-color); font-size:0.7rem; font-weight:900;" id="disk-1-status">--</span>
-                    </div>
-                    <div style="font-size:1.05rem; font-weight:800; margin:10px 0; color:var(--accent-color);" id="disk-1-name">Loading Drive...</div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:15px;" id="disk-1-info">偵測中...</div>
-                    <div class="progress-bar" style="height:4px;"><div id="disk-1-bar" class="progress-fill" style="width:0%"></div></div>
-                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:0.7rem;">
-                        <span id="disk-1-temp" style="display:none;">TEMP: --°C</span><span id="disk-1-val">--%</span>
-                    </div>
-                </div>
+    <div class="nas-grid">
+        <section class="widget nas-disk" aria-labelledby="disk-0-name">
+            <p class="w-cap" style="color:#8E8E96"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="13" width="17" height="7" rx="2"></rect><path d="M5.5 13l2.5-8h8l2.5 8M16.5 16.5h.01"></path></svg><span id="disk-0-dev">系統碟</span></p>
+            <div class="nas-disk-top">
+                <h3 id="disk-0-name" class="nas-disk-name">讀取中…</h3>
+                <span id="disk-0-status" class="pill">—</span>
             </div>
+            <div class="nas-big"><b id="disk-0-val" class="w-big">--%</b><span class="w-muted">已使用</span></div>
+            <div class="w-bar"><div id="disk-0-bar" style="width:0%"></div></div>
+            <p id="disk-0-info" class="w-muted nas-info">偵測中…</p>
+            <span id="disk-0-temp" hidden></span>
+        </section>
 
-            <div class="card-title" style="margin-top:2.5rem;">🛡️ 實體儲存池控制中樞 (Physical Storage Pool)</div>
-            <div style="background:var(--surface-2); border:1px solid var(--border-color); border-radius:12px; padding:20px; display:flex; align-items:center; gap:30px;">
-                <div style="width:80px; height:80px; display:flex; align-items:center; justify-content:center; background:var(--accent-soft); border-radius:50%; border:2px solid var(--accent-color); font-size:2rem;" id="pool-icon">🗄️</div>
-                <div style="flex:1;">
-                    <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:10px;">
-                        <div>
-                            <div style="font-weight:800; font-size:1.1rem;" id="raid-name">Absolute_Storage_Pool</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted);" id="raid-type">JBOD / Single Drive Logic</div>
-                        </div>
-                        <div style="text-align:right;"><div style="color:var(--success-color); font-weight:900; font-size:0.8rem;" id="raid-status">STATUS: ONLINE</div></div>
-                    </div>
-                    <div class="progress-bar" style="height:8px;"><div id="raid-bar" class="progress-fill" style="width:100%; background:linear-gradient(90deg, var(--accent-color), var(--success-color));"></div></div>
-                </div>
+        <section class="widget nas-disk" aria-labelledby="disk-1-name">
+            <p class="w-cap" style="color:#2E9BF0"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="13" width="17" height="7" rx="2"></rect><path d="M5.5 13l2.5-8h8l2.5 8M16.5 16.5h.01"></path></svg><span id="disk-1-dev">資料碟</span></p>
+            <div class="nas-disk-top">
+                <h3 id="disk-1-name" class="nas-disk-name">讀取中…</h3>
+                <span id="disk-1-status" class="pill">—</span>
             </div>
-        </div>
+            <div class="nas-big"><b id="disk-1-val" class="w-big">--%</b><span class="w-muted">已使用</span></div>
+            <div class="w-bar"><div id="disk-1-bar" style="width:0%"></div></div>
+            <p id="disk-1-info" class="w-muted nas-info">偵測中…</p>
+            <span id="disk-1-temp" hidden></span>
+        </section>
 
-        <div class="card" style="height:fit-content;">
-            <div class="card-title">📊 儲存佔用細節</div>
-            <div style="display:flex; flex-direction:column; gap:12px;">
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>核心系統</span><b id="det-core">--G</b></div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>用戶媒體 (NAS)</span><b id="det-user">--G</b></div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem;"><span>Docker 掛載區</span><b id="det-docker">--G</b></div>
-                <hr style="border:0; border-top:1px solid var(--border-color); margin:10px 0;">
-                <div style="text-align:center;">
-                    <button class="btn btn-primary" style="width:100%; font-size:0.75rem; font-weight:800;" onclick="refreshNASHardware()">🔄 刷新讀取 S.M.A.R.T 報告</button>
-                </div>
+        <section class="widget nas-details" aria-labelledby="nas-details-title">
+            <p id="nas-details-title" class="w-cap" style="color:#FF9F43"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9l7 4"></path><circle cx="12" cy="12" r="9"></circle></svg>空間用途
+                <button type="button" class="w-more" onclick="refreshNASHardware()">重新整理</button></p>
+            <div class="nas-rows">
+                <div class="nas-row"><span class="nas-dot" style="background:#8E8E96"></span><span>核心系統</span><b id="det-core">--</b></div>
+                <div class="nas-row"><span class="nas-dot" style="background:#2E9BF0"></span><span>成員檔案（NAS）</span><b id="det-user">--</b></div>
+                <div class="nas-row"><span class="nas-dot" style="background:#5E5CE6"></span><span>Docker 掛載區</span><b id="det-docker">--</b></div>
             </div>
-        </div>
+            <p class="w-muted nas-note">每 30 秒自動更新磁碟健康（S.M.A.R.T）。</p>
+        </section>
+
+        <section class="widget w2 nas-pool" aria-labelledby="raid-name">
+            <p class="w-cap" style="color:#2FB463"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M8.5 12l2.5 2.5 4.5-5"></path></svg>儲存池</p>
+            <div class="nas-pool-row">
+                <div class="nas-pool-text">
+                    <h3 id="raid-name" class="nas-disk-name">儲存池</h3>
+                    <p id="raid-type" class="w-muted">—</p>
+                </div>
+                <span id="raid-status" class="pill">—</span>
+            </div>
+            <div class="w-bar"><div id="raid-bar" style="width:100%"></div></div>
+        </section>
     </div>
 </div>
