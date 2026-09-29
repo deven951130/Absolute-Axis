@@ -201,7 +201,7 @@ window.createVMAccount = async function() {
             loadVMAccounts();
         } else {
             const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "新增失敗", "error");
+            toastText(typeof data.detail === 'string' ? data.detail : "新增失敗", "error");
         }
     } catch (err) {
         console.error(err);
@@ -218,7 +218,7 @@ window.deleteVMAccount = async function(id) {
             loadVMAccounts();
         } else {
             const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "刪除失敗", "error");
+            toastText(typeof data.detail === 'string' ? data.detail : "刪除失敗", "error");
         }
     } catch (e) {
         console.error(e);

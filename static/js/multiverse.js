@@ -49,10 +49,10 @@ async function loadMultiverseInfo() {
             if (dlBtn) {
                 if (info.has_client_pack) {
                     dlBtn.disabled = false;
-                    dlBtn.innerHTML = '📥 下載客戶端模組包';
+                    dlBtn.textContent = '下載客戶端模組包';
                 } else {
                     dlBtn.disabled = true;
-                    dlBtn.innerHTML = '❌ 尚未上傳客戶端模組包';
+                    dlBtn.textContent = '尚未上傳客戶端模組包';
                 }
             }
             
@@ -63,7 +63,7 @@ async function loadMultiverseInfo() {
             const adminControls = document.getElementById('mv-admin-pack-controls');
             const librarySection = document.getElementById('mv-pack-library-section');
 
-            if (editDescBtn) editDescBtn.style.display = isAdmin ? 'block' : 'none';
+            if (editDescBtn) editDescBtn.style.display = isAdmin ? '' : 'none';
             if (adminControls) adminControls.style.display = isAdmin ? 'flex' : 'none';
             if (librarySection) librarySection.style.display = isAdmin ? 'block' : 'none';
             if (isAdmin) loadPackLibrary();
@@ -88,15 +88,13 @@ function _mvRenderStatus(data) {
     if (online) {
         dot.style.background = 'var(--success-color)';
         dot.style.boxShadow = '0 0 8px color-mix(in srgb, var(--success-color) 70%, transparent)';
-        title.textContent = '🌌 Absolute-Axis MC — 伺服器線上';
-        sub.textContent = '連線正常，Minecraft Java Edition 運行中';
-        banner.style.borderLeftColor = 'var(--success-color)';
+        title.textContent = 'Minecraft 伺服器運作中';
+        sub.textContent = '連線正常，Java 版伺服器執行中';
     } else {
         dot.style.background = 'var(--danger-color)';
         dot.style.boxShadow = '0 0 8px color-mix(in srgb, var(--danger-color) 70%, transparent)';
-        title.textContent = '🌌 Absolute-Axis MC — 伺服器離線';
-        sub.textContent = 'TCP 連線失敗，服務可能已停止或正在引導中';
-        banner.style.borderLeftColor = 'var(--danger-color)';
+        title.textContent = 'Minecraft 伺服器離線';
+        sub.textContent = '連不上伺服器：服務可能已停止，或正在啟動中';
     }
 
     // 更新時間
@@ -122,7 +120,7 @@ function _mvRenderStatus(data) {
     // --- 硬體規格 ---
     _mvSet('mv-ram', data.specs?.ram || '--');
     _mvSet('mv-jvm', data.specs?.jvm_heap || '--');
-    _mvSet('mv-cpu', `${data.specs?.cpu_threads || '--'} Threads`);
+    _mvSet('mv-cpu', `${data.specs?.cpu_threads || '--'} 執行緒`);
     _mvSet('mv-container', data.specs?.container || '--');
 
     // --- 脈搏狀態環 ---
@@ -132,13 +130,13 @@ function _mvRenderStatus(data) {
         ring.style.border = '3px solid var(--success-color)';
         ring.style.boxShadow = '0 0 12px color-mix(in srgb, var(--success-color) 50%, transparent)';
         ring.style.animation = 'mv-pulse-anim 2s infinite';
-        ringLabel.textContent = 'ONLINE';
+        ringLabel.textContent = '線上';
         ringLabel.style.color = 'var(--success-color)';
     } else {
         ring.style.border = '3px solid var(--danger-color)';
         ring.style.boxShadow = 'none';
         ring.style.animation = 'none';
-        ringLabel.textContent = 'OFFLINE';
+        ringLabel.textContent = '離線';
         ringLabel.style.color = 'var(--danger-color)';
     }
 
@@ -153,7 +151,7 @@ function _mvRenderStatus(data) {
 
 function _mvRenderError(msg) {
     const sub = document.getElementById('mv-banner-sub');
-    if (sub) sub.textContent = `⚠️ ${msg}`;
+    if (sub) sub.textContent = msg;
     const el = document.getElementById('mv-last-update');
     if (el) el.textContent = new Date().toLocaleTimeString('zh-TW');
 }
@@ -199,10 +197,9 @@ window.sendMCCommand = async function() {
     const command = input.value.trim();
     if (!command) return;
 
-    // 立即在 log 顯示送出記錄
-    const ts = new Date().toLocaleTimeString('zh-TW');
-    const pendingLine = document.createElement('div');
-    pendingLine.innerHTML = `<span style="color:var(--text-muted)">[${ts}]</span> <span style="color:var(--accent-color)">></span> <span style="color:var(--text-main);">${escapeHtml(command)}</span> <span style="color:var(--text-muted)">— 發送中...</span>`;
+    // 立即在 log 顯示送出記錄（指令與錯誤訊息都用 textContent）
+    const ts = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+    const pendingLine = _mvLogLine(ts, 'pending', command, '送出中…');
     log.appendChild(pendingLine);
     log.scrollTop = log.scrollHeight;
     input.value = '';
@@ -213,19 +210,24 @@ window.sendMCCommand = async function() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ command })
         });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            pendingLine.innerHTML = `<span style="color:var(--text-muted)">[${ts}]</span> <span style="color:var(--success-color)">✓</span> <span style="color:var(--success-color);">${escapeHtml(command)}</span>`;
-        } else {
-            pendingLine.innerHTML = `<span style="color:var(--text-muted)">[${ts}]</span> <span style="color:var(--danger-color)">✗</span> <span style="color:var(--danger-color);">${escapeHtml(command)}</span> — ${data.detail || '未知錯誤'}`;
-        }
+        const data = await res.json().catch(() => ({}));
+        pendingLine.replaceWith(res.ok
+            ? _mvLogLine(ts, 'ok', command, '')
+            : _mvLogLine(ts, 'bad', command, typeof data.detail === 'string' ? data.detail : '未知錯誤'));
     } catch (e) {
-        pendingLine.innerHTML = `<span style="color:var(--text-muted)">[${ts}]</span> <span style="color:var(--danger-color)">✗</span> <span style="color:var(--danger-color);">${escapeHtml(command)}</span> — 網路錯誤：${e.message}`;
+        pendingLine.replaceWith(_mvLogLine(ts, 'bad', command, '網路錯誤'));
     }
     log.scrollTop = log.scrollHeight;
 };
+
+function _mvLogLine(ts, state, command, note) {
+    const mark = { pending: '›', ok: '✓', bad: '✗' }[state];
+    return h('div', { class: `mv-log-line ${state}` },
+        h('span', { class: 'mv-log-ts', text: `[${ts}]` }),
+        h('span', { class: 'mv-log-mark', text: mark }),
+        h('span', { class: 'mv-log-cmd', text: command }),
+        note ? h('span', { class: 'mv-log-note', text: `— ${note}` }) : null);
+}
 
 function escapeHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -241,27 +243,6 @@ if (!document.getElementById('mv-style')) {
             70% { box-shadow: 0 0 0 10px rgba(76,175,80,0); }
             100% { box-shadow: 0 0 0 0 rgba(76,175,80,0); }
         }
-        .mv-info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .mv-label {
-            font-size: 0.7rem;
-            font-weight: 800;
-            color: var(--text-muted);
-        }
-        .mv-value {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: var(--text-main);
-            text-align: right;
-            max-width: 60%;
-        }
-        #mv-cmd-log::-webkit-scrollbar { width: 6px; }
-        #mv-cmd-log::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
     `;
     document.head.appendChild(style);
 }
@@ -278,9 +259,9 @@ window.toggleEditDesc = function(show) {
         if (editBtn) editBtn.style.display = 'none';
         if (textarea) textarea.focus();
     } else {
-        if (display) display.style.display = 'block';
+        if (display) display.style.display = '';
         if (editArea) editArea.style.display = 'none';
-        if (editBtn) editBtn.style.display = 'block';
+        if (editBtn) editBtn.style.display = '';
     }
 };
 
@@ -296,15 +277,15 @@ window.saveDesc = async function() {
             body: JSON.stringify({ description })
         });
         if (res.ok) {
-            if (typeof showToast === 'function') showToast("模組包說明已保存", "success");
+            toastText("模組包說明已保存", "success");
             toggleEditDesc(false);
             await loadMultiverseInfo();
         } else {
             const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "保存失敗", "error");
+            toastText(data.detail || "保存失敗", "error");
         }
     } catch (e) {
-        if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
+        toastText("網路錯誤：" + e.message, "error");
     }
 };
 
@@ -325,94 +306,67 @@ window.triggerUpload = function(type) {
 async function loadPackLibrary() {
     const container = document.getElementById('mv-pack-list');
     if (!container) return;
-    container.innerHTML = '<div style="color:var(--text-muted); font-size:0.82rem; text-align:center; padding:0.8rem;">載入中...</div>';
+    const note = (text, tone = 'ios-muted') => container.replaceChildren(
+        h('div', { class: 'ios-row static' }, h('span', { class: `ios-label ${tone}`, text })));
+    note('載入中…');
     try {
         const res = await authFetch('/api/minecraft/packs');
         if (!res.ok) {
-            container.innerHTML = '<div style="color:var(--danger-color); font-size:0.82rem; text-align:center; padding:0.8rem;">載入失敗</div>';
+            note('函式庫載入失敗', 'mv-bad');
             return;
         }
         const data = await res.json();
         renderPackList(data.packs || []);
     } catch (e) {
-        container.innerHTML = `<div style="color:var(--danger-color); font-size:0.82rem; text-align:center; padding:0.8rem;">錯誤：${e.message}</div>`;
+        note('函式庫載入失敗：連線錯誤', 'mv-bad');
     }
 }
 
 /**
- * 渲染模組包清單
+ * 渲染模組包清單（名稱來自上傳的檔名：一律 textContent＋事件綁定）
  */
 function renderPackList(packs) {
     const container = document.getElementById('mv-pack-list');
     if (!container) return;
-
-    if (packs.length === 0) {
-        container.innerHTML = '<div style="color:var(--text-muted); font-size:0.82rem; text-align:center; padding:1rem;">函式庫為空，請先上傳模組包</div>';
+    if (!packs.length) {
+        container.replaceChildren(h('div', { class: 'ios-row static' },
+            h('span', { class: 'ios-label ios-muted', text: '函式庫是空的，請先上傳模組包。' })));
         return;
     }
-
-    container.innerHTML = packs.map(pack => {
+    container.replaceChildren(...packs.map((pack) => {
         const inLibrary = pack.in_library !== false;
-
-        // 邊框顏色
-        let borderStyle, bgStyle;
-        if (pack.active && inLibrary) {
-            borderStyle = 'border-color:var(--success-color);';
-            bgStyle = 'background:color-mix(in srgb, var(--success-color) 8%, transparent);';
-        } else if (pack.active && !inLibrary) {
-            borderStyle = 'border-color:var(--warning-color);';
-            bgStyle = 'background:color-mix(in srgb, var(--warning-color) 8%, transparent);';
-        } else {
-            borderStyle = 'border-color:var(--border-color);';
-            bgStyle = 'background:var(--surface-2);';
+        const pills = [];
+        if (pack.active) pills.push(h('span', { class: `pill ${inLibrary ? 'ok' : 'warn'}`, text: inLibrary ? '使用中' : '使用中・未存入庫' }));
+        if (inLibrary) pills.push(h('span', { class: `pill ${pack.has_world ? 'info' : ''}`, text: pack.has_world ? '有世界存檔' : '全新地圖' }));
+        const size = pack.size_mb != null ? `${pack.size_mb} MB` : '檔案不在函式庫中（需重新上傳才能存入）';
+        const actions = h('span', { class: 'row-actions' });
+        if (!pack.active) {
+            actions.append(
+                h('button', { type: 'button', class: 'btn btn-primary btn-sm', text: '切換部署',
+                              onclick: () => window.switchPack(pack.name, !!pack.has_world) }),
+                h('button', { type: 'button', class: 'btn btn-danger btn-sm', text: '刪除',
+                              onclick: () => window.deletePackFromLibrary(pack.name) }));
         }
+        return h('div', { class: 'ios-row static user-row' },
+            h('span', { class: 'nav-ico', style: 'background:#20A6A6' }, _mvBoxIcon()),
+            h('span', { class: 'row-main' },
+                h('b', { text: pack.name }),
+                h('span', { class: pack.size_mb != null ? '' : 'mv-warn', text: size })),
+            pills,
+            actions);
+    }));
+}
 
-        // 啟用徽章
-        let badge = '';
-        if (pack.active && inLibrary) {
-            badge = '<span style="font-size:0.6rem; background:color-mix(in srgb, var(--success-color) 20%, transparent); color:var(--success-color); border:1px solid color-mix(in srgb, var(--success-color) 50%, transparent); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中</span>';
-        } else if (pack.active && !inLibrary) {
-            badge = '<span style="font-size:0.6rem; background:color-mix(in srgb, var(--warning-color) 20%, transparent); color:var(--warning-color); border:1px solid color-mix(in srgb, var(--warning-color) 50%, transparent); border-radius:8px; padding:2px 8px; font-weight:900; margin-left:8px;">啟用中・未存入庫</span>';
-        }
-
-        // 地圖狀態標籤
-        const worldBadge = inLibrary
-            ? (pack.has_world
-                ? '<span style="font-size:0.6rem; background:var(--accent-soft); color:var(--accent-color); border:1px solid color-mix(in srgb, var(--accent-color) 40%, transparent); border-radius:8px; padding:2px 8px; font-weight:700; margin-left:6px;">🗺 有地圖存檔</span>'
-                : '<span style="font-size:0.6rem; background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border-color); border-radius:8px; padding:2px 8px; font-weight:700; margin-left:6px;">✨ 全新地圖</span>')
-            : '';
-
-        // 右側動作
-        let actions = '';
-        if (pack.active) {
-            actions = '<span style="font-size:0.75rem; color:var(--success-color); font-weight:700;">✓ 已部署</span>';
-        } else {
-            actions = `
-                <button class="btn btn-outline" style="padding:5px 14px; font-size:0.75rem; border-color:var(--accent-color) !important; color:var(--accent-color);" onclick="window.switchPack('${escapeHtml(pack.name)}', ${pack.has_world})">⚡ 切換部署</button>
-                <button class="btn btn-outline" style="padding:5px 10px; font-size:0.75rem; border-color:var(--danger-color) !important; color:var(--danger-color);" onclick="window.deletePackFromLibrary('${escapeHtml(pack.name)}')" title="從函式庫刪除">🗑️</button>
-            `;
-        }
-
-        const sizeText = pack.size_mb != null ? `${pack.size_mb} MB` : '檔案不在函式庫中（需重新上傳才能保存至庫）';
-        const sizeColor = pack.size_mb != null ? 'color:var(--text-muted);' : 'color:var(--warning-color);';
-
-        return `
-            <div style="display:flex; align-items:center; gap:12px; padding:10px 14px;
-                border:1px solid; border-radius:8px; ${borderStyle} ${bgStyle} transition:0.2s;">
-                <div style="flex:1; min-width:0;">
-                    <div style="font-size:0.82rem; font-weight:800; color:var(--text-main);
-                        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                        📦 ${escapeHtml(pack.name)}${badge}${worldBadge}
-                    </div>
-                    <div style="font-size:0.68rem; margin-top:3px; font-weight:700; ${sizeColor}">
-                        ${sizeText}
-                    </div>
-                </div>
-                <div style="display:flex; gap:8px; flex-shrink:0; align-items:center;">
-                    ${actions}
-                </div>
-            </div>`;
-    }).join('');
+function _mvBoxIcon() {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    for (const d of ['M12 3l8 4.5v9L12 21l-8-4.5v-9z', 'M12 12l8-4.5M12 12v9M12 12L4 7.5']) {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', d);
+        svg.append(p);
+    }
+    return svg;
 }
 
 
@@ -422,16 +376,21 @@ function renderPackList(packs) {
  */
 window.switchPack = async function(packName, hasWorld = false) {
     // 第一步：確認切換
-    if (!confirm(`確定要切換至「${packName}」？\n\n系統將自動：\n・保存目前世界存檔\n・${hasWorld ? '還原該模組包的世界存檔' : '建立全新世界（該包尚無存檔）'}\n・重新啟動伺服器`)) return;
+    if (!(await axisAsk({
+        title: `切換到「${packName}」？`,
+        message: `會自動：\n・保存目前的世界存檔\n・${hasWorld ? '還原這個模組包的世界存檔' : '建立全新世界（這個包還沒有存檔）'}\n・重新啟動伺服器`,
+        ok: '切換部署',
+    }))) return;
 
     // 第二步：若該包已有存檔，詢問是否重置地圖
     let resetWorld = false;
     if (hasWorld) {
-        resetWorld = confirm(
-            `「${packName}」有舊的世界存檔。\n\n` +
-            `確定 → 刪除舊存檔，生成全新地圖\n` +
-            `取消 → 繼續使用該包的舊地圖（推薦）`
-        );
+        // 按 Esc 或「沿用」＝保留舊地圖（安全的預設）
+        resetWorld = await axisAsk({
+            title: `「${packName}」有舊的世界存檔`,
+            message: '要沿用這個存檔，還是刪掉它、產生全新地圖？刪除後無法復原。',
+            ok: '刪除舊存檔、產生新地圖', cancel: '沿用舊地圖（建議）', danger: true,
+        });
     }
 
     const progressLabel = resetWorld
@@ -452,16 +411,15 @@ window.switchPack = async function(packName, hasWorld = false) {
             const worldMsg = resetWorld
                 ? '，已重置為全新地圖'
                 : (hasWorld ? '，已還原該包的世界存檔' : '，全新地圖將在首次連線時生成');
-            if (typeof showToast === 'function') showToast(
-                `已切換至 ${packName}${worldMsg}。Minecraft 模組載入需要數分鐘，請稍後再連線。`, 'success'
+            toastText(`已切換至 ${packName}${worldMsg}。Minecraft 模組載入需要數分鐘，請稍後再連線。`, 'success'
             );
             await loadMultiverse();
         } else {
-            if (typeof showToast === 'function') showToast(data.detail || '切換失敗', 'error');
+            toastText(data.detail || '切換失敗', 'error');
         }
     } catch (e) {
         _mvHideProgress();
-        if (typeof showToast === 'function') showToast('切換錯誤：' + e.message, 'error');
+        toastText('切換錯誤：' + e.message, 'error');
     }
 };
 
@@ -470,20 +428,19 @@ window.switchPack = async function(packName, hasWorld = false) {
  * 從函式庫刪除指定模組包
  */
 window.deletePackFromLibrary = async function(packName) {
-    const ok = confirm(`確定要從函式庫刪除「${packName}」嗎？\n此操作不可復原。`);
-    if (!ok) return;
+    if (!(await axisAsk({ title: `從函式庫刪除「${packName}」？`, message: '刪除後無法復原。', ok: '刪除', danger: true }))) return;
 
     try {
         const res = await authFetch(`/api/minecraft/packs/${encodeURIComponent(packName)}`, { method: 'DELETE' });
         const data = await res.json();
         if (res.ok) {
-            if (typeof showToast === 'function') showToast(`已刪除 ${packName}`, 'success');
+            toastText(`已刪除 ${packName}`, 'success');
             await loadPackLibrary();
         } else {
-            if (typeof showToast === 'function') showToast(data.detail || '刪除失敗', 'error');
+            toastText(data.detail || '刪除失敗', 'error');
         }
     } catch (e) {
-        if (typeof showToast === 'function') showToast('刪除錯誤：' + e.message, 'error');
+        toastText('刪除錯誤：' + e.message, 'error');
     }
 };
 
@@ -496,7 +453,7 @@ window.handleFileSelected = function(input) {
     const type = window._mvUploadType;
 
     if (!file.name.endsWith('.zip')) {
-        if (typeof showToast === 'function') showToast("僅接受 .zip 壓縮包！", "warning");
+        toastText("僅接受 .zip 壓縮包！", "warning");
         return;
     }
 
@@ -530,23 +487,23 @@ window.handleFileSelected = function(input) {
     xhr.addEventListener('load', async function() {
         _mvHideProgress();
         if (xhr.status >= 200 && xhr.status < 300) {
-            if (typeof showToast === 'function') showToast(`${desc} 上傳並部署成功！`, "success");
+            toastText(`${desc} 上傳並部署成功！`, "success");
             await loadMultiverse();
         } else {
             let detail = '上傳失敗';
             try { detail = JSON.parse(xhr.responseText).detail || detail; } catch (_) {}
-            if (typeof showToast === 'function') showToast(detail, "error");
+            toastText(detail, "error");
         }
     });
 
     xhr.addEventListener('error', function() {
         _mvHideProgress();
-        if (typeof showToast === 'function') showToast("上傳網路錯誤，請確認伺服器狀態", "error");
+        toastText("上傳網路錯誤，請確認伺服器狀態", "error");
     });
 
     xhr.addEventListener('timeout', function() {
         _mvHideProgress();
-        if (typeof showToast === 'function') showToast("上傳逾時，請確認網路品質後重試", "error");
+        toastText("上傳逾時，請確認網路品質後重試", "error");
     });
 
     xhr.open('POST', url);
@@ -561,46 +518,14 @@ function _mvShowProgress(pct, label) {
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'mv-upload-overlay';
-        overlay.style.cssText = `
-            position: fixed; inset: 0; z-index: 9999;
-            background: var(--backdrop); backdrop-filter: blur(4px);
-            display: flex; align-items: center; justify-content: center;
-        `;
-        overlay.innerHTML = `
-            <div style="
-                background: var(--card-bg);
-                border: 1px solid var(--border-color); border-radius: 16px;
-                padding: 2rem 2.5rem; min-width: 420px; max-width: 90vw;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-                text-align: center;
-            ">
-                <div style="font-size: 2rem; margin-bottom: 1rem;">📤</div>
-                <div id="mv-prog-label" style="
-                    font-size: 0.85rem; font-weight: 700; color: var(--text-muted);
-                    margin-bottom: 1.2rem; min-height: 1.2em;
-                ">準備上傳...</div>
-                <div style="
-                    background: var(--surface-2); border-radius: 8px;
-                    height: 12px; overflow: hidden; margin-bottom: 0.8rem;
-                    border: 1px solid var(--border-color);
-                ">
-                    <div id="mv-prog-bar" style="
-                        height: 100%; width: 0%;
-                        background: var(--accent-color);
-                        border-radius: 8px;
-                        transition: width 0.3s ease;
-                        box-shadow: none;
-                    "></div>
-                </div>
-                <div id="mv-prog-pct" style="
-                    font-size: 1.4rem; font-weight: 900;
-                    color: var(--accent-color, var(--accent-color)); margin-bottom: 0.5rem;
-                ">0%</div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem;">
-                    上傳完成後伺服器會自動停止並重新部署，請勿關閉頁面
-                </div>
-            </div>
-        `;
+        overlay.className = 'sheet-overlay';
+        overlay.style.cssText = 'display:flex;';
+        overlay.append(h('div', { class: 'sheet mv-progress' },
+            h('p', { class: 'card-h', text: '上傳模組包' }),
+            h('p', { id: 'mv-prog-label', class: 'w-muted', text: '準備上傳…' }),
+            h('div', { class: 'w-bar' }, h('div', { id: 'mv-prog-bar', style: 'width:0%' })),
+            h('b', { id: 'mv-prog-pct', class: 'w-big mv-prog-pct', text: '0%' }),
+            h('p', { class: 'w-muted mv-hint', text: '上傳完成後伺服器會自動停止並重新部署，請不要關閉這個頁面。' })));
         document.body.appendChild(overlay);
     }
     const bar = document.getElementById('mv-prog-bar');
@@ -618,27 +543,26 @@ function _mvHideProgress() {
 }
 
 window.uninstallServerPack = async function() {
-    const ok = confirm("警告：您確定要卸載伺服器模組包嗎？這將刪除 mods、config 等資料夾並重啟伺服器（地圖存檔 world 將會保留）。");
-    if (!ok) return;
+    if (!(await axisAsk({ title: '卸載伺服器模組包？', message: '會刪除 mods、config 等資料夾並重啟伺服器；世界存檔（world）會保留。', ok: '卸載', danger: true }))) return;
     
-    if (typeof showToast === 'function') showToast("正在卸載伺服器模組包，請稍候...", "info");
+    toastText("正在卸載伺服器模組包，請稍候...", "info");
     
     try {
         const res = await authFetch('/api/minecraft/uninstall-server', { method: 'POST' });
         if (res.ok) {
-            if (typeof showToast === 'function') showToast("伺服器模組包已成功卸載！", "success");
+            toastText("伺服器模組包已成功卸載！", "success");
             await loadMultiverse();
         } else {
             const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "卸載失敗", "error");
+            toastText(data.detail || "卸載失敗", "error");
         }
     } catch (e) {
-        if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
+        toastText("網路錯誤：" + e.message, "error");
     }
 };
 
 window.downloadClientPack = function() {
-    if (typeof showToast === 'function') showToast("開始下載客戶端模組包...", "success");
+    toastText("開始下載客戶端模組包...", "success");
     window.location.href = window.location.origin + '/static/minecraft-client-pack.zip';
 };
 

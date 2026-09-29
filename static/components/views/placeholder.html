@@ -1,8 +1,9 @@
-<!-- Absolute Axis - Placeholder View Module -->
+<!-- Absolute Axis - 尚未開放的功能（目前：核心助手）。ui.js switchView 會填入 #ph-title -->
 <div id="view-placeholder" class="view-section">
-    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:60vh; text-align:center;">
-        <div id="ph-icon" style="font-size:6rem; margin-bottom:2rem; filter:drop-shadow(0 0 30px var(--accent-color));">🏡</div>
-        <h1 id="ph-title" style="font-size:2.5rem; font-weight:900; margin-bottom:1rem;">系統尚未開放</h1>
-        <p style="color:var(--text-muted); font-size:1.1rem; max-width:500px;">Absolute Axis 研發團隊正在為此功能進行最後的調變與接入。這將是結合 KVM 虛擬化與個人 AI 隱私的核心樞紐。</p>
+    <div class="ph-wrap">
+        <div id="ph-icon" class="ph-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"></path></svg></div>
+        <h2 id="ph-title" class="ph-title">尚未開放</h2>
+        <p class="w-muted ph-text">這個功能還在開發中：之後會整合伺服器與家中設備，用對話的方式查狀態、下指令。</p>
+        <button type="button" class="btn btn-outline" onclick="switchView('dashboard')">回到總覽</button>
     </div>
 </div>

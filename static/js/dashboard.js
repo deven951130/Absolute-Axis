@@ -14,13 +14,18 @@ function initCharts() {
 
     const config = (label, color) => ({
         type: 'line',
-        data: { labels: Array(30).fill(''), datasets: [{ label: label, data: Array(30).fill(0), borderColor: color, tension: 0.3, fill: true, backgroundColor: color + '11', pointRadius: 0, borderWidth: 2 }] },
+        data: { labels: Array(30).fill(''), datasets: [{ label: label, data: Array(30).fill(0), borderColor: color, tension: 0.35, fill: true, backgroundColor: color + '22', pointRadius: 0, pointHoverRadius: 4, borderWidth: 2 }] },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             animation: { duration: 0 },
-            scales: { y: { min: 0, max: 100, grid: { color: cssVar('--border-color') } }, x: { display: false } },
-            plugins: { legend: { display: false } }
+            scales: {
+                y: { min: 0, max: 100, grid: { color: cssVar('--border-color') },
+                     ticks: { color: cssVar('--text-muted'), stepSize: 25, callback: (v) => v + '%' } },
+                x: { display: false }
+            },
+            plugins: { legend: { display: false },
+                       tooltip: { displayColors: false, callbacks: { label: (c) => `${c.dataset.label} ${Number(c.raw).toFixed(1)}%` } } }
         }
     });
 
@@ -75,6 +80,11 @@ async function pollMetrics() {
             if (bwUp) bwUp.innerText = d.bandwidth.up;
             if (bwDn) bwDn.innerText = d.bandwidth.down;
 
+            // 實時數據頁的目前數值（metrics.html）
+            const mtCpu = document.getElementById('mt-cpu-now');
+            const mtRam = document.getElementById('mt-ram-now');
+            if (mtCpu) mtCpu.textContent = Math.round(d.cpu_percent) + '%';
+            if (mtRam) mtRam.textContent = Math.round(d.ram_percent) + '%';
             if (cpuChart) {
                 cpuChart.data.datasets[0].data.push(d.cpu_percent);
                 if (cpuChart.data.datasets[0].data.length > 30) cpuChart.data.datasets[0].data.shift();
@@ -174,44 +184,37 @@ async function pollGithub() {
 /**
  * renderLogs - 渲染與過濾日誌
  */
+const _LOG_TAGS = [
+    ['SECURITY:', 'log-badge-security', '安全警報'],
+    ['BROADCAST:', 'log-badge-broadcast', '廣播'],
+    ['MC_COMMAND:', 'log-badge-mc', 'MC 指令'],
+    ['Admin:', 'log-badge-admin', '管理'],
+    ['Cloud storage:', 'log-badge-cloud', '私有雲'],
+    ['SYSTEM:', 'log-badge-system', '系統'],
+];
+
 function renderLogs(logs) {
     const logBox = document.getElementById('terminal-logs');
     if (!logBox) return;
 
     const filterText = (document.getElementById('log-search-input')?.value || '').toLowerCase().trim();
-    const filtered = logs.filter(x => x.toLowerCase().includes(filterText));
+    const filtered = logs.filter(x => String(x).toLowerCase().includes(filterText));
 
-    logBox.innerHTML = filtered.map(x => {
-        let content = x;
-        let badgeClass = '';
-        let typeLabel = '';
-
-        if (x.includes('SECURITY:')) {
-            badgeClass = 'log-badge-security';
-            typeLabel = '安全警報';
-        } else if (x.includes('BROADCAST:')) {
-            badgeClass = 'log-badge-broadcast';
-            typeLabel = '廣播';
-        } else if (x.includes('MC_COMMAND:')) {
-            badgeClass = 'log-badge-mc';
-            typeLabel = 'MC 指令';
-        } else if (x.includes('Admin:')) {
-            badgeClass = 'log-badge-admin';
-            typeLabel = '管理';
-        } else if (x.includes('Cloud storage:')) {
-            badgeClass = 'log-badge-cloud';
-            typeLabel = '私有雲';
-        } else if (x.includes('SYSTEM:')) {
-            badgeClass = 'log-badge-system';
-            typeLabel = '系統';
+    // 紀錄內容含使用者輸入（廣播訊息、上傳檔名…）：只用 textContent，標籤用獨立的 span
+    logBox.replaceChildren(...filtered.map(x => {
+        const line = String(x);
+        // 取最前面出現的類別字樣：動作本身的前綴，而不是使用者訊息裡的字（避免偽裝成「安全警報」）
+        let tag = null, i = -1;
+        for (const t of _LOG_TAGS) {
+            const at = line.indexOf(t[0]);
+            if (at !== -1 && (i === -1 || at < i)) { tag = t; i = at; }
         }
-
-        if (badgeClass) {
-            content = content.replace(/(SECURITY:|BROADCAST:|MC_COMMAND:|Admin:|Cloud storage:|SYSTEM:)/, `<span class="log-badge ${badgeClass}">${typeLabel}</span>`);
-        }
-
-        return `<div style="margin-bottom:6px; line-height:1.6; word-break:break-all;">${content}</div>`;
-    }).join('');
+        if (!tag) return h('div', { class: 'log-line', text: line });
+        return h('div', { class: 'log-line' },
+            line.slice(0, i),
+            h('span', { class: `log-badge ${tag[1]}`, text: tag[2] }),
+            line.slice(i + tag[0].length));
+    }));
 
     if (document.activeElement !== document.getElementById('log-search-input')) {
         logBox.scrollTop = logBox.scrollHeight;
@@ -240,12 +243,9 @@ async function pollServices() {
             const svcs = await sv.json();
             const svcList = document.getElementById('svc-list');
             if (svcList) {
-                svcList.innerHTML = svcs.map(x => `
-                    <div style="display:flex;justify-content:space-between;padding:11px 14px;background:var(--surface-2);border-radius:14px;font-size:14px;">
-                        <span>${x.name}</span>
-                        <span style="color:${x.online?'var(--success-color)':'var(--danger-color)'};font-weight:600;">● ${x.online?'正常':'離線'}</span>
-                    </div>
-                `).join('');
+                svcList.replaceChildren(...svcs.map(x => h('div', { class: 'svc-row' },
+                    h('span', { text: x.name }),
+                    h('span', { class: `svc-state ${x.online ? 'ok' : 'bad'}`, text: `● ${x.online ? '正常' : '離線'}` }))));
             }
         }
     } catch (e) {
@@ -309,8 +309,7 @@ async function loadSpecs() {
 async function broadCast() {
     const m = document.getElementById('msg-input');
     if (m && m.value) {
-        const ok = confirm("您確定要發送此系統廣播訊息嗎？");
-        if (!ok) return;
+        if (!(await axisAsk({ title: '送出廣播訊息？', message: '會寫進稽核日誌，所有登入的使用者都看得到。', ok: '送出' }))) return;
         await authFetch('/api/system/message', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: m.value }) });
         m.value = '';
     }
@@ -355,36 +354,31 @@ window.switchTerminalTab = function(tab) {
 async function loadAnnouncements() {
     const annBox = document.getElementById('terminal-announcements');
     if (!annBox) return;
-    
+    const note = (text, cls) => annBox.replaceChildren(h('div', { class: cls, text }));
+
     try {
         const res = await authFetch('/api/system/announcements');
-        if (res.ok) {
-            const anns = await res.json();
-            if (anns.length === 0) {
-                annBox.innerHTML = '<div style="color:var(--text-muted); font-style:italic; padding: 1.5rem 0;">目前沒有任何發布的公告。</div>';
-                return;
-            }
-            
-            annBox.innerHTML = anns.map(x => `
-                <div style="margin-bottom:12px; line-height:1.6; border-bottom:1px dashed var(--border-color); padding-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:800; color:var(--accent-color); margin-bottom:6px;">
-                        <span>📢 [ANNOUNCEMENT] By ${x.author}</span>
-                        <span>${x.timestamp}</span>
-                    </div>
-                    <div style="color:var(--text-main); font-size:0.85rem; padding-left:8px; word-break:break-all;">${x.content}</div>
-                </div>
-            `).join('');
-            
-            // 自動滾動到底部
-            annBox.scrollTop = annBox.scrollHeight;
-        } else {
-            annBox.innerHTML = '<div style="color:var(--danger-color);">無法加載公告列表。</div>';
+        if (!res.ok) {
+            note('無法載入公告。', 'ann-note bad');
+            return;
         }
+        const anns = await res.json();
+        if (!anns.length) {
+            note('目前沒有公告。', 'ann-note');
+            return;
+        }
+        annBox.replaceChildren(...anns.map(x => h('div', { class: 'ann-item' },
+            h('div', { class: 'ann-meta' },
+                h('span', { text: `公告・${x.author}` }),
+                h('span', { text: x.timestamp })),
+            h('div', { class: 'ann-body', text: x.content }))));
+        annBox.scrollTop = annBox.scrollHeight;
     } catch (e) {
         console.error("Failed to load announcements:", e);
-        annBox.innerHTML = '<div style="color:var(--danger-color);">加載公告發生錯誤。</div>';
+        note('載入公告時發生錯誤。', 'ann-note bad');
     }
 }
+
 window.loadAnnouncements = loadAnnouncements;
 
 window.publishAnnouncement = async function() {
@@ -393,12 +387,11 @@ window.publishAnnouncement = async function() {
     
     const content = input.value.trim();
     if (!content) {
-        if (typeof showToast === 'function') showToast("請輸入公告內容！", "error");
+        toastText("請輸入公告內容！", "error");
         return;
     }
     
-    const ok = navigator.webdriver ? true : confirm("您確定要發布此公告嗎？所有登入使用者皆可見。");
-    if (!ok) return;
+    if (!(await axisAsk({ title: '發布這則公告？', message: '所有登入的使用者都會看到。', ok: '發布' }))) return;
     
     try {
         const res = await authFetch('/api/system/announcements', {
@@ -408,14 +401,14 @@ window.publishAnnouncement = async function() {
         });
         
         if (res.ok) {
-            if (typeof showToast === 'function') showToast("公告發布成功！", "success");
+            toastText("公告發布成功！", "success");
             input.value = '';
             await loadAnnouncements();
         } else {
-            const err = await res.json();
-            if (typeof showToast === 'function') showToast(err.detail || "發布公告失敗", "error");
+            const err = await res.json().catch(() => ({}));
+            toastText(typeof err.detail === 'string' ? err.detail : "發布公告失敗", "error");
         }
     } catch (e) {
-        if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
+        toastText("網路錯誤：" + e.message, "error");
     }
 };

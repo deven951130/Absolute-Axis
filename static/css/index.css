@@ -2192,3 +2192,148 @@ label.ios-row { cursor: pointer; }
     .form-card { position: static; }
 }
 .page-lead { margin: 0; font-size: 15px; }
+
+/* ---------- NAS 管理（nas-mgnt.html／nas-mgnt.js） ---------- */
+.nas-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.nas-disk, .nas-details, .nas-pool { gap: 12px; min-height: 0 !important; }
+.nas-details { grid-row: span 2; }
+.nas-pool { grid-column: span 2; }
+.nas-disk-top, .nas-pool-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.nas-disk-name { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.nas-big { display: flex; align-items: baseline; gap: 8px; }
+.nas-big .w-big { font-size: 48px; }
+.w-bar > div { background: var(--accent-color); }
+.nas-info, .nas-note { font-size: 13px; }
+.nas-rows { display: flex; flex-direction: column; }
+.nas-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border-color); font-size: 15px; }
+.nas-row:last-child { border-bottom: 0; }
+.nas-row span:nth-child(2) { flex: 1; }
+.nas-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+@media (max-width: 900px) {
+    .nas-grid { grid-template-columns: minmax(0, 1fr); }
+    .nas-details, .nas-pool { grid-row: auto; grid-column: auto; }
+}
+
+/* ---------- 開源分享（opensource.html／opensource.js） ---------- */
+.page-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.page-actions .btn { text-decoration: none; display: inline-flex; align-items: center; }
+.repo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+.repo-grid > .post-empty { grid-column: 1 / -1; }
+.repo-card {
+    display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: var(--radius);
+    background: var(--card-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+}
+.repo-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.repo-name { flex: 1; min-width: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repo-stats { font-family: var(--font-num); font-size: 13px; color: var(--text-muted); white-space: pre; }
+.repo-desc { flex: 1; font-size: 14px; line-height: 1.6; color: var(--text-muted); overflow-wrap: anywhere; }
+.repo-clone { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-radius: 12px; background: var(--fill-2); }
+.repo-clone code { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 12px; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repo-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px solid var(--border-color); flex-wrap: wrap; }
+.repo-lang { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+.repo-lang i { width: 9px; height: 9px; border-radius: 50%; }
+.repo-actions { display: flex; gap: 8px; }
+.repo-actions a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+
+/* 底部彈出的表單（新增專案等）；以 display:flex 開啟，沿用原本的 JS */
+.sheet-overlay { position: fixed; inset: 0; z-index: 100000; align-items: center; justify-content: center; padding: 16px;
+    background: var(--backdrop); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.sheet { width: min(520px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+    padding: 22px; border-radius: 26px; border: 1px solid var(--glass-border);
+    background: color-mix(in srgb, var(--card-solid) 95%, transparent); color: var(--text-main); box-shadow: var(--shadow); }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.sheet .ios-caption { margin-top: 8px; margin-bottom: 0; }
+.sheet-import { display: flex; gap: 8px; }
+.sheet-import .t-input { flex: 1; min-width: 0; margin: 0 !important; }
+.sheet .btn-block { margin-top: 8px; }
+
+/* ---------- 實時數據（metrics.html） ---------- */
+#view-metrics .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 0; }
+.metric-w { gap: 10px; min-height: 0 !important; }
+.metric-canvas { position: relative; height: 240px; }
+@media (max-width: 900px) { #view-metrics .metrics-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- 尚未開放的功能（placeholder.html） ---------- */
+.ph-wrap { min-height: 56vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 24px 16px; }
+.ph-icon { width: 84px; height: 84px; border-radius: 24px; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #A45DE0, #5E5CE6); box-shadow: 0 18px 40px color-mix(in srgb, #A45DE0 35%, transparent); }
+.ph-icon svg { width: 40px; height: 40px; fill: none; stroke: #FFFFFF; stroke-width: 1.8; stroke-linejoin: round; }
+.ph-title { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+.ph-text { max-width: 420px; font-size: 15px; line-height: 1.6; }
+
+/* ---------- 多重宇宙（Minecraft；multiverse.html／multiverse.js） ---------- */
+.mv-banner { flex-direction: row !important; align-items: center; gap: 14px; padding: 16px 20px !important; min-height: 0 !important; margin-bottom: 20px; }
+.mv-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--off-color); }
+.mv-banner-text { flex: 1; min-width: 0; }
+.mv-banner-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+.mv-banner-sub { margin-top: 2px; font-size: 13px; }
+.mv-updated { font-size: 13px; white-space: nowrap; }
+.mv-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.mv-card { gap: 12px; min-height: 0 !important; }
+.mv-rows { display: flex; flex-direction: column; }
+.mv-info-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border-color); }
+.mv-info-row:last-child { border-bottom: 0; }
+.mv-label { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+.mv-value { font-size: 14px; font-weight: 500; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+.mv-mono { font-family: var(--font-mono); font-size: 13px; }
+.mv-addr { display: flex; flex-direction: column; gap: 6px; }
+.mv-addr-row { display: flex; align-items: center; gap: 8px; }
+.mv-addr-row code { flex: 1; min-width: 0; padding: 7px 12px; border-radius: 10px; background: var(--fill-2); font-family: var(--font-mono); font-size: 13px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.2s; }
+.mv-pulse { display: flex; align-items: center; gap: 10px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border-color); }
+.mv-ring { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--off-color); flex: none; }
+.mv-pulse-label { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+.mv-desc { grid-column: span 2; }
+.mv-desc-text { flex: 1; min-height: 120px; padding: 14px 16px; border-radius: 14px; background: var(--fill-2); font-size: 14px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mv-desc-edit { flex-direction: column; gap: 10px; flex: 1; }
+.mv-desc-edit textarea { width: 100%; min-height: 140px; margin: 0 !important; resize: vertical; font: inherit; line-height: 1.6; }
+.mv-desc-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.mv-admin { flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border-color); }
+.mv-admin .btn-block { height: 40px; }
+.mv-section { margin-top: 26px; }
+.mv-hint { font-size: 13px; }
+.mv-warn { color: var(--warning-color) !important; }
+.mv-bad { color: var(--danger-color); }
+.mv-console { padding: 0 !important; gap: 0 !important; overflow: hidden; min-height: 0 !important; }
+.mv-log { min-height: 180px; max-height: 300px; overflow-y: auto; padding: 14px 18px; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; }
+.mv-log-sys { color: var(--text-muted); }
+.mv-log-line { display: flex; gap: 8px; flex-wrap: wrap; }
+.mv-log-ts { color: var(--text-muted); }
+.mv-log-line.ok .mv-log-mark, .mv-log-line.ok .mv-log-cmd { color: var(--success-color); }
+.mv-log-line.bad .mv-log-mark, .mv-log-line.bad .mv-log-cmd, .mv-log-line.bad .mv-log-note { color: var(--danger-color); }
+.mv-log-line.pending .mv-log-mark { color: var(--accent-color); }
+.mv-log-note { color: var(--text-muted); overflow-wrap: anywhere; }
+.mv-cmd-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 18px; border-top: 1px solid var(--border-color); background: var(--surface-2); }
+.mv-prompt { font-family: var(--font-mono); color: var(--accent-color); }
+.mv-cmd-row input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--text-main); font-family: var(--font-mono); font-size: 14px; }
+.mv-quick { display: flex; flex-wrap: wrap; gap: 8px; }
+.mv-progress { align-items: stretch; text-align: center; gap: 12px; }
+.mv-prog-pct { font-size: 40px !important; }
+@media (max-width: 1100px) {
+    .mv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+    .mv-grid { grid-template-columns: minmax(0, 1fr); }
+    .mv-desc { grid-column: auto; }
+    .mv-banner { flex-wrap: wrap; }
+    .mv-updated { order: 3; width: 100%; }
+}
+
+/* ==================== 總覽：稽核日誌／公告／服務列（dashboard.js 以 textContent 產生） ==================== */
+.log-line { margin-bottom: 6px; line-height: 1.6; word-break: break-all; white-space: pre-wrap; }
+.svc-row {
+    display: flex; justify-content: space-between; gap: 10px;
+    padding: 11px 14px; background: var(--fill); border-radius: 14px; font-size: 14px;
+}
+.svc-state { font-weight: 600; white-space: nowrap; }
+.svc-state.ok { color: var(--success-color); }
+.svc-state.bad { color: var(--danger-color); }
+.ann-item { margin-bottom: 12px; padding-bottom: 10px; line-height: 1.6; border-bottom: 1px dashed var(--border-color); }
+.ann-meta {
+    display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px;
+    font-size: 0.75rem; font-weight: 700; color: var(--accent-color);
+}
+.ann-body { color: var(--text-main); font-size: 0.85rem; padding-left: 8px; word-break: break-word; white-space: pre-wrap; }
+.ann-note { color: var(--text-muted); padding: 1.5rem 0; }
+.ann-note.bad { color: var(--danger-color); }

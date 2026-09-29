@@ -23,18 +23,19 @@ async function refreshNASHardware() {
             const valEl = document.getElementById(`disk-${i}-val`);
             const tempEl = document.getElementById(`disk-${i}-temp`);
 
-            if (nameEl) nameEl.innerText = disk.name;
+            if (nameEl) nameEl.textContent = disk.name;
             if (statusEl) {
-                statusEl.innerText = `● ${disk.status}`;
-                statusEl.style.color = disk.status === 'NORMAL' ? 'var(--success-color)' : 'var(--danger-color)';
+                const ok = disk.status === 'NORMAL';
+                statusEl.textContent = ok ? '健康' : `異常（${disk.status}）`;
+                statusEl.className = ok ? 'pill ok' : 'pill bad';
             }
-            if (devEl) devEl.innerText = `[${disk.device}] ${disk.type}`;
-            if (infoEl) infoEl.innerText = `容量: ${disk.total_gb} GB / 已用: ${disk.used_gb} GB`;
+            if (devEl) devEl.textContent = `${disk.device} · ${disk.type}`;
+            if (infoEl) infoEl.textContent = `容量 ${disk.total_gb} GB · 已用 ${disk.used_gb} GB`;
             if (barEl) {
                 barEl.style.width = disk.used_pct + '%';
                 barEl.style.background = disk.used_pct > 90 ? 'var(--danger-color)' : 'var(--accent-color)';
             }
-            if (valEl) valEl.innerText = disk.used_pct.toFixed(1) + '%';
+            if (valEl) valEl.textContent = disk.used_pct.toFixed(0) + '%';
             // 溫度欄位已在 HTML 中被設定為 display:none 隱藏
             // if (tempEl) {
             //     tempEl.innerText = `溫度: ${disk.temp}°C`;
@@ -48,21 +49,23 @@ async function refreshNASHardware() {
         const rStatus = document.getElementById('raid-status');
         const rBar = document.getElementById('raid-bar');
         
-        if (rName) rName.innerText = d.raid.name;
-        if (rType) rType.innerText = d.raid.type;
+        if (rName) rName.textContent = d.raid.name;
+        if (rType) rType.textContent = d.raid.type;
         if (rStatus) {
-            rStatus.innerText = `狀態: ${d.raid.status}`;
-            rStatus.style.color = d.raid.status === 'ONLINE' ? 'var(--success-color)' : 'var(--danger-color)';
+            const online = d.raid.status === 'ONLINE';
+            rStatus.textContent = online ? '運作中' : `異常（${d.raid.status}）`;
+            rStatus.className = online ? 'pill ok' : 'pill bad';
         }
+        if (rBar) rBar.style.background = d.raid.status === 'ONLINE' ? 'var(--success-color)' : 'var(--danger-color)';
         
         // 3. Storage Allocation Details
         const dCore = document.getElementById('det-core');
         const dUser = document.getElementById('det-user');
         const dDocker = document.getElementById('det-docker');
         
-        if (dCore) dCore.innerText = d.details.core;
-        if (dUser) dUser.innerText = d.details.user;
-        if (dDocker) dDocker.innerText = d.details.docker;
+        if (dCore) dCore.textContent = d.details.core;
+        if (dUser) dUser.textContent = d.details.user;
+        if (dDocker) dDocker.textContent = d.details.docker;
 
     } catch (e) {
         console.error("NAS Hardware refresh error:", e);
