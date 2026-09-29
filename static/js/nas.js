@@ -26,7 +26,7 @@ const NASManager = {
         if (!btnGrid || !btnList) return;
 
         const isLight = document.body.classList.contains('light-mode');
-        const activeColor = isLight ? '#fff' : '#0d1117';
+        const activeColor = 'var(--on-accent)';
         
         btnGrid.style.background = (mode === 'grid' ? 'var(--accent-color)' : 'transparent');
         btnGrid.style.color = (mode === 'grid' ? activeColor : 'var(--text-main)');

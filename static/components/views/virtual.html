@@ -82,8 +82,8 @@
 
     <!-- 選擇帳號控制 VM 的 Modal -->
     <div id="vm-console-modal" class="login-overlay" style="display:none;" onclick="if(event.target === this) closeVMConsoleModal()">
-        <div style="background:#161b22; width:400px; padding:2.5rem; border-radius:18px; border:1px solid #30363d; position:relative;">
-            <span onclick="closeVMConsoleModal()" style="position:absolute; top:15px; right:20px; cursor:pointer; color:var(--text-muted); font-size:1.5rem; font-weight:bold; transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
+        <div style="background:var(--card-bg); width:400px; padding:2.5rem; border-radius:18px; border:1px solid var(--border-color); position:relative;">
+            <span onclick="closeVMConsoleModal()" style="position:absolute; top:15px; right:20px; cursor:pointer; color:var(--text-muted); font-size:1.5rem; font-weight:bold; transition:color 0.2s;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
             <h3 style="margin-top:0; margin-bottom:1.5rem; color:var(--accent-color); font-weight:900;">開啟虛擬機控制台</h3>
             
             <div style="display:flex; flex-direction:column; gap:1.2rem;">
@@ -93,9 +93,9 @@
                         <option value="">-- 請選擇帳號 --</option>
                     </select>
                 </div>
-                <div id="vm-console-credentials-display" style="display:none; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); padding:12px; border-radius:8px; font-size:0.8rem; font-family:monospace;">
+                <div id="vm-console-credentials-display" style="display:none; background:var(--surface-2); border:1px solid var(--border-color); padding:12px; border-radius:8px; font-size:0.8rem; font-family:monospace;">
                     <div>帳號：<span id="vm-console-disp-user" style="color:var(--accent-color);"></span></div>
-                    <div style="margin-top:5px;">密碼：<span id="vm-console-disp-pass" style="color:#7ee787;"></span></div>
+                    <div style="margin-top:5px;">密碼：<span id="vm-console-disp-pass" style="color:var(--success-color);"></span></div>
                 </div>
                 <button class="btn btn-primary" id="btn-confirm-vm-console" style="width:100%; height:46px; font-weight:800;" onclick="confirmOpenVMConsole()">確認並在新分頁開啟控制台</button>
             </div>

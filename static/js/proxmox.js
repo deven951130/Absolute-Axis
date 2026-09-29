@@ -28,15 +28,15 @@ async function loadProxmoxStatus() {
                         <span>CPU Load</span>
                         <span style="font-weight:800;">${node.cpu}%</span>
                     </div>
-                    <div class="progress-bar" style="height:6px; background:rgba(255,255,255,0.05);">
-                        <div class="progress-fill" style="width:${node.cpu}%; background:linear-gradient(90deg, var(--accent-color), #fff);"></div>
+                    <div class="progress-bar" style="height:6px; background:var(--surface-2);">
+                        <div class="progress-fill" style="width:${node.cpu}%; background:var(--accent-color);"></div>
                     </div>
                     <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-top:5px;">
                         <span>Memory</span>
                         <span style="font-weight:800;">${node.memory.percent}%</span>
                     </div>
-                    <div class="progress-bar" style="height:6px; background:rgba(255,255,255,0.05);">
-                        <div class="progress-fill" style="width:${node.memory.percent}%; background:linear-gradient(90deg, #3498db, #fff);"></div>
+                    <div class="progress-bar" style="height:6px; background:var(--surface-2);">
+                        <div class="progress-fill" style="width:${node.memory.percent}%; background:var(--accent-color);"></div>
                     </div>
                 </div>
             `;
@@ -67,7 +67,7 @@ async function loadProxmoxVMs() {
             const statusClr = up ? 'var(--success-color)' : 'var(--text-muted)';
             const item = document.createElement('div');
             item.className = 'file-list-item';
-            item.style = `display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-left:4px solid ${statusClr}; margin-bottom:8px;`;
+            item.style = `display:flex; align-items:center; justify-content:space-between; padding:12px 20px; margin-bottom:8px;`;
             
             const actionBtn = up ? 
                 `<button class="btn btn-outline" style="padding:4px 8px; font-size:0.7rem; color:var(--danger-color);" onclick="sendVMAction(${vm.id}, '${vm.node}', 'shutdown', '${vm.type}')">⏹️ 關機</button>` :

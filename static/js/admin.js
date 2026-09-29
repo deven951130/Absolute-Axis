@@ -21,20 +21,20 @@ function renderUsers() {
     });
 
     const statusBadges = {
-        'Approved': '<span class="status-badge" style="background:rgba(46, 204, 113, 0.15); color:#2ecc71; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; border:1px solid rgba(46, 204, 113, 0.3); text-transform:uppercase; margin-left:8px;">已核准</span>',
-        'Pending': '<span class="status-badge" style="background:rgba(241, 196, 15, 0.15); color:#f1c40f; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; border:1px solid rgba(241, 196, 15, 0.3); text-transform:uppercase; margin-left:8px;">等待中</span>',
-        'Rejected': '<span class="status-badge" style="background:rgba(231, 76, 60, 0.15); color:#e74c3c; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; border:1px solid rgba(231, 76, 60, 0.3); text-transform:uppercase; margin-left:8px;">已拒絕</span>'
+        'Approved': '<span class="status-badge" style="background:color-mix(in srgb, var(--success-color) 15%, transparent); color:var(--success-color); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; border:1px solid color-mix(in srgb, var(--success-color) 30%, transparent); text-transform:uppercase; margin-left:8px;">已核准</span>',
+        'Pending': '<span class="status-badge" style="background:color-mix(in srgb, var(--warning-color) 15%, transparent); color:var(--warning-color); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; border:1px solid color-mix(in srgb, var(--warning-color) 30%, transparent); text-transform:uppercase; margin-left:8px;">等待中</span>',
+        'Rejected': '<span class="status-badge" style="background:color-mix(in srgb, var(--danger-color) 15%, transparent); color:var(--danger-color); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; border:1px solid color-mix(in srgb, var(--danger-color) 30%, transparent); text-transform:uppercase; margin-left:8px;">已拒絕</span>'
     };
 
     table.innerHTML = filtered.map(u => {
         const uStatus = u.status || 'Approved';
-        const badgeHtml = statusBadges[uStatus] || `<span class="status-badge" style="background:rgba(255,255,255,0.15); color:#fff; padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; margin-left:8px;">${uStatus}</span>`;
+        const badgeHtml = statusBadges[uStatus] || `<span class="status-badge" style="background:var(--surface-2); color:var(--text-main); padding:4px 10px; border-radius:20px; font-size:0.75rem; font-weight:800; margin-left:8px;">${uStatus}</span>`;
 
         let actionButtons = '';
         if (uStatus === 'Pending') {
             actionButtons = `
-                <button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;border-color:#2ecc71;color:#2ecc71;margin-right:5px;" onclick="approveUser('${u.username}')">核准</button>
-                <button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;border-color:#e74c3c;color:#e74c3c;margin-right:5px;" onclick="rejectUser('${u.username}')">拒絕</button>
+                <button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;border-color:var(--success-color);color:var(--success-color);margin-right:5px;" onclick="approveUser('${u.username}')">核准</button>
+                <button class="btn btn-outline" style="padding:4px 10px;font-size:0.75rem;border-color:var(--danger-color);color:var(--danger-color);margin-right:5px;" onclick="rejectUser('${u.username}')">拒絕</button>
             `;
         }
 
@@ -73,8 +73,8 @@ function filterUsers(status, btn) {
 
     if (btn) {
         btn.classList.add('active');
-        btn.style.background = 'rgba(255,255,255,0.1)';
-        btn.style.color = '#fff';
+        btn.style.background = 'var(--card-bg)';
+        btn.style.color = 'var(--text-main)';
     }
 
     renderUsers();

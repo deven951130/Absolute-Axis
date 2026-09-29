@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark light">
     <title>Absolute Axis 絕對軸心</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- 與 DeviceHub 同一套字體：標題 Fraunces／Noto Serif TC、內文 IBM Plex Sans／Noto Sans TC、數字 IBM Plex Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@500;700&amp;display=swap" rel="stylesheet">
     <!-- Core Styles -->
     <link rel="stylesheet" href="/static/css/index.css?v=AXIS_VER">
     <!-- Third-party scripts -->
@@ -17,8 +19,8 @@
 
     <!-- 登入驗證層 (核心組件) -->
     <div id="login-overlay" class="login-overlay" onclick="if(event.target === this) hideLoginOverlay()">
-        <div style="background:#161b22;width:380px;padding:3.5rem;border-radius:18px;border:1px solid #30363d;text-align:center;position:relative;">
-            <span onclick="hideLoginOverlay()" style="position:absolute; top:15px; right:20px; cursor:pointer; color:var(--text-muted); font-size:1.5rem; font-weight:bold; transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
+        <div style="background:var(--card-bg);width:380px;padding:3.5rem;border-radius:18px;border:1px solid var(--border-color);text-align:center;position:relative;">
+            <span onclick="hideLoginOverlay()" style="position:absolute; top:15px; right:20px; cursor:pointer; color:var(--text-muted); font-size:1.5rem; font-weight:bold; transition:color 0.2s;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
             
             <!-- 登入/註冊分頁選單 -->
             <div style="display:flex; justify-content:center; gap:24px; margin-bottom:2.5rem; border-bottom:1px solid var(--border-color); padding-bottom:12px;">

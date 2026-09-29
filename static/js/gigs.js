@@ -75,18 +75,18 @@ function renderGigsList() {
     filteredGigs.forEach(g => {
         const item = document.createElement('div');
         item.className = 'file-list-item';
-        item.style = 'display:flex; flex-direction:column; padding:1.5rem; gap:12px; margin-bottom:12px; border-radius:12px; border:1px solid var(--border-color); background:rgba(22, 27, 34, 0.4);';
+        item.style = 'display:flex; flex-direction:column; padding:1.5rem; gap:12px; margin-bottom:12px; border-radius:12px; border:1px solid var(--border-color); background:var(--card-bg);';
         
         // 狀態與顏色標籤
         let statusBadge = '';
         if (g.status === 'Open') {
-            statusBadge = '<span style="background:rgba(56, 139, 253, 0.15); color:#58a6ff; border:1px solid rgba(56, 139, 253, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">開放承接</span>';
+            statusBadge = '<span style="background:color-mix(in srgb, var(--accent-color) 15%, transparent); color:var(--accent-color); border:1px solid color-mix(in srgb, var(--accent-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">開放承接</span>';
         } else if (g.status === 'Assigned') {
-            statusBadge = '<span style="background:rgba(210, 153, 34, 0.15); color:#d29922; border:1px solid rgba(210, 153, 34, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">進行中</span>';
+            statusBadge = '<span style="background:color-mix(in srgb, var(--warning-color) 15%, transparent); color:var(--warning-color); border:1px solid color-mix(in srgb, var(--warning-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">進行中</span>';
         } else if (g.status === 'Completed') {
-            statusBadge = '<span style="background:rgba(46, 160, 67, 0.15); color:#3fb950; border:1px solid rgba(46, 160, 67, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已完成</span>';
+            statusBadge = '<span style="background:color-mix(in srgb, var(--success-color) 15%, transparent); color:var(--success-color); border:1px solid color-mix(in srgb, var(--success-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已完成</span>';
         } else if (g.status === 'Rejected') {
-            statusBadge = '<span style="background:rgba(248, 81, 73, 0.15); color:#f85149; border:1px solid rgba(248, 81, 73, 0.4); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已拒絕</span>';
+            statusBadge = '<span style="background:color-mix(in srgb, var(--danger-color) 15%, transparent); color:var(--danger-color); border:1px solid color-mix(in srgb, var(--danger-color) 40%, transparent); padding:2px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">已拒絕</span>';
         }
 
         // 按鈕與操作控制
@@ -111,7 +111,7 @@ function renderGigsList() {
         } else if (g.status === 'Assigned') {
             let buttons = [];
             if (currentUser === g.creator || currentUser === g.worker || isAdmin) {
-                buttons.push(`<button class="btn btn-outline" style="color:#2ecc71; padding:6px 16px; font-size:0.75rem;" onclick="completeGig(${g.id})">標記為已完成</button>`);
+                buttons.push(`<button class="btn btn-outline" style="color:var(--success-color); padding:6px 16px; font-size:0.75rem;" onclick="completeGig(${g.id})">標記為已完成</button>`);
             }
             if (isAdmin) {
                 buttons.push(`<button class="btn btn-outline" style="color:var(--danger-color); padding:6px 12px; font-size:0.75rem; margin-left:8px;" onclick="deleteGig(${g.id})">刪除案件</button>`);
@@ -133,7 +133,7 @@ function renderGigsList() {
         // 拒絕理由區塊
         let rejectReasonHtml = '';
         if (g.status === 'Rejected') {
-            rejectReasonHtml = `<div style="font-size:0.85rem; color:#f85149; margin-top:8px; font-weight:700; border-top:1px dashed rgba(248, 81, 73, 0.2); padding-top:8px;">拒絕原因：${g.reject_reason || '未提供理由'}</div>`;
+            rejectReasonHtml = `<div style="font-size:0.85rem; color:var(--danger-color); margin-top:8px; font-weight:700; border-top:1px dashed color-mix(in srgb, var(--danger-color) 20%, transparent); padding-top:8px;">拒絕原因：${g.reject_reason || '未提供理由'}</div>`;
         }
 
         const creatorText = g.creator === 'Guest' && g.contact ? `Guest (聯絡方式: ${g.contact})` : g.creator;
