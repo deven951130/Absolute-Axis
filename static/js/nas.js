@@ -284,16 +284,28 @@ const NASManager = {
                 const text = await blob.text();
                 c.innerHTML = `<pre style="color:#fff; background:rgba(0,0,0,0.7); padding:30px; border-radius:12px; border:1px solid var(--border-color); width:100%; height:100%; overflow:auto; text-align:left; font-size:0.9rem; line-height:1.6; white-space:pre-wrap;">${this.escapeHTML(text)}</pre>`;
             } else {
-                c.innerHTML = `
-                    <div style="text-align:center;">
-                        <div style="font-size:4rem; margin-bottom:20px;">📄</div>
-                        <div style="color:var(--text-muted); margin-bottom:20px;">此檔案類型不支援線上預覽 (${e || '未知'})</div>
-                        <button class="btn btn-primary" onclick="NASManager.download('${path}', '${owner}')">⬇️ 直接下載</button>
-                    </div>
-                `;
+                // 路徑與副檔名來自檔名：用 DOM＋textContent＋事件綁定，不組 onclick 字串（檔名含引號時可注入）
+                const box = document.createElement('div');
+                box.style.textAlign = 'center';
+                const icon = document.createElement('div');
+                icon.style.cssText = 'font-size:4rem; margin-bottom:20px;';
+                icon.textContent = '📄';
+                const msg = document.createElement('div');
+                msg.style.cssText = 'color:var(--text-muted); margin-bottom:20px;';
+                msg.textContent = `此檔案類型不支援線上預覽 (${e || '未知'})`;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-primary';
+                btn.textContent = '⬇️ 直接下載';
+                btn.addEventListener('click', () => NASManager.download(path, owner));
+                box.append(icon, msg, btn);
+                c.replaceChildren(box);
             }
         } catch (err) {
-            c.innerHTML = `<div style="color:var(--danger-color); padding:3rem; text-align:center;">載入失敗：${err.message}</div>`;
+            const fail = document.createElement('div');
+            fail.style.cssText = 'color:var(--danger-color); padding:3rem; text-align:center;';
+            fail.textContent = `載入失敗：${err.message}`;
+            c.replaceChildren(fail);
         }
     },
 
@@ -437,7 +449,8 @@ const NASManager = {
             const users = await res.json();
             const sel = document.getElementById('share-user-select');
             if (sel) {
-                sel.innerHTML = users.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
+                // 使用者名稱來自伺服器：用 Option（textContent／value），不插入 HTML
+                sel.replaceChildren(...users.map((u) => new Option(u.username, u.username)));
             }
             
             const targetName = document.getElementById('share-target-name');

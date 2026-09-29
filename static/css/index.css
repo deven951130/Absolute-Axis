@@ -1972,3 +1972,97 @@ select.t-input option { background: var(--card-solid); color: var(--text-main); 
     .dh-vm-row > :nth-child(3), .dh-vm-row > :nth-child(4) { display: none; }
     .dh-vm-ops { grid-column: 1 / -1; justify-content: flex-start; }
 }
+
+/* =====================================================================
+   系統設定：iOS「設定」風格（settings.html／settings.js；PR #6 ③）
+   個人卡片＋分組清單（彩色圓角小圖示＋文字＋ ›）；子頁面「‹ 設定」返回。
+   ===================================================================== */
+#view-settings { max-width: 720px; }
+/* closeSettingPanel() 會把 #settings-main 設成 display:block，所以用 margin 分組（不用 flex gap） */
+.ios-settings > * + * { margin-top: 22px; }
+.ios-profile, .ios-list {
+    background: var(--card-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); border-radius: 22px;
+}
+.ios-profile { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; }
+.ios-profile:hover { background: color-mix(in srgb, var(--card-bg) 70%, var(--fill)); }
+.ios-avatar { width: 60px; height: 60px; flex: none; border-radius: 50%; object-fit: cover; background: var(--fill); }
+.ios-profile-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ios-profile-name { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ios-profile-sub { font-size: 14px; color: var(--text-muted); }
+.ios-list { display: flex; flex-direction: column; overflow: hidden; }
+.ios-row {
+    position: relative; width: 100%; min-height: 52px; display: flex; align-items: center; gap: 14px; padding: 8px 16px;
+    border: 0; background: transparent; color: var(--text-main); font: inherit; font-size: 16px; text-align: left; cursor: pointer;
+}
+.ios-row + .ios-row::before { content: ""; position: absolute; top: 0; right: 0; left: 58px; border-top: 1px solid var(--border-color); }
+.ios-row.static + .ios-row.static::before { left: 16px; }
+.ios-row:hover { background: var(--surface-2); }
+.ios-row:active { background: var(--fill); }
+.ios-row.static { cursor: default; }
+.ios-row.static:hover, .ios-row.static:active { background: transparent; }
+.ios-label { flex: 1; min-width: 0; }
+.ios-value { max-width: 62%; color: var(--text-muted); font-size: 15px; text-align: right; overflow-wrap: anywhere; }
+.ios-muted { color: var(--text-muted); }
+.ios-chev { width: 15px; height: 15px; flex: none; fill: none; stroke: var(--text-faint); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.ios-back {
+    display: inline-flex; align-items: center; gap: 2px; margin: 0 0 4px -6px; padding: 6px 6px 6px 0;
+    border: 0; background: none; color: var(--accent-color); font: inherit; font-size: 17px; cursor: pointer;
+}
+.ios-back svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ios-title { margin: 0 0 20px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+.ios-caption { margin: 0 16px 8px; font-size: 13px; color: var(--text-muted); }
+.ios-list + .ios-caption { margin-top: 28px; }
+.ios-footnote { margin: 8px 16px 0; font-size: 13px; line-height: 1.5; color: var(--text-muted); }
+.ios-pad { padding: 14px 16px; }
+.ios-seg { display: flex; width: 100%; }
+.ios-seg button { flex: 1; }
+/* iOS 開關（純 CSS；仍是原本的 checkbox，onchange 不變） */
+.ios-switch {
+    -webkit-appearance: none; appearance: none; position: relative; flex: none; margin: 0;
+    width: 51px; height: 31px; border-radius: 16px; background: var(--fill-2); cursor: pointer; transition: background 0.2s;
+}
+.ios-switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%;
+    background: #FFFFFF; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16); transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ios-switch:checked { background: var(--success-color); }
+.ios-switch:checked::after { transform: translateX(20px); }
+.ios-switch:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+label.ios-row { cursor: pointer; }
+.ios-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 14px 6px; }
+.ios-swatch { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 4px 0; border: 0; background: none; color: var(--text-main); font: inherit; font-size: 12px; cursor: pointer; }
+.ios-swatch i { width: 36px; height: 36px; border-radius: 50%; background: var(--sw); transition: box-shadow 0.15s; }
+.ios-swatch[aria-pressed="true"] i { box-shadow: 0 0 0 3px var(--card-solid), 0 0 0 5px var(--sw); }
+.ios-swatch[aria-pressed="true"] { font-weight: 600; }
+.ios-admin { flex-direction: column; gap: 0; margin-top: 28px; }
+.ios-form label span { width: 44px; color: var(--text-muted); }
+.ios-save { align-self: flex-start; margin-top: 14px; }
+#panel-theme .ios-seg button[aria-pressed="true"] { background: var(--seg-active); }
+
+/* =====================================================================
+   手機底部玻璃分頁列（index.html #tabbar／glass.js；PR #6 ④）
+   只在 ≤768px 顯示；「更多」＝開啟側邊欄。
+   ===================================================================== */
+.tabbar { display: none; }
+@media (max-width: 768px) {
+    .tabbar {
+        position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 1000;
+        display: flex; gap: 2px; height: 64px; padding: 6px;
+        border-radius: 28px; background: var(--sidebar-color);
+        -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow), var(--shadow);
+    }
+    .tabbar .tab {
+        flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+        border: 0; border-radius: 22px; background: transparent; color: var(--text-muted);
+        font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .tabbar .tab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+    .tabbar .tab[aria-current="page"] { color: var(--accent-color); background: var(--fill); font-weight: 600; }
+    .tabbar .tab:active { transform: scale(0.96); }
+    body.not-logged-in .tabbar, body.full-screen-view .tabbar { display: none; }
+    /* 內容與通知都讓出分頁列的高度 */
+    .main-content { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important; }
+    #toast-container { bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important; }
+}

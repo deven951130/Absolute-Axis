@@ -92,7 +92,16 @@
  
         <!-- Components (Views) will be injected here by app.js -->
     </main>
- 
+
+    <!-- 手機底部玻璃分頁列（≤768px 才顯示；glass.js 依 view-switched 高亮目前頁面） -->
+    <nav id="tabbar" class="tabbar" aria-label="主要分頁">
+        <button type="button" class="tab" data-view="dashboard" onclick="switchView('dashboard')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"></rect><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"></rect><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"></rect></svg><span>總覽</span></button>
+        <button type="button" class="tab" data-view="smart" onclick="switchView('smart')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11l8.5-7 8.5 7"></path><path d="M6 10v10h12V10"></path></svg><span>智慧宅控</span></button>
+        <button type="button" class="tab" data-view="virtual" onclick="switchView('virtual')"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="7" rx="2"></rect><rect x="3.5" y="13" width="17" height="7" rx="2"></rect><path d="M7.5 7.5h.01M7.5 16.5h.01"></path></svg><span>虛擬化</span></button>
+        <button type="button" class="tab" data-view="cloud" onclick="switchView('cloud')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6 9.5 4.25 4.25 0 0 0 7 18z"></path></svg><span>私有雲</span></button>
+        <button type="button" class="tab" data-view="more" onclick="toggleSidebar(event)" aria-label="更多功能"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.2"></circle><circle cx="12" cy="12" r="1.2"></circle><circle cx="18.5" cy="12" r="1.2"></circle></svg><span>更多</span></button>
+    </nav>
+
     <!-- Toast 通知容器 -->
     <div id="toast-container"></div>
  
@@ -112,7 +121,8 @@
     <script src="/static/js/gigs.js?v=AXIS_VER"></script>
     <script src="/static/js/opensource.js?v=AXIS_VER"></script>
     <script src="/static/js/feedback.js?v=AXIS_VER"></script>
- 
+    <script src="/static/js/settings.js?v=AXIS_VER"></script>
+
     <!-- Application Entry Point (Modular Core) -->
     <script src="/static/js/glass.js?v=AXIS_VER"></script>
     <script src="/static/js/app.js?v=AXIS_VER"></script>
