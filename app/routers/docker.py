@@ -3,7 +3,7 @@ import docker
 import socket
 from fastapi import APIRouter, Depends, HTTPException
 from app.models import DockerControlRequest, DeployVMRequest
-from app.utils import get_current_user_obj, log_event
+from app.utils import require_admin, get_current_user_obj, log_event
 
 # Hide SSL warnings if Docker connects over unverified HTTPS sometimes
 urllib3.disable_warnings()
@@ -47,7 +47,7 @@ def list_containers(user: dict = Depends(get_current_user_obj)):
         return []
 
 @router.post("/control")
-def control_docker(req: DockerControlRequest, user: dict = Depends(get_current_user_obj)):
+def control_docker(req: DockerControlRequest, user: dict = Depends(require_admin)):
     if not client: raise HTTPException(status_code=500, detail="Docker SDK not connected.")
     try:
         container = client.containers.get(req.container_id)
@@ -71,7 +71,7 @@ def get_free_port():
     return port
 
 @router.post("/deploy")
-def deploy_vm(req: DeployVMRequest, user: dict = Depends(get_current_user_obj)):
+def deploy_vm(req: DeployVMRequest, user: dict = Depends(require_admin)):
     if not client: raise HTTPException(status_code=500, detail="Docker SDK not connected.")
     
     os_map = {

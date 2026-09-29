@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from proxmoxer import ProxmoxAPI
-from app.config import PVE_HOST, PVE_USER, PVE_PASS
-from app.utils import get_current_user_obj
+from app.config import PVE_HOST, PVE_USER, PVE_PASS, PVE_TOKEN_ID, PVE_TOKEN_SECRET, PVE_CA_FILE
+from app.utils import get_current_user_obj, require_admin
 import urllib3
 
 # Disable SSL warnings for internal PVE IP
@@ -11,13 +11,27 @@ router = APIRouter(prefix="/api/proxmox", tags=["proxmox"])
 
 def get_pve_client():
     try:
-        proxmox = ProxmoxAPI(
-            PVE_HOST, 
-            user=PVE_USER, 
-            password=PVE_PASS, 
-            verify_ssl=False,
-            timeout=60
-        )
+        verify = PVE_CA_FILE or False  # 有 CA 檔就驗證憑證
+        if PVE_TOKEN_ID and PVE_TOKEN_SECRET:
+            # 最小權限的 API token（例如 axis@pve!axis）：不需要 root 密碼
+            token_user, _, token_name = PVE_TOKEN_ID.partition("!")
+            proxmox = ProxmoxAPI(
+                PVE_HOST,
+                user=token_user,
+                token_name=token_name,
+                token_value=PVE_TOKEN_SECRET,
+                verify_ssl=verify,
+                timeout=60
+            )
+        else:
+            # 舊方式：root 密碼。請改用 PVE_TOKEN_ID / PVE_TOKEN_SECRET
+            proxmox = ProxmoxAPI(
+                PVE_HOST,
+                user=PVE_USER,
+                password=PVE_PASS,
+                verify_ssl=verify,
+                timeout=60
+            )
         return proxmox
     except Exception as e:
         print(f"PVE Connection Error: {e}")
@@ -92,7 +106,7 @@ def list_pve_vms(user: dict = Depends(get_current_user_obj)):
         print(f"PVE VM List Error: {e}")
         return []
 @router.post("/vm/action")
-def vm_action(vmid: int, node: str, action: str, vm_type: str = "qemu", user: dict = Depends(get_current_user_obj)):
+def vm_action(vmid: int, node: str, action: str, vm_type: str = "qemu", user: dict = Depends(require_admin)):
     pve = get_pve_client()
     if not pve:
         raise HTTPException(status_code=500, detail="PVE Connection Error")
@@ -118,7 +132,7 @@ def vm_action(vmid: int, node: str, action: str, vm_type: str = "qemu", user: di
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/deploy")
-def deploy_vm(os_type: str, user: dict = Depends(get_current_user_obj)):
+def deploy_vm(os_type: str, user: dict = Depends(require_admin)):
     import paramiko
     import time
     
