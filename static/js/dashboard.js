@@ -241,9 +241,9 @@ async function pollServices() {
             const svcList = document.getElementById('svc-list');
             if (svcList) {
                 svcList.innerHTML = svcs.map(x => `
-                    <div style="display:flex;justify-content:space-between;padding:12px;background:var(--bg-color);border-radius:8px;margin-bottom:8px;border:1px solid var(--border-color);font-size:0.85rem;">
+                    <div style="display:flex;justify-content:space-between;padding:11px 14px;background:var(--surface-2);border-radius:14px;font-size:14px;">
                         <span>${x.name}</span>
-                        <span style="color:${x.online?'var(--success-color)':'var(--danger-color)'};font-weight:700;">● ${x.online?'Running':'Offline'}</span>
+                        <span style="color:${x.online?'var(--success-color)':'var(--danger-color)'};font-weight:600;">● ${x.online?'正常':'離線'}</span>
                     </div>
                 `).join('');
             }

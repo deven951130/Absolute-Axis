@@ -127,6 +127,8 @@ function _dhErrorText(code) {
 
 function _dhAsk(title, message, { ok = '確定', danger = false } = {}) {
     const dlg = document.getElementById('dh-dialog');
+    // 對話框放在智慧宅控頁裡；從其他頁（例如總覽）開啟時先移到 body，否則會被隱藏的頁面擋住
+    if (dlg && dlg.parentElement !== document.body) document.body.appendChild(dlg);
     if (!dlg || typeof dlg.showModal !== 'function') {
         return Promise.resolve(window.confirm(`${title}\n\n${message}`));
     }
@@ -179,6 +181,7 @@ async function _dhRun(key, label, targetName, url, body) {
     } finally {
         DH.busy.delete(key);
         loadDeviceHub(true);
+        loadDeviceHubDashboard(true);
     }
 }
 
@@ -304,6 +307,7 @@ function _dhRender() {
     _dhRenderDevices();
     _dhRenderGuests();
     _dhRenderAlerts();
+    _dhRenderDashboard();
     const link = document.getElementById('dh-open');
     if (link && /^https:\/\//.test(data.ui_url || '')) {  // 只接受 https 網址
         link.href = data.ui_url;
@@ -511,3 +515,112 @@ function _dhRenderAlerts() {
         _dhEl('span', { class: 'dh-msg', text: a.message }))));
     if (!alerts.length) list.append(_dhEl('li', { class: 'dh-calm', text: '目前沒有告警，一切安好。' }));
 }
+
+// ---------- 總覽頁的小工具（只給管理員）：快速控制、設備 ----------
+// 圖示是固定的 SVG 字串（不含任何來自 DeviceHub 的資料），名稱一律用 textContent。
+
+const _DH_SVG = {
+    desktop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M8 20h8M12 16v4"></path></svg>',
+    laptop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="10" rx="1.5"></rect><path d="M2 19h20"></path></svg>',
+    chip: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"></rect><path d="M9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"></path></svg>',
+    power: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8"></path><path d="M6.3 6.8a8 8 0 1 0 11.4 0"></path></svg>',
+    moon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>',
+    server: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="7" rx="2"></rect><rect x="3.5" y="13" width="17" height="7" rx="2"></rect></svg>',
+    home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11l8.5-7 8.5 7"></path><path d="M6 10v10h12V10"></path></svg>',
+};
+
+function _dhDeviceSvg(d) {
+    if (d.type === 'esp32') return _DH_SVG.chip;
+    const text = `${d.id} ${d.name}`.toLowerCase();
+    return /laptop|筆電|notebook/.test(text) ? _DH_SVG.laptop : _DH_SVG.desktop;
+}
+
+function _dhQuickButton(label, svg, tone, handler, busyKey) {
+    const btn = _dhEl('button', { type: 'button', class: `quick-btn ${tone}`, onclick: handler,
+        disabled: busyKey ? DH.busy.has(busyKey) : false });
+    const ico = _dhEl('span', { class: 'q-ico' });
+    ico.innerHTML = svg;
+    btn.append(ico, _dhEl('span', { text: label }));
+    return btn;
+}
+
+function _dhRenderDashboard() {
+    const list = document.getElementById('dash-dev-list');
+    const quick = document.getElementById('dash-quick-grid');
+    if (!list || !quick || !DH.data || DH.data.error) return;
+    const devs = [...(DH.data.devices || [])].sort((a, b) =>
+        (a.type === b.type ? 0 : a.type === 'host' ? -1 : 1) || a.name.localeCompare(b.name, 'zh-Hant'));
+    const server = _dhServerDevice();
+    const online = devs.filter((d) => d.status === 'online').length;
+    const title = document.getElementById('dash-dev-title');
+    if (title) title.textContent = `設備 · ${online} / ${devs.length} 在線`;
+
+    list.replaceChildren(...devs.map((d) => {
+        const on = d.status === 'online';
+        const t = d.telemetry || {};
+        let sub = on ? '在線' : `離線 · ${_dhAgo(d.last_seen)}`;
+        if (on && server && server.id === d.id) sub = '在線 · 電源控制器';
+        else if (on && typeof t.cpu === 'number') sub = `在線 · CPU ${Math.round(t.cpu)}%`;
+        const circle = _dhEl('span', { class: 'dr-circle' });
+        circle.innerHTML = _dhDeviceSvg(d);
+        return _dhEl('div', { class: 'dev-ring', 'data-on': String(on) }, circle,
+            _dhEl('span', { class: 'dr-name', text: d.name }), _dhEl('span', { class: 'dr-sub', text: sub }));
+    }));
+
+    const btns = [];
+    if (DH.controls && DH.controls.ok) {
+        for (const d of devs.filter((x) => x.type === 'host').slice(0, 2)) {
+            const acts = _dhDeviceActions(d.id).map((a) => a.action);
+            if (d.status === 'online' && acts.includes('host.sleep')) {
+                btns.push(_dhQuickButton(`${d.name} 睡眠`, _DH_SVG.moon, '', () => _dhCommand(d, 'host.sleep'), `${d.id}:host.sleep`));
+            } else if (d.status !== 'online') {
+                const w = _dhDeviceWake(d.id);
+                if (w && w.direct) btns.push(_dhQuickButton(`喚醒 ${d.name}`, _DH_SVG.power, 'on', () => _dhWake(d), `${d.id}:wake`));
+            }
+        }
+        if (server && server.status === 'online' && _dhDeviceActions(server.id).some((a) => a.action === 'pwrbtn.press')) {
+            const alive = _dhServerView().key === 'ok';
+            const label = alive ? '短按電源鍵（關機）' : '短按電源鍵（開機）';
+            btns.push(_dhQuickButton('伺服器電源', _DH_SVG.server, 'danger',
+                () => _dhCommand(server, 'pwrbtn.press', { label, warn: alive ? DH_POWER_WARN.pressOn : DH_POWER_WARN.pressOff }),
+                `${server.id}:pwrbtn.press`));
+        }
+    }
+    btns.push(_dhQuickButton('智慧宅控', _DH_SVG.home, '', () => switchView('smart'), null));
+    quick.replaceChildren(...btns.slice(0, 4));
+}
+
+async function loadDeviceHubDashboard(force = false) {
+    const quick = document.getElementById('dash-quick');
+    const devices = document.getElementById('dash-devices');
+    if (!quick || !devices) return;
+    if (!_dhIsAdmin()) { quick.hidden = true; devices.hidden = true; return; }
+    const view = document.querySelector('.view-section.active');
+    if (!view || view.id !== 'view-dashboard' || (DH.loading && !force)) return;
+    DH.loading = true;
+    try {
+        const res = await authFetch('/api/devicehub/summary');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.configured || data.error) { quick.hidden = true; devices.hidden = true; return; }
+        DH.data = data;
+        if (data.control) {
+            const c = await authFetch('/api/devicehub/controls');
+            DH.controls = c.ok ? await c.json() : { ok: false, error: `http_${c.status}` };
+        } else {
+            DH.controls = { ok: false, error: 'control_not_configured' };
+        }
+        quick.hidden = false;
+        devices.hidden = false;
+        _dhRenderDashboard();
+    } catch (e) {
+        // authFetch 已顯示網路錯誤
+    } finally {
+        DH.loading = false;
+    }
+}
+
+document.addEventListener('view-switched', (e) => {
+    if (e.detail && e.detail.view === 'dashboard') loadDeviceHubDashboard(true);
+});
+setInterval(loadDeviceHubDashboard, 10000);
