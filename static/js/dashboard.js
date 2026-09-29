@@ -14,13 +14,18 @@ function initCharts() {
 
     const config = (label, color) => ({
         type: 'line',
-        data: { labels: Array(30).fill(''), datasets: [{ label: label, data: Array(30).fill(0), borderColor: color, tension: 0.3, fill: true, backgroundColor: color + '11', pointRadius: 0, borderWidth: 2 }] },
+        data: { labels: Array(30).fill(''), datasets: [{ label: label, data: Array(30).fill(0), borderColor: color, tension: 0.35, fill: true, backgroundColor: color + '22', pointRadius: 0, pointHoverRadius: 4, borderWidth: 2 }] },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             animation: { duration: 0 },
-            scales: { y: { min: 0, max: 100, grid: { color: cssVar('--border-color') } }, x: { display: false } },
-            plugins: { legend: { display: false } }
+            scales: {
+                y: { min: 0, max: 100, grid: { color: cssVar('--border-color') },
+                     ticks: { color: cssVar('--text-muted'), stepSize: 25, callback: (v) => v + '%' } },
+                x: { display: false }
+            },
+            plugins: { legend: { display: false },
+                       tooltip: { displayColors: false, callbacks: { label: (c) => `${c.dataset.label} ${Number(c.raw).toFixed(1)}%` } } }
         }
     });
 
@@ -75,6 +80,11 @@ async function pollMetrics() {
             if (bwUp) bwUp.innerText = d.bandwidth.up;
             if (bwDn) bwDn.innerText = d.bandwidth.down;
 
+            // 實時數據頁的目前數值（metrics.html）
+            const mtCpu = document.getElementById('mt-cpu-now');
+            const mtRam = document.getElementById('mt-ram-now');
+            if (mtCpu) mtCpu.textContent = Math.round(d.cpu_percent) + '%';
+            if (mtRam) mtRam.textContent = Math.round(d.ram_percent) + '%';
             if (cpuChart) {
                 cpuChart.data.datasets[0].data.push(d.cpu_percent);
                 if (cpuChart.data.datasets[0].data.length > 30) cpuChart.data.datasets[0].data.shift();

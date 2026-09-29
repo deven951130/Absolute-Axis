@@ -107,10 +107,9 @@ function switchView(v, pushHistory = true) {
     }
 
     if (['ai'].includes(v)) {
-        const ts = { 'ai': '核心 AI 助手' };
-        const is = { 'ai': '🤖' };
-        document.getElementById('ph-title').innerText = ts[v] + " 系統尚未開放";
-        document.getElementById('ph-icon').innerText = is[v];
+        const ts = { 'ai': '核心助手' };
+        // 圖示是 placeholder.html 裡的線條 SVG（不再塞 emoji）
+        document.getElementById('ph-title').textContent = ts[v] + " 尚未開放";
         v = 'placeholder';
     }
 
@@ -167,7 +166,7 @@ function switchView(v, pushHistory = true) {
         'feedback': '意見反饋'
     };
     
-    document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').innerText.replace(' 系統尚未開放', '');
+    document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').textContent.replace(' 尚未開放', '');
 
     // 儲存當前視圖，實現持久化
     localStorage.setItem('axis_current_view', v);

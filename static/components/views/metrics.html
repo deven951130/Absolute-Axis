@@ -1,17 +1,20 @@
-<!-- Absolute Axis - Metrics View Module -->
+<!-- Absolute Axis - 實時數據（Chart.js；dashboard.js 每 5 秒推一點，保留最近 30 點＝2.5 分鐘） -->
 <div id="view-metrics" class="view-section">
-    <div class="metrics-grid">
-        <div class="metric-chart-card">
-            <div class="card-title">📊 CPU 效能曲線 (Real-time)</div>
-            <div style="flex:1; min-height:0; position:relative;">
-                <canvas id="chart-cpu"></canvas>
-            </div>
+    <div class="page-wrap wide">
+        <div class="page-head">
+            <p class="w-muted page-sub page-lead">伺服器的即時負載，每 5 秒更新一次，顯示最近 2.5 分鐘。</p>
         </div>
-        <div class="metric-chart-card">
-            <div class="card-title">🌈 RAM 波動分析 (Real-time)</div>
-            <div style="flex:1; min-height:0; position:relative;">
-                <canvas id="chart-ram"></canvas>
-            </div>
+        <div class="metrics-grid">
+            <section class="widget metric-w" aria-labelledby="mt-cpu-cap">
+                <p id="mt-cpu-cap" class="w-cap" style="color:var(--accent-color)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"></rect><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"></path></svg>CPU</p>
+                <div class="nas-big"><b id="mt-cpu-now" class="w-big">--%</b><span class="w-muted">目前使用率</span></div>
+                <div class="metric-canvas"><canvas id="chart-cpu" role="img" aria-label="CPU 使用率曲線（最近 2.5 分鐘）"></canvas></div>
+            </section>
+            <section class="widget metric-w" aria-labelledby="mt-ram-cap">
+                <p id="mt-ram-cap" class="w-cap" style="color:var(--success-color)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7" width="17" height="10" rx="2"></rect><path d="M7 11v2M10.5 11v2M14 11v2M17.5 11v2M7 17v3M17 17v3"></path></svg>記憶體</p>
+                <div class="nas-big"><b id="mt-ram-now" class="w-big">--%</b><span class="w-muted">目前使用率</span></div>
+                <div class="metric-canvas"><canvas id="chart-ram" role="img" aria-label="記憶體使用率曲線（最近 2.5 分鐘）"></canvas></div>
+            </section>
         </div>
     </div>
 </div>
