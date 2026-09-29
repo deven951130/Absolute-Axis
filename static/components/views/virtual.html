@@ -1,103 +1,75 @@
-<!-- Absolute Axis - Virtualization View Module -->
+<!-- Absolute Axis - 虛擬化中心（玻璃版面；設計：Claude Design「Absolute Axis 版面重設計」） -->
 <div id="view-virtual" class="view-section">
-    
-    <div class="card" style="margin-bottom:2rem;">
-        <h2 class="card-title">🖥️ Proxmox 宿主機狀態 (Node Status)</h2>
-        <div id="pve-node-status" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:1.5rem;">
-            <div style="color:var(--text-muted); padding:1rem;">載入中...</div>
-        </div>
-    </div>
-    
-    <div class="card" style="margin-bottom:2rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h2 class="card-title" style="margin:0;">💻 PVE 實體虛擬機 (Proxmox VMs)</h2>
-            <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="loadProxmoxVMs()">重新整理</button>
-        </div>
-        <div id="pve-vm-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 18px;">
+        <span class="w-muted" style="font-size: 15px; font-weight: 600;">Proxmox VE</span>
+        <button class="btn btn-outline" style="margin-left: auto; padding: 9px 18px; font-size: 14px;" onclick="loadProxmoxStatus(); loadProxmoxVMs()">重新整理</button>
     </div>
 
-    <!-- 虛擬機帳號管理區塊 -->
-    <div style="display:grid; grid-template-columns: 1fr 2fr; gap:2rem; margin-bottom:2rem;">
-        <!-- 新增 VM 帳號 -->
-        <div>
-            <div class="card">
-                <h3 style="margin-top:0; margin-bottom:1.2rem; color:var(--accent-color); font-size:1.1rem; font-weight:900;">新增虛擬機帳號</h3>
-                <div style="display:flex; flex-direction:column; gap:1rem;">
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.4rem;">帳號名稱</label>
-                        <input type="text" id="vm-acc-user" placeholder="請輸入帳號" class="t-input">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.4rem;">密碼</label>
-                        <input type="password" id="vm-acc-pass" placeholder="請輸入密碼" class="t-input">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.4rem;">關聯虛擬機 ID (選填)</label>
-                        <input type="number" id="vm-acc-vmid" placeholder="例如 100" class="t-input">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.4rem;">說明</label>
-                        <input type="text" id="vm-acc-desc" placeholder="帳號描述" class="t-input">
-                    </div>
-                    <button class="btn btn-primary" onclick="createVMAccount()" style="height:40px; font-weight:800;">新增用戶</button>
-                </div>
+    <!-- 節點狀態：圓環小工具（proxmox.js 填入） -->
+    <div id="pve-node-status" class="widgets" style="grid-auto-rows: auto; margin-bottom: 20px;">
+        <div class="widget" style="min-height: 140px; justify-content: center;"><span class="w-muted">載入中…</span></div>
+    </div>
+
+    <!-- 虛擬機：卡片（proxmox.js 填入） -->
+    <h2 style="font-size: 20px; margin: 8px 0 12px;">虛擬機與容器</h2>
+    <div id="pve-vm-list" class="vm-cards" style="margin-bottom: 28px;"></div>
+
+    <!-- 虛擬機使用者 -->
+    <div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; margin-bottom: 28px;" class="vm-acc-grid">
+        <section class="widget" aria-labelledby="vm-acc-h" style="min-height: 0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <h2 id="vm-acc-h" style="margin: 0; font-size: 17px;">虛擬機使用者</h2>
+                <span class="w-muted" style="font-size: 13px;">給朋友登入指定 VM 用的帳號</span>
+                <button class="btn btn-outline" style="margin-left: auto; padding: 6px 14px; font-size: 13px;" onclick="loadVMAccounts()">重新整理</button>
             </div>
-        </div>
-        <!-- 帳號列表 -->
-        <div>
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
-                    <h3 style="margin:0; color:var(--text-main); font-size:1.1rem; font-weight:900;">虛擬機用戶清單</h3>
-                    <button class="btn btn-outline" style="padding:4px 10px; font-size:0.72rem;" onclick="loadVMAccounts()">重新整理</button>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left;">
-                        <thead>
-                            <tr style="border-bottom:1px solid var(--border-color); color:var(--text-muted);">
-                                <th style="padding:10px;">帳號</th>
-                                <th style="padding:10px;">密碼</th>
-                                <th style="padding:10px;">關聯 VM</th>
-                                <th style="padding:10px;">描述</th>
-                                <th style="padding:10px; text-align:right;">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="vm-accounts-table-body">
-                            <tr>
-                                <td colspan="5" style="padding:20px; text-align:center; color:var(--text-muted);">載入中...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div style="overflow-x: auto; margin-top: 10px;">
+                <table class="admin-table" style="font-size: 14px;">
+                    <thead>
+                        <tr><th>帳號</th><th>密碼</th><th>關聯 VM</th><th>描述</th><th style="text-align: right;">操作</th></tr>
+                    </thead>
+                    <tbody id="vm-accounts-table-body">
+                        <tr><td colspan="5" style="padding: 20px; text-align: center;" class="w-muted">載入中…</td></tr>
+                    </tbody>
+                </table>
             </div>
-        </div>
+        </section>
+        <section class="widget" aria-labelledby="vm-new-h" style="min-height: 0; gap: 12px;">
+            <h2 id="vm-new-h" style="margin: 0; font-size: 17px;">新增使用者</h2>
+            <div class="ios-group">
+                <label><span>帳號</span><input type="text" id="vm-acc-user" placeholder="必填" autocomplete="off"></label>
+                <label><span>密碼</span><input type="password" id="vm-acc-pass" placeholder="必填" autocomplete="new-password"></label>
+                <label><span>VM ID</span><input type="number" id="vm-acc-vmid" placeholder="選填，例如 100"></label>
+                <label><span>描述</span><input type="text" id="vm-acc-desc" placeholder="選填"></label>
+            </div>
+            <button class="btn btn-primary" onclick="createVMAccount()" style="height: 44px;">建立</button>
+        </section>
     </div>
 
-    <div class="card" style="margin-bottom:2rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-            <h2 class="card-title" style="margin:0;">🗄️ 容器虛擬機 (Docker Instances)</h2>
-            <button class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" onclick="loadDocker()">重新整理</button>
+    <!-- Docker -->
+    <section class="widget" aria-labelledby="docker-h" style="min-height: 0; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+            <h2 id="docker-h" style="margin: 0; font-size: 17px;">Docker 容器</h2>
+            <button class="btn btn-outline" style="margin-left: auto; padding: 6px 14px; font-size: 13px;" onclick="loadDocker()">重新整理</button>
         </div>
-        <div id="docker-list" style="display:flex; flex-direction:column; gap:12px;"></div>
-    </div>
+        <div id="docker-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    </section>
 
-    <!-- 選擇帳號控制 VM 的 Modal -->
-    <div id="vm-console-modal" class="login-overlay" style="display:none;" onclick="if(event.target === this) closeVMConsoleModal()">
-        <div style="background:var(--card-bg); width:400px; padding:2.5rem; border-radius:18px; border:1px solid var(--border-color); position:relative;">
-            <span onclick="closeVMConsoleModal()" style="position:absolute; top:15px; right:20px; cursor:pointer; color:var(--text-muted); font-size:1.5rem; font-weight:bold; transition:color 0.2s;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'">&times;</span>
-            <h3 style="margin-top:0; margin-bottom:1.5rem; color:var(--accent-color); font-weight:900;">開啟虛擬機控制台</h3>
-            
-            <div style="display:flex; flex-direction:column; gap:1.2rem;">
-                <div>
-                    <label style="font-size:0.75rem; font-weight:800; color:var(--text-muted); display:block; margin-bottom:0.5rem;">選擇您要登入的虛擬機帳號</label>
-                    <select id="vm-console-user-select" class="t-input" style="appearance:none; -webkit-appearance:none; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%238b949e%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/><path d=%22M0 0h24v24H0z%22 fill=%22none%22/></svg>'); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;">
-                        <option value="">-- 請選擇帳號 --</option>
-                    </select>
+    <!-- 選擇帳號開啟 VM 控制台 -->
+    <div id="vm-console-modal" class="login-overlay" style="display: none;" onclick="if(event.target === this) closeVMConsoleModal()">
+        <div style="width: 400px; max-width: calc(100vw - 32px); padding: 28px; position: relative;">
+            <button type="button" onclick="closeVMConsoleModal()" aria-label="關閉" class="round-btn" style="position: absolute; top: 14px; right: 14px; width: 36px; height: 36px;"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+            <h3 style="margin: 0 0 18px; font-size: 20px;">開啟虛擬機控制台</h3>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <label for="vm-console-user-select" class="w-muted" style="font-size: 13px;">選擇要登入的虛擬機帳號</label>
+                <select id="vm-console-user-select" class="t-input" style="margin-bottom: 0;">
+                    <option value="">請選擇帳號</option>
+                </select>
+                <div id="vm-console-credentials-display" style="display: none; background: var(--surface-2); padding: 12px 14px; border-radius: 14px; font-size: 13px; font-family: var(--font-mono);">
+                    <div>帳號：<span id="vm-console-disp-user" style="color: var(--accent-color);"></span></div>
+                    <div style="margin-top: 5px;">密碼：<span id="vm-console-disp-pass" style="color: var(--success-color);"></span></div>
                 </div>
-                <div id="vm-console-credentials-display" style="display:none; background:var(--surface-2); border:1px solid var(--border-color); padding:12px; border-radius:8px; font-size:0.8rem; font-family:monospace;">
-                    <div>帳號：<span id="vm-console-disp-user" style="color:var(--accent-color);"></span></div>
-                    <div style="margin-top:5px;">密碼：<span id="vm-console-disp-pass" style="color:var(--success-color);"></span></div>
-                </div>
-                <button class="btn btn-primary" id="btn-confirm-vm-console" style="width:100%; height:46px; font-weight:800;" onclick="confirmOpenVMConsole()">確認並在新分頁開啟控制台</button>
+                <button class="btn btn-primary" id="btn-confirm-vm-console" style="width: 100%; height: 46px;" onclick="confirmOpenVMConsole()">在新分頁開啟控制台</button>
             </div>
         </div>
     </div>
