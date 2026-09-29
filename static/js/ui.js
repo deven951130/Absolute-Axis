@@ -445,7 +445,7 @@ window.saveOSConfig = async function() {
             }
         } else {
             const data = await res.json();
-            if (typeof showToast === 'function') showToast(data.detail || "儲存設定失敗", "error");
+            toastText(typeof data.detail === 'string' ? data.detail : "儲存設定失敗", "error");
         }
     } catch (e) {
         if (typeof showToast === 'function') showToast("網路錯誤：" + e.message, "error");
