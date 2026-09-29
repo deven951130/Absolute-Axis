@@ -12,15 +12,64 @@
         <button class="btn btn-outline smart-tab-btn" data-tab="devices" onclick="switchSmartTab('devices')" style="flex:1; border:none; font-weight:800;">
             📱 綁定裝置
         </button>
-        <button class="btn btn-outline smart-tab-btn" data-tab="devicehub" onclick="switchSmartTab('devicehub')" style="flex:1; border:none; font-weight:800; display:none;">
-            🛰️ DeviceHub
-        </button>
     </div>
 
     <!-- ============================================== -->
-    <!-- TAB 1: 首頁 / 模式 (保留原本的 Blynk 控制) -->
+    <!-- TAB 1: 首頁：管理員看 DeviceHub（電源、設備、虛擬機）；其他人看原本的 Blynk 環境數據 -->
     <!-- ============================================== -->
     <div id="smart-tab-home" class="smart-tab-content active" style="animation: fadeIn 0.3s ease;">
+        <!-- DeviceHub（只給管理員；DeviceHub repo: docs/spec/integration-api.md）：伺服器電源、設備、虛擬機、告警 -->
+        <div id="dh-home" class="dh" hidden>
+            <section class="dh-headline">
+                <h2 id="dh-headline">讀取中…</h2>
+                <p id="dh-subline" class="dh-muted"></p>
+            </section>
+
+            <div class="dh-layout">
+                <section class="dh-panel dh-server" aria-labelledby="dh-server-state">
+                    <div class="dh-server-head">
+                        <div class="dh-server-title">
+                            <p class="dh-eyebrow">PROXMOX 主機</p>
+                            <h3 class="dh-server-status"><span id="dh-server-dot" class="dh-dot big" data-s="unknown"></span><span id="dh-server-state">—</span></h3>
+                            <p id="dh-server-note" class="dh-muted"></p>
+                        </div>
+                        <div id="dh-server-actions" class="dh-actions"></div>
+                    </div>
+                    <div id="dh-server-stats" class="dh-stats"></div>
+                </section>
+                <aside class="dh-side" aria-label="摘要">
+                    <div class="dh-tile"><span>設備在線</span><b id="dh-sum-dev">—</b></div>
+                    <div class="dh-tile"><span>虛擬機執行中</span><b id="dh-sum-vm">—</b></div>
+                    <div class="dh-tile"><span>24 小時告警</span><b id="dh-sum-alert">—</b></div>
+                    <a id="dh-open" class="dh-link" target="_blank" rel="noopener noreferrer" hidden>開啟 DeviceHub 完整控制台（需 Tailscale）↗</a>
+                </aside>
+            </div>
+
+            <section class="dh-section" aria-labelledby="dh-devices-h">
+                <h3 id="dh-devices-h">設備</h3>
+                <div id="dh-devices" class="dh-cards"></div>
+            </section>
+
+            <section class="dh-section" id="dh-pve-sec" aria-labelledby="dh-pve-h" hidden>
+                <h3 id="dh-pve-h">虛擬機與容器 <span id="dh-pve-error" class="dh-note"></span></h3>
+                <div class="dh-panel dh-vm-table" role="table" aria-labelledby="dh-pve-h">
+                    <div class="dh-vm-row dh-vm-headrow" role="row">
+                        <span role="columnheader">名稱</span><span role="columnheader">狀態</span>
+                        <span role="columnheader">CPU</span><span role="columnheader">記憶體</span>
+                        <span role="columnheader" class="dh-vm-ops">操作</span>
+                    </div>
+                    <div id="dh-guests" role="rowgroup"></div>
+                </div>
+            </section>
+
+            <section class="dh-section" aria-labelledby="dh-alerts-h">
+                <h3 id="dh-alerts-h">告警與控制通知</h3>
+                <ul id="dh-alerts" class="dh-panel dh-alert-list"></ul>
+            </section>
+        </div>
+
+        <!-- 一般會員、或尚未設定 DeviceHub 時：原本的 Blynk 環境數據 -->
+        <div id="smart-legacy">
         <!-- 頂部中樞狀態與連線橫幅 -->
         <div id="smart-status-banner" style="
             display: flex; align-items: center; gap: 16px;
@@ -142,63 +191,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- 下方區塊：智慧設備控制面板 (實體繼電器與模擬) -->
-        <div class="card" style="border-left:4px solid #2ecc71;">
-            <div class="card-title" style="font-size:1.05rem; margin-bottom:1.5rem;">
-                <span>💻 實體與模擬設備控制中心</span>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.5rem;">
-                
-                <!-- 實體電腦開機控制 (對應 Relay 實體硬體) -->
-                <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.2rem; display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <span style="font-size:0.82rem; font-weight:800;">實體電腦電源控制</span>
-                            <span class="status-badge" style="background:rgba(46,204,113,0.15); color:#2ecc71; border:1px solid rgba(46,204,113,0.3); font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800;">ONLINE</span>
-                        </div>
-                        <div style="font-size:0.65rem; color:var(--text-muted); line-height:1.4;">
-                            透過 ESP32 繼電器點接主機板 PWR 接腳，實現實體電腦開機。
-                        </div>
-                    </div>
-                    <div style="margin-top:1.2rem;">
-                        <button class="btn btn-primary" id="btn-pc-power" style="width:100%; height:45px; font-weight:800; font-size:0.82rem;" onclick="triggerPCPower()">
-                            ⚡ 點擊發送開機脈衝
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 智慧照明控制系統 (模擬) -->
-                <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.2rem; display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <span style="font-size:0.82rem; font-weight:800;">照明控制系統</span>
-                            <span id="smart-light-status" class="status-badge" style="background:#444; color:#fff; font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800;">ALL OFF</span>
-                        </div>
-                        <div style="font-size:0.65rem; color:var(--text-muted); line-height:1.4;">主機環境附屬模擬照明設備，可進行開關狀態微切換。</div>
-                    </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:1.2rem;">
-                        <button class="btn btn-outline" id="btn-smart-light-1" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="toggleSmartLight(1)">💡 客廳主燈</button>
-                        <button class="btn btn-outline" id="btn-smart-light-2" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="toggleSmartLight(2)">🛋️ 氛圍燈</button>
-                    </div>
-                </div>
-
-                <!-- 自動排風排濕控制 (模擬) -->
-                <div style="background:rgba(255,255,255,0.02); border:1px solid #30363d; border-radius:10px; padding:1.2rem; display:flex; flex-direction:column; justify-content:space-between; min-height:180px;">
-                    <div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <span style="font-size:0.82rem; font-weight:800;">中樞自動排風系統</span>
-                            <span id="smart-fan-status" class="status-badge" style="background:rgba(242,170,31,0.15); color:#f2aa1f; border:1px solid rgba(242,170,31,0.3); font-size:0.65rem; padding:2px 8px; border-radius:10px; font-weight:800;">AUTO MODE</span>
-                        </div>
-                        <div style="font-size:0.65rem; color:var(--text-muted); line-height:1.4;">當濕度超過 60% 時，中樞排風系統將自動啟動以保護硬體。</div>
-                    </div>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:1.2rem;">
-                        <button class="btn btn-outline" id="btn-smart-fan-low" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="setSmartFan('LOW')">🌀 低速排風</button>
-                        <button class="btn btn-outline" id="btn-smart-fan-high" style="height:40px; font-size:0.75rem; font-weight:800;" onclick="setSmartFan('HIGH')">🌪️ 強力排風</button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -308,30 +300,13 @@
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- TAB 4: DeviceHub（唯讀模組；控制請到 DeviceHub） -->
-    <!-- ============================================== -->
-    <div id="smart-tab-devicehub" class="smart-tab-content" style="display:none; animation: fadeIn 0.3s ease;">
-        <div class="card" style="display:flex; align-items:center; gap:16px; margin-bottom:1.5rem; border-left:4px solid var(--accent-color);">
-            <div>
-                <div style="font-size:1rem; font-weight:900;">🛰️ DeviceHub 設備與電源管理</div>
-                <div id="dh-status" style="font-size:0.75rem; color:var(--text-muted); margin-top:3px; font-weight:700;">載入中…</div>
-            </div>
-            <a id="dh-open" class="btn btn-primary" target="_blank" rel="noopener noreferrer"
-               style="margin-left:auto; display:none; text-decoration:none;">開啟 DeviceHub 控制台 ↗</a>
+    <!-- DeviceHub 確認視窗：不用原生 confirm()，有些內嵌瀏覽器會擋掉它，危險操作就被默默取消 -->
+    <dialog id="dh-dialog" class="dh dh-dialog" aria-labelledby="dh-dialog-title">
+        <p id="dh-dialog-title" class="dh-dialog-title"></p>
+        <p id="dh-dialog-msg" class="dh-dialog-msg"></p>
+        <div class="dh-dialog-actions">
+            <button id="dh-dialog-cancel" type="button" class="dh-btn">取消</button>
+            <button id="dh-dialog-ok" type="button" class="dh-btn primary">確定</button>
         </div>
-        <div style="font-size:0.72rem; color:var(--text-muted); margin:-0.8rem 0 1.2rem; font-weight:700;">
-            這裡只顯示狀態。開關機等控制請按上方按鈕到 DeviceHub（需在已登入 Tailscale 的裝置上開啟）。
-        </div>
-
-        <h3 style="font-size:1.1rem; margin-bottom:1rem; color:var(--text-main);">設備</h3>
-        <div id="dh-devices" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:1.2rem; margin-bottom:2rem;"></div>
-
-        <h3 style="font-size:1.1rem; margin-bottom:1rem; color:var(--text-main);">虛擬機與容器</h3>
-        <div id="dh-guests" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:1.2rem; margin-bottom:2rem;"></div>
-
-        <h3 style="font-size:1.1rem; margin-bottom:1rem; color:var(--text-main);">最近告警</h3>
-        <div id="dh-alerts" class="card" style="display:flex; flex-direction:column; gap:8px;"></div>
-    </div>
-
+    </dialog>
 </div>
