@@ -283,7 +283,7 @@ function _bindShowResult(data) {
 
 // 每種裝置的設定內容與步驟（DeviceHub repo：firmware/README.md、agent/README.md）
 function _bindGuide(kind, id, pw, mqtt) {
-    const lan = mqtt.lan || '192.168.0.50';
+    const lan = mqtt.lan || '<DeviceHub 主機 IP>';
     const port = mqtt.port || 1883;
     if (kind === 'esp32') {
         return {

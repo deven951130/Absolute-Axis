@@ -54,7 +54,7 @@ init_db_user()
 
 
 # CORS - 讀取環境變數 ALLOWED_ORIGINS，預設值為 * 向下相容
-# 生產環境請在 .env 中設定 ALLOWED_ORIGINS=https://absoluteaxis.dpdns.org
+# 需要跨來源時在 .env 設定 ALLOWED_ORIGINS=https://你的網域（多個用逗號分隔）
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,

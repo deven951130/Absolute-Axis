@@ -70,6 +70,15 @@
 
         <!-- 一般會員、或尚未設定 DeviceHub 時：原本的 Blynk 環境數據 -->
         <div id="smart-legacy">
+        <!-- 沒有任何裝置來源（沒設定 DeviceHub，也沒設定 Blynk）時：設定說明（smart.js 切換） -->
+        <section id="smart-setup" class="widget" style="min-height: 0; gap: 10px;" hidden>
+            <div style="font-size: 17px; font-weight: 600;">尚未連接任何裝置</div>
+            <div class="w-muted" style="font-size: 14px; line-height: 1.7;">
+                智慧宅控要先連接裝置來源才會有資料，擇一在 <code>.env</code> 設定後重新啟動主控台：<br>
+                ・<b>DeviceHub</b>：遠端開關機、喚醒、溫濕度與告警——設定 <code>DEVICEHUB_URL</code> 與 token（只有管理員看得到）。<br>
+                ・<b>Blynk 溫濕度感測器</b>：設定 <code>BLYNK_TOKEN</code>。
+            </div>
+        </section>
         <!-- 頂部中樞狀態與連線橫幅 -->
         <div id="smart-status-banner" style="
             display: flex; align-items: center; gap: 16px;

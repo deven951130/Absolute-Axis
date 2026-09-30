@@ -37,6 +37,14 @@ async function loadProxmoxStatus() {
         const res = await authFetch('/api/proxmox/status');
         if (!res.ok) return;
         const nodes = await res.json();
+        if (!Array.isArray(nodes)) {
+            // 沒設定 Proxmox（.env 的 PVE_HOST）：顯示說明，Docker 容器照常可用
+            el.replaceChildren(_pveEl('section', { class: 'widget', style: 'min-height: 0; gap: 6px; grid-column: 1 / -1;' },
+                _pveEl('div', { style: 'font-size: 15px; font-weight: 600;', text: '尚未連接 Proxmox' }),
+                _pveEl('div', { class: 'w-muted', style: 'font-size: 14px;',
+                    text: '在 .env 設定 PVE_HOST 與 API token（PVE_TOKEN_ID／PVE_TOKEN_SECRET）後重新啟動，虛擬機就會出現在這裡。下方的 Docker 容器不受影響。' })));
+            return;
+        }
         const cards = [];
         nodes.forEach((node) => {
             const up = node.status === 'online';

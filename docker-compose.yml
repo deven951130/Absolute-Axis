@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   axis-server:
     build: .
@@ -7,27 +5,35 @@ services:
     restart: always
     network_mode: host
     environment:
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - TZ=Asia/Taipei
       # 綁定至 Tailscale IP (從 .env 讀取，預設為全監聽)
       - HOST_IP=${HOST_IP:-0.0.0.0}
-      - PVE_HOST=${PVE_HOST:-192.168.0.138}
+      # Proxmox（選用）：沒設定 PVE_HOST＝不使用 Proxmox
+      - PVE_HOST=${PVE_HOST:-}
+      - PVE_CONSOLE_HOST=${PVE_CONSOLE_HOST:-}
+      - PVE_VM_STORAGE=${PVE_VM_STORAGE:-}
       - PVE_USER=${PVE_USER:-root@pam}
-      - PVE_PASS=${PVE_PASS}
+      - PVE_PASS=${PVE_PASS:-}
       # 建議改用最小權限的 API token（設定後優先使用，不再需要 root 密碼呼叫 API）
       - PVE_TOKEN_ID=${PVE_TOKEN_ID:-}
       - PVE_TOKEN_SECRET=${PVE_TOKEN_SECRET:-}
       - PVE_CA_FILE=${PVE_CA_FILE:-}
       - MC_SSH_USER=${MC_SSH_USER:-root}
       - MC_SSH_PASS=${MC_SSH_PASS:-}
-      - BLYNK_TOKEN=${BLYNK_TOKEN}
+      # Minecraft 模組（選用）：沒設定 MC_HOST＝不使用
+      - MC_HOST=${MC_HOST:-}
+      - MC_PORT=${MC_PORT:-}
+      - MC_PUBLIC_HOST=${MC_PUBLIC_HOST:-}
+      - BLYNK_TOKEN=${BLYNK_TOKEN:-}
       # DeviceHub 模組（DeviceHub repo: docs/spec/integration-api.md）
-      - DEVICEHUB_URL=${DEVICEHUB_URL:-http://192.168.0.50:8080}
+      - DEVICEHUB_URL=${DEVICEHUB_URL:-}
       - DEVICEHUB_TOKEN=${DEVICEHUB_TOKEN:-}
       - DEVICEHUB_CONTROL_TOKEN=${DEVICEHUB_CONTROL_TOKEN:-}
       # 必填、不得有預設值：預設值寫在 repo 裡等於公開，任何人都能偽造管理員登入
       - AXIS_JWT_SECRET=${AXIS_JWT_SECRET:?請在 .env 設定 AXIS_JWT_SECRET，產生方式見 .env.example}
-      # 只在第一次建立 sparkle 帳號時使用；沒有預設值
+      # 資料庫裡還沒有任何管理員時，用這組帳密建立第一個管理員（帳號預設 admin）；密碼沒有預設值
+      - AXIS_ADMIN_USER=${AXIS_ADMIN_USER:-}
       - AXIS_ADMIN_PASS=${AXIS_ADMIN_PASS:-}
       - AXIS_BASE_PATH=/app
       - AXIS_SYS_ROOT=/
@@ -46,17 +52,21 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # 選用：Cloudflare Tunnel（從外面連線）。在 .env 設 CLOUDFLARE_TUNNEL_TOKEN 與 COMPOSE_PROFILES=tunnel 才會啟動
   cloudflared:
     image: cloudflare/cloudflared:latest
+    profiles: ["tunnel"]
     container_name: axis-cloudflared
     restart: always
     network_mode: host
     environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
     command: tunnel --no-autoupdate run
 
+  # 選用：Minecraft 伺服器。在 .env 設 COMPOSE_PROFILES=minecraft 才會啟動（可與 tunnel 並列：tunnel,minecraft）
   minecraft-server:
     image: itzg/minecraft-server
+    profiles: ["minecraft"]
     container_name: axis-mc
     restart: unless-stopped
     ports:

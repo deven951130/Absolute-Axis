@@ -23,9 +23,10 @@ from app.utils import require_admin
 
 router = APIRouter(tags=["devicehub"])
 
-DEVICEHUB_URL = os.getenv("DEVICEHUB_URL", "http://192.168.0.50:8080").rstrip("/")
-DEVICEHUB_TOKEN = os.getenv("DEVICEHUB_TOKEN", "")
-DEVICEHUB_CONTROL_TOKEN = os.getenv("DEVICEHUB_CONTROL_TOKEN", "")
+DEVICEHUB_URL = os.getenv("DEVICEHUB_URL", "").strip().rstrip("/")
+# 沒設定 DEVICEHUB_URL＝不使用 DeviceHub 模組（token 一併忽略，智慧宅控顯示「未設定」）
+DEVICEHUB_TOKEN = os.getenv("DEVICEHUB_TOKEN", "") if DEVICEHUB_URL else ""
+DEVICEHUB_CONTROL_TOKEN = os.getenv("DEVICEHUB_CONTROL_TOKEN", "") if DEVICEHUB_URL else ""
 _CACHE_SECONDS = 5  # 多個分頁同時開著也只打 DeviceHub 一次
 _cache = {"ts": 0.0, "data": None}
 

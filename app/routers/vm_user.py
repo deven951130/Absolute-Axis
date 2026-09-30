@@ -5,6 +5,7 @@ from typing import List
 from app.database import get_db, VMAccount
 from app.models import VMAccountCreate
 from app.utils import get_current_user_obj, log_event, require_admin
+from app.config import PVE_CONSOLE_HOST
 
 router = APIRouter(prefix="/api/proxmox", tags=["proxmox_users"])
 
@@ -57,8 +58,10 @@ def delete_vm_user(id: int, user: dict = Depends(require_admin), db: Session = D
 
 @router.get("/console_url")
 def get_console_url(vmid: int, node: str, vm_type: str = "qemu", user: dict = Depends(get_current_user_obj)):
-    # 這裡的 PVE 宿主機 IP 為 100.124.203.61 (Tailscale IP)，確保全域皆可連線
-    pve_ip = "100.124.203.61"
+    # PVE_CONSOLE_HOST：瀏覽器能連到的 Proxmox 位址（例如 Tailscale IP）；沒設定就用 PVE_HOST
+    pve_ip = PVE_CONSOLE_HOST
+    if not pve_ip:
+        raise HTTPException(status_code=503, detail="尚未設定 Proxmox：請在 .env 設定 PVE_HOST（或 PVE_CONSOLE_HOST）")
     console_type = "kvm" if vm_type == "qemu" else "lxc"
     url = f"https://{pve_ip}:8006/?console={console_type}&novnc=1&vmid={vmid}&vmtype={vm_type}&node={node}"
     return {"url": url}

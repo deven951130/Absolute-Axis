@@ -33,9 +33,10 @@ def _load_config() -> dict:
                 return json.load(f)
         except Exception:
             pass
+    # 預設沒有作者：管理員在「系統設定 › 開源專案分享」填 GitHub 帳號後才同步
     return {
-        "developer_name": "deven951130",
-        "github_url": "https://github.com/deven951130",
+        "developer_name": "",
+        "github_url": "",
         "github_token": ""
     }
 
@@ -62,7 +63,9 @@ def _load_repos() -> list:
             pass
     
     config = _load_config()
-    dev_name = config.get("developer_name", "deven951130")
+    dev_name = (config.get("developer_name") or "").strip()
+    if not dev_name:
+        return []
     
     token = _get_effective_token()
     headers = {}
@@ -226,8 +229,8 @@ def get_github_config(user: dict = Depends(get_current_user_obj_optional)):
     """取得開源專案作者配置資訊"""
     config = _load_config()
     res = {
-        "developer_name": config.get("developer_name", "deven951130"),
-        "github_url": config.get("github_url", "https://github.com/deven951130")
+        "developer_name": config.get("developer_name", ""),
+        "github_url": config.get("github_url", "")
     }
     if user and user.get("role") in ("admin", "Administrator"):
         res["has_token"] = bool(config.get("github_token", "").strip())

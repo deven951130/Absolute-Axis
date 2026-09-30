@@ -40,7 +40,12 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 Days
 
 # PVE Config - 從環境變數讀取，無明碼預設值
-PVE_HOST = os.getenv("PVE_HOST", "192.168.0.138")
+# 沒設定 PVE_HOST＝不使用 Proxmox（虛擬化中心只顯示 Docker）
+PVE_HOST = os.getenv("PVE_HOST", "").strip()
+# 開 noVNC 主控台時瀏覽器要連的位址（例如 Tailscale IP）；沒設定就用 PVE_HOST
+PVE_CONSOLE_HOST = os.getenv("PVE_CONSOLE_HOST", "").strip() or PVE_HOST
+# 「部署 VM」建立磁碟用的 Proxmox 儲存空間名稱
+PVE_VM_STORAGE = os.getenv("PVE_VM_STORAGE", "").strip() or "local-lvm"
 PVE_USER = os.getenv("PVE_USER", "root@pam")
 PVE_PASS = os.getenv("PVE_PASS")
 # 建議：最小權限的 API token（例如 axis@pve!axis），設定後 API 呼叫優先使用它，不再用 root 密碼

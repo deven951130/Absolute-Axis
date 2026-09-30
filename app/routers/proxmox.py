@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from proxmoxer import ProxmoxAPI
-from app.config import PVE_HOST, PVE_USER, PVE_PASS, PVE_TOKEN_ID, PVE_TOKEN_SECRET, PVE_CA_FILE
+from app.config import PVE_HOST, PVE_USER, PVE_PASS, PVE_TOKEN_ID, PVE_TOKEN_SECRET, PVE_CA_FILE, PVE_VM_STORAGE
 from app.utils import get_current_user_obj, require_admin
 import urllib3
 
@@ -9,7 +9,17 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 router = APIRouter(prefix="/api/proxmox", tags=["proxmox"])
 
+NOT_CONFIGURED = "尚未設定 Proxmox：請在 .env 設定 PVE_HOST 與 API token（PVE_TOKEN_ID／PVE_TOKEN_SECRET）"
+
+
+def _require_configured():
+    if not PVE_HOST:
+        raise HTTPException(status_code=503, detail=NOT_CONFIGURED)
+
+
 def get_pve_client():
+    if not PVE_HOST:
+        return None
     try:
         verify = PVE_CA_FILE or False  # 有 CA 檔就驗證憑證
         if PVE_TOKEN_ID and PVE_TOKEN_SECRET:
@@ -39,6 +49,9 @@ def get_pve_client():
 
 @router.get("/status")
 def get_pve_status(user: dict = Depends(get_current_user_obj)):
+    if not PVE_HOST:
+        # 頁面載入時會呼叫：回 200 讓前端顯示「未設定」卡片，而不是跳錯誤通知
+        return {"configured": False, "detail": NOT_CONFIGURED}
     pve = get_pve_client()
     if not pve:
         raise HTTPException(status_code=500, detail="Could not connect to Proxmox host.")
@@ -107,6 +120,7 @@ def list_pve_vms(user: dict = Depends(get_current_user_obj)):
         return []
 @router.post("/vm/action")
 def vm_action(vmid: int, node: str, action: str, vm_type: str = "qemu", user: dict = Depends(require_admin)):
+    _require_configured()
     pve = get_pve_client()
     if not pve:
         raise HTTPException(status_code=500, detail="PVE Connection Error")
@@ -147,12 +161,15 @@ def deploy_vm(os_type: str, user: dict = Depends(require_admin)):
     config = specs.get(os_type.lower())
     if not config:
         raise HTTPException(status_code=400, detail="Unsupported OS type")
+    _require_configured()
+    if not PVE_PASS:
+        raise HTTPException(status_code=503, detail="「部署 VM」需要 Proxmox root 密碼：請在 .env 設定 PVE_PASS")
         
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
-        # Use local IP for speed
-        client.connect("192.168.0.138", username="root", password=PVE_PASS, timeout=15)
+        # PVE_HOST 建議填區網 IP（比較快）
+        client.connect(PVE_HOST, username="root", password=PVE_PASS, timeout=15)
         
         # 1. Get next VMID
         stdin, stdout, stderr = client.exec_command("pvesh get /cluster/nextid")
@@ -164,7 +181,7 @@ def deploy_vm(os_type: str, user: dict = Depends(require_admin)):
         time.sleep(1)
         
         # 3. qm set (Disk & ISO)
-        disk_cmd = f"qm set {vmid} --scsi0 Fast-Storage:{config['disk']}"
+        disk_cmd = f"qm set {vmid} --scsi0 {PVE_VM_STORAGE}:{config['disk']}"
         client.exec_command(disk_cmd)
         
         iso_cmd = f"qm set {vmid} --ide2 local:iso/{config['iso']},media=cdrom"

@@ -59,6 +59,7 @@ def dh(monkeypatch):
         calls.append({"method": "GET", "url": url, "headers": headers})
         return state["resp"]
 
+    monkeypatch.setattr(devicehub, "DEVICEHUB_URL", "http://192.168.0.50:8080")
     monkeypatch.setattr(devicehub, "DEVICEHUB_TOKEN", "read-tok")
     monkeypatch.setattr(devicehub, "DEVICEHUB_CONTROL_TOKEN", "control-tok")
     monkeypatch.setattr(devicehub.requests, "request", fake_request)

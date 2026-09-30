@@ -15,6 +15,7 @@ from app.models import MessageRequest
 from app.utils import get_current_user_obj, log_event, get_dir_size, require_admin
 from app.config import SYS_ROOT, NAS_ROOT, BLYNK_TOKEN, BASE_PATH
 from app.database import get_db, AuditLog
+from app.routers.minecraft import MC_LXC_IP, MC_LXC_PORT
 
 router = APIRouter(tags=["system"])
 
@@ -197,7 +198,7 @@ def get_sensors(user: dict = Depends(get_current_user_obj)):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(0.2)
-            if s.connect_ex(("192.168.0.130", 25565)) == 0:
+            if MC_LXC_IP and s.connect_ex((MC_LXC_IP, MC_LXC_PORT)) == 0:
                 mc_online = True
     except:
         pass
@@ -206,11 +207,12 @@ def get_sensors(user: dict = Depends(get_current_user_obj)):
     display_ip = public_ip if is_admin else mask_ip(public_ip)
 
     return {
-        "sensors": {"temp": room_temp, "humid": room_humid},
+        # source：溫濕度的來源；None＝沒有感測器（上面的數字是用 CPU 溫度估的，前端不當成房間溫度顯示）
+        "sensors": {"temp": room_temp, "humid": room_humid, "source": "blynk" if BLYNK_TOKEN else None},
         "minecraft": {
             "online": mc_online,
             "ip": display_ip,
-            "port": 25565,
+            "port": MC_LXC_PORT,
             "specs": mc_specs
         }
     }
