@@ -2337,3 +2337,15 @@ label.ios-row { cursor: pointer; }
 .ann-body { color: var(--text-main); font-size: 0.85rem; padding-left: 8px; word-break: break-word; white-space: pre-wrap; }
 .ann-note { color: var(--text-muted); padding: 1.5rem 0; }
 .ann-note.bad { color: var(--danger-color); }
+
+/* ---------- 虛擬化中心：Docker 容器清單（docker.js） ---------- */
+.docker-row { display: flex; align-items: center; gap: 14px; padding: 12px 4px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
+.docker-row:last-child { border-bottom: 0; }
+.docker-ico { width: 40px; height: 40px; flex: none; border-radius: 11px; display: flex; align-items: center; justify-content: center; }
+.docker-ico svg { width: 20px; height: 20px; fill: none; stroke: #FFFFFF; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.docker-main { flex: 1; min-width: 200px; }
+.docker-name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 16px; font-weight: 600; }
+.docker-name > span:first-child { overflow-wrap: anywhere; }
+.docker-meta { margin-top: 3px; font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); overflow-wrap: anywhere; }
+.docker-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.docker-actions .btn { padding: 7px 14px; font-size: 13px; }
