@@ -34,7 +34,7 @@ docker compose up -d --build
 | Proxmox 虛擬機／LXC | `PVE_HOST`、`PVE_TOKEN_ID`、`PVE_TOKEN_SECRET`（最小權限 token 的建立指令在 `.env.example`） |
 | 智慧宅控的裝置（遠端開關機、喚醒、溫濕度） | `DEVICEHUB_URL`、`DEVICEHUB_TOKEN`、`DEVICEHUB_CONTROL_TOKEN`（需要另外架設 DeviceHub） |
 | 從外面連線 | `CLOUDFLARE_TUNNEL_TOKEN` ＋ `COMPOSE_PROFILES=tunnel`；或用 Tailscale |
-| Minecraft | 連到另一台主機：`MC_HOST` 等；或 `COMPOSE_PROFILES=minecraft` 啟動內建容器 |
+| Minecraft | 連到另一台主機：`MC_HOST` 等；或 `COMPOSE_PROFILES=minecraft` 啟動內建容器（伺服器包 zip 放 `./minecraft-data/`，版本與路徑見 `.env.example` 的 `MC_VERSION`／`MC_FORGE_VERSION`／`MC_SERVER_PACK`） |
 | 開源分享 | 介面「系統設定 › 開源專案平台」填 GitHub 帳號 |
 
 ### 裝好之後：自己新增

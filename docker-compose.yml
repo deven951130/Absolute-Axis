@@ -65,7 +65,8 @@ services:
 
   # 選用：Minecraft 伺服器。在 .env 設 COMPOSE_PROFILES=minecraft 才會啟動（可與 tunnel 並列：tunnel,minecraft）
   minecraft-server:
-    image: itzg/minecraft-server
+    # Forge 1.20.x 需要 Java 17（latest 是 Java 25，會讓 Forge 模組包起不來）
+    image: itzg/minecraft-server:java17
     profiles: ["minecraft"]
     container_name: axis-mc
     restart: unless-stopped
@@ -73,11 +74,18 @@ services:
       - "25565:25565"
     environment:
       EULA: "TRUE"
-      MEMORY: "10G"
-      # 使用 CUSTOM 模式，這樣它會直接執行資料夾內的啟動檔或主程式
-      TYPE: "CUSTOM"
-      CUSTOM_JAR_EXEC: "bash start.sh" # 如果是 Forge/Fabric 整合包通常會有 start.sh
-      # 若沒有 start.sh，itzg 映像檔也有自動化尋找機制
+      # 模組包伺服器：TYPE／版本在 .env 設定（MC_TYPE、MC_VERSION、MC_FORGE_VERSION）
+      TYPE: "${MC_TYPE:-FORGE}"
+      VERSION: "${MC_VERSION:-LATEST}"
+      FORGE_VERSION: "${MC_FORGE_VERSION:-}"
+      # 伺服器包 zip（容器內路徑，例如 /data/server.zip）：第一次啟動與 zip 更新時自動解壓到 /data
+      GENERIC_PACK: "${MC_SERVER_PACK:-}"
+      # 堆積上限要比容器記憶體上限少 1.5 GB 左右，留給 JVM 本身，否則會被 OOM 砍掉
+      INIT_MEMORY: "4G"
+      MAX_MEMORY: "9G"
+      USE_AIKAR_FLAGS: "true"
+      # 大型模組包載入很久：停用內建 watchdog（max-tick-time=-1），避免被判定卡死而強制結束（見 UPDATE_LOG）
+      MAX_TICK_TIME: "-1"
     deploy:
       resources:
         limits:
