@@ -289,7 +289,9 @@ window.saveDesc = async function() {
     }
 };
 
-window.triggerUpload = function(type) {
+// 名稱不能叫 triggerUpload：私有雲（nas.js）也用這個全域名稱，multiverse.js 較晚載入會把它蓋掉，
+// 結果私有雲的「上傳檔案」變成打開模組包上傳（只收 .zip，且會存成公開的 static/minecraft-client-pack.zip）
+window.mvTriggerUpload = function(type) {
     window._mvUploadType = type;
     const fileInput = document.getElementById('mv-file-input');
     if (fileInput) {

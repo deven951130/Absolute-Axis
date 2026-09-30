@@ -81,8 +81,8 @@
             <button id="mv-download-client-btn" type="button" class="btn btn-primary btn-block" onclick="window.downloadClientPack()" disabled>下載客戶端模組包</button>
             <div id="mv-admin-pack-controls" class="mv-admin" style="display:none;">
                 <span class="mv-label">管理員</span>
-                <button type="button" class="btn btn-outline btn-block" onclick="window.triggerUpload('server')">上傳伺服器包（.zip）</button>
-                <button type="button" class="btn btn-outline btn-block" onclick="window.triggerUpload('client')">上傳客戶端包（.zip）</button>
+                <button type="button" class="btn btn-outline btn-block" onclick="window.mvTriggerUpload('server')">上傳伺服器包（.zip）</button>
+                <button type="button" class="btn btn-outline btn-block" onclick="window.mvTriggerUpload('client')">上傳客戶端包（.zip）</button>
                 <button type="button" class="btn btn-danger btn-block" onclick="window.uninstallServerPack()">卸載伺服器模組包</button>
                 <input type="file" id="mv-file-input" accept=".zip" style="display:none;" onchange="window.handleFileSelected(this)">
             </div>
