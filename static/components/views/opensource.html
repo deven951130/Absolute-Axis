@@ -5,7 +5,7 @@
             <p id="os-subtitle" class="w-muted page-sub page-lead">自動同步開發者的公開專案與開源成果</p>
             <div class="page-actions">
                 <button id="os-add-repo-btn" type="button" class="btn btn-primary" style="display:none;" onclick="window.showAddRepoModal()">＋ 新增專案</button>
-                <a id="os-author-url" href="https://github.com/deven951130" target="_blank" rel="noopener noreferrer" class="btn btn-outline">GitHub 主頁</a>
+                <a id="os-author-url" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="display:none;">GitHub 主頁</a>
             </div>
         </div>
         <div id="repos-grid" class="repo-grid"><p class="w-muted post-empty">載入中…</p></div>
@@ -20,13 +20,13 @@
             </div>
             <p class="ios-caption">從 GitHub 連結匯入</p>
             <div class="sheet-import">
-                <input type="text" id="os-import-url" class="t-input" placeholder="https://github.com/deven951130/Absolute-Axis">
+                <input type="text" id="os-import-url" class="t-input" placeholder="https://github.com/帳號/專案">
                 <button id="os-import-btn" type="button" class="btn btn-outline" onclick="window.importFromUrl()">解析</button>
             </div>
             <p class="ios-caption">專案資訊</p>
             <div class="ios-group ios-form-rows sheet-form">
                 <label><span>名稱</span><input type="text" id="os-repo-name" placeholder="Absolute-Axis"></label>
-                <label><span>完整</span><input type="text" id="os-repo-fullname" placeholder="deven951130/Absolute-Axis"></label>
+                <label><span>完整</span><input type="text" id="os-repo-fullname" placeholder="帳號/專案"></label>
                 <label><span>連結</span><input type="text" id="os-repo-url" placeholder="https://github.com/…"></label>
                 <label><span>語言</span><input type="text" id="os-repo-lang" placeholder="Python / JavaScript"></label>
                 <label class="ta"><span>描述</span><textarea id="os-repo-desc" rows="3" placeholder="一句話介紹這個專案"></textarea></label>

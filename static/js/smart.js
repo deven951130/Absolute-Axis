@@ -50,6 +50,14 @@ function _smartRenderStatus(data) {
         return;
     }
 
+    // 沒有感測器來源（沒設定 Blynk）：顯示設定說明，不把用 CPU 溫度估的數字當成房間溫度顯示
+    const legacy = document.getElementById('smart-legacy');
+    const noSource = !data.sensors.source;
+    if (legacy) {
+        for (const c of legacy.children) c.hidden = c.id === 'smart-setup' ? !noSource : noSource;
+    }
+    if (noSource) return;
+
     const temp = parseFloat(data.sensors.temp);
     const humid = parseFloat(data.sensors.humid);
 

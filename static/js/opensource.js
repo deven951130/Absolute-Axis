@@ -8,6 +8,7 @@ const _OS_LANG_COLOR = {
 };
 
 function _osSafeUrl(url) {
+    if (!url) return null;  // 空字串會被解析成本站網址
     try {
         const u = new URL(String(url || ''), location.origin);
         return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : null;
@@ -28,17 +29,22 @@ async function loadGitHubRepos() {
     const addBtn = document.getElementById('os-add-repo-btn');
     if (addBtn) addBtn.style.display = isAdmin ? '' : 'none';
 
+    let authorSet = false;
     try {
         const configRes = await authFetch('/api/github/config');
         if (configRes.ok) {
             const config = await configRes.json();
             const subtitle = document.getElementById('os-subtitle');
             const authorUrl = document.getElementById('os-author-url');
-            if (subtitle && config.developer_name) {
+            authorSet = !!config.developer_name;
+            if (subtitle && authorSet) {
                 subtitle.textContent = `自動同步 ${config.developer_name} 在 GitHub 上的公開專案與開源成果`;
             }
             const href = _osSafeUrl(config.github_url);
-            if (authorUrl && href) authorUrl.href = href;
+            if (authorUrl) {
+                authorUrl.style.display = href ? '' : 'none';  // 沒設定作者主頁就不顯示按鈕
+                if (href) authorUrl.href = href;
+            }
         }
     } catch (e) {
         console.error('Failed to load github config in view:', e);
@@ -53,7 +59,8 @@ async function loadGitHubRepos() {
         }
         const repos = await res.json();
         if (!repos.length) {
-            note('還沒有任何公開專案。');
+            note(authorSet ? '還沒有任何公開專案。'
+                           : '還沒設定 GitHub 帳號：管理員到「系統設定 › 開源專案平台」填入帳號後，就會自動同步公開專案。');
             return;
         }
         grid.replaceChildren(...repos.map((repo) => _osCard(repo, isAdmin)));

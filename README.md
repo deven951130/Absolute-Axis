@@ -9,6 +9,54 @@
 
 無論是遠端存取 NAS 檔案、一鍵啟閉遊戲伺服器，還是查看家中實時的溫濕度數據，都能透過 Absolute-Axis 直覺的儀表板一次搞定。
 
+## 🚀 自己架一台（Self-hosting）
+
+Absolute Axis 可以裝在你自己的主機上使用；裝置、硬碟、成員都在介面裡自己新增。
+
+**需要**：64 位元 Linux 主機（實體機或虛擬機）、Docker 與 Docker Compose、Git。
+
+```bash
+git clone https://github.com/deven951130/Absolute-Axis.git
+cd Absolute-Axis
+cp .env.example .env
+openssl rand -hex 32          # 把結果填進 .env 的 AXIS_JWT_SECRET
+nano .env                     # 再填 AXIS_ADMIN_PASS（第一個管理員的密碼）
+docker compose up -d --build
+```
+
+瀏覽器打開 `http://<主機 IP>:8000`，用 `admin`（或你在 `AXIS_ADMIN_USER` 設的名稱）與 `AXIS_ADMIN_PASS` 登入，
+再到「系統設定 › 個人身分與安全密碼」改成你自己的名稱與密碼。
+
+### 選用整合（都在 `.env` 設定，留空＝不使用，介面會顯示「未設定」）
+
+| 功能 | 設定 |
+| --- | --- |
+| Proxmox 虛擬機／LXC | `PVE_HOST`、`PVE_TOKEN_ID`、`PVE_TOKEN_SECRET`（最小權限 token 的建立指令在 `.env.example`） |
+| 智慧宅控的裝置（遠端開關機、喚醒、溫濕度） | `DEVICEHUB_URL`、`DEVICEHUB_TOKEN`、`DEVICEHUB_CONTROL_TOKEN`（需要另外架設 DeviceHub） |
+| 從外面連線 | `CLOUDFLARE_TUNNEL_TOKEN` ＋ `COMPOSE_PROFILES=tunnel`；或用 Tailscale |
+| Minecraft | 連到另一台主機：`MC_HOST` 等；或 `COMPOSE_PROFILES=minecraft` 啟動內建容器 |
+| 開源分享 | 介面「系統設定 › 開源專案平台」填 GitHub 帳號 |
+
+### 裝好之後：自己新增
+
+- **裝置**：智慧宅控 › 新增裝置（需要 DeviceHub）
+- **硬碟**：接上並掛載後，會自動出現在 NAS 管理 › 儲存池（容量、用量、SMART 健康）。私有雲的檔案放在 `./nas`；要改放到其他硬碟，把 `docker-compose.yml` 裡的 `./nas` 改成那顆硬碟的掛載路徑。
+- **成員**：帳號管理 › 新增成員
+- **功能開關**：系統設定 › 模組化功能
+
+### 更新
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+### 安全提醒
+
+- 不要在路由器直接開放 8000 埠；要從外面連線，用 Tailscale 或 Cloudflare Tunnel 這類加密通道。
+- `.env` 內含密碼與 token，不要 commit、不要貼到 issue。
+- 主控台容器以 `privileged` 執行，並掛載 `docker.sock` 與 `/dev`（為了管理容器、讀取硬碟 SMART），等同主機的 root 權限：管理員帳號只給信任的人。
+
 ## ✨ 核心特色 (Core Features)
 
 *   🎛️ **全域控制中樞 (Total Control Dashboard)**

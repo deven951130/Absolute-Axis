@@ -14,9 +14,11 @@ from app.config import BASE_PATH
 
 router = APIRouter(prefix="/api/minecraft", tags=["minecraft"])
 
-# LXC 容器連線設定
-MC_LXC_IP = "192.168.0.130"
-MC_LXC_PORT = 25565
+# Minecraft 主機（LXC／VM）連線設定；沒設定 MC_HOST＝不使用 Minecraft 模組
+MC_LXC_IP = os.getenv("MC_HOST", "").strip()
+MC_LXC_PORT = int(os.getenv("MC_PORT", "").strip()) if os.getenv("MC_PORT", "").strip().isdigit() else 25565
+# 玩家從外面連線用的網域（例如 DDNS 網域）；沒設定就不顯示
+MC_PUBLIC_HOST = os.getenv("MC_PUBLIC_HOST", "").strip()
 # SSH 帳密改由環境變數提供，不寫在程式碼裡（舊的明碼密碼已在 git 歷史中，請務必更換）
 MC_SSH_USER = os.getenv("MC_SSH_USER", "root")
 MC_SSH_PASS = os.getenv("MC_SSH_PASS", "")
@@ -25,6 +27,8 @@ MC_SCREEN_NAME = "mc"
 
 def _check_online() -> bool:
     """快速 TCP 探測 Minecraft 是否存活。"""
+    if not MC_LXC_IP:
+        return False
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(1.0)
@@ -35,6 +39,8 @@ def _check_online() -> bool:
 
 def _ssh_exec(command: str) -> Tuple[str, str]:
     """透過 SSH 在 LXC 容器中執行指令，回傳 (stdout, stderr)。"""
+    if not MC_LXC_IP:
+        raise HTTPException(status_code=503, detail="尚未設定 Minecraft 主機：請在 .env 設定 MC_HOST")
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
@@ -108,10 +114,10 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
             "lan_ip": MC_LXC_IP,
             "port": MC_LXC_PORT,
             "wan_ip": display_wan_ip,
-            "address_lan": f"{MC_LXC_IP}:{MC_LXC_PORT}",
+            "address_lan": f"{MC_LXC_IP}:{MC_LXC_PORT}" if MC_LXC_IP else "--",
             "address_wan": display_address_wan,
             "address_wan_real": f"{public_ip}:{MC_LXC_PORT}" if public_ip != "Unknown" else "--",
-            "address_ddns": f"absoluteaxis.dpdns.org:{MC_LXC_PORT}"
+            "address_ddns": f"{MC_PUBLIC_HOST}:{MC_LXC_PORT}" if MC_PUBLIC_HOST else "--"
         },
         "specs": {
             "ram": "16 GB",
@@ -128,14 +134,15 @@ import threading
 
 def run_ddns_updater():
     last_ip = None
-    dynu_user = os.getenv("DYNU_USER", "deven951130")
+    dynu_user = os.getenv("DYNU_USER", "")
     dynu_pass = os.getenv("DYNU_PASS")
+    dynu_host = os.getenv("DYNU_HOSTNAME", "")
     
-    if not dynu_pass:
-        print("[DDNS] DYNU_PASS not configured. Skipping background updates.")
+    if not (dynu_pass and dynu_user and dynu_host):
+        print("[DDNS] DYNU_USER / DYNU_PASS / DYNU_HOSTNAME not configured. Skipping background updates.")
         return
         
-    print("[DDNS] Starting background DDNS updater for absoluteaxis.dpdns.org")
+    print(f"[DDNS] Starting background DDNS updater for {dynu_host}")
     while True:
         try:
             r = requests.get("https://api.ipify.org?format=json", timeout=5)
@@ -143,16 +150,16 @@ def run_ddns_updater():
                 current_ip = r.json().get("ip")
                 if current_ip and current_ip != last_ip:
                     # 更新 Dynu DNS IP 記錄
-                    update_url = f"https://api.dynu.com/nic/update?hostname=absoluteaxis.dpdns.org&myip={current_ip}&username={dynu_user}&password={dynu_pass}"
+                    update_url = f"https://api.dynu.com/nic/update?hostname={dynu_host}&myip={current_ip}&username={dynu_user}&password={dynu_pass}"
                     resp = requests.get(update_url, timeout=5)
                     if resp.status_code == 200:
                         last_ip = current_ip
-                        print(f"[DDNS] Successfully synchronized absoluteaxis.dpdns.org to {current_ip}")
+                        print(f"[DDNS] Successfully synchronized {dynu_host} to {current_ip}")
         except Exception as e:
             print(f"[DDNS] Synchronization failed: {e}")
         time.sleep(300)
 
-if os.getenv("DYNU_PASS"):
+if os.getenv("DYNU_PASS") and os.getenv("DYNU_USER") and os.getenv("DYNU_HOSTNAME"):
     threading.Thread(target=run_ddns_updater, daemon=True).start()
 
 

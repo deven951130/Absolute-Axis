@@ -123,24 +123,42 @@ def safe_path(rel: str, username: str):
     return p
 
 def init_db_user():
+    """第一次啟動時建立管理員帳號。
+
+    只在資料庫裡「一個管理員都沒有」時才建立：名稱來自 AXIS_ADMIN_USER（預設 admin），
+    密碼來自 AXIS_ADMIN_PASS。已經有管理員（例如舊版建立的 sparkle，或改過名稱的管理員）就不動，
+    所以既有的站台升級後不會多出第二個管理員。
+    """
+    from app.naming import valid_username, USERNAME_RULE
+
     db = SessionLocal()
     try:
-        admin_user = db.query(User).filter(User.username == "sparkle").first()
-        if not admin_user:
-            admin_pass = os.getenv("AXIS_ADMIN_PASS")
-            if not admin_pass:
-                print("WARNING: AXIS_ADMIN_PASS not set. Skipping default admin creation.")
-                print("Set AXIS_ADMIN_PASS in .env to initialize the admin account.")
-                return
-            new_admin = User(
-                username="sparkle",
-                password_hash=get_password_hash(admin_pass),
-                role="Administrator",
-                avatar=""
-            )
-            db.add(new_admin)
-            db.commit()
-            print("System DB initialized with admin 'sparkle'.")
+        if db.query(User).filter(User.role.in_(("admin", "Administrator"))).first():
+            return
+        username = (os.getenv("AXIS_ADMIN_USER") or "admin").strip()
+        admin_pass = (os.getenv("AXIS_ADMIN_PASS") or "").strip()
+        if admin_pass.startswith("<") and admin_pass.endswith(">"):
+            admin_pass = ""  # 還是範本裡的「<請填入…>」：當作沒填，不能拿公開的字串當管理員密碼
+        if not admin_pass:
+            print("WARNING: AXIS_ADMIN_PASS not set. Skipping default admin creation.")
+            print("Set AXIS_ADMIN_PASS in .env to initialize the admin account.")
+            return
+        if not valid_username(username):
+            print(f"WARNING: AXIS_ADMIN_USER「{username}」不符合規則（{USERNAME_RULE}），未建立管理員。")
+            return
+        if db.query(User).filter(User.username == username).first():
+            # 同名的一般帳號不自動升成管理員，避免把別人的帳號變成管理員
+            print(f"WARNING: 帳號「{username}」已存在但不是管理員，未建立管理員；請改用其他 AXIS_ADMIN_USER。")
+            return
+        new_admin = User(
+            username=username,
+            password_hash=get_password_hash(admin_pass),
+            role="Administrator",
+            avatar=""
+        )
+        db.add(new_admin)
+        db.commit()
+        print(f"System DB initialized with admin '{username}'.")
     except Exception as e:
         print(f"Init DB error: {e}")
     finally:

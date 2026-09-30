@@ -487,9 +487,11 @@ const NASManager = {
         
         const file = input.files[0];
         
-        // Cloudflare Free Tier 100MB limit check
-        if (file.size > 100 * 1024 * 1024 && window.location.hostname.includes('dpdns.org')) {
-            if (!confirm('偵測到您正透過 Cloudflare 代理上傳超過 100MB 的檔案。Cloudflare 免費版通常限制單次上傳為 100MB，這可能會導致上傳失敗。是否仍要嘗試？\n\n建議：如需上傳大檔案，請使用 Tailscale 內網 IP。')) {
+        // Cloudflare Tunnel 免費方案單次上傳上限 100MB：透過網域連線（不是 IP、localhost 或 Tailscale）時先提醒
+        const host = window.location.hostname;
+        const viaDomain = !/^[\d.]+$|^\[|^localhost$|\.ts\.net$/.test(host);
+        if (file.size > 100 * 1024 * 1024 && viaDomain) {
+            if (!confirm('檔案超過 100MB。如果你是透過 Cloudflare Tunnel 連線，免費方案單次上傳上限是 100MB，可能會失敗。是否仍要上傳？\n\n建議：大檔案改用區網 IP 或 Tailscale 連線上傳。')) {
                 input.value = '';
                 return;
             }

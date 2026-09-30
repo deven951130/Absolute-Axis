@@ -1855,7 +1855,7 @@ select.t-input option { background: var(--card-solid); color: var(--text-main); 
     --dh-mono: var(--font-mono, ui-monospace, "SFMono-Regular", Consolas, monospace);
     color: var(--dh-text);
 }
-.dh[hidden], .dh [hidden], #smart-legacy[hidden] { display: none !important; }
+.dh[hidden], .dh [hidden], #smart-legacy[hidden], #smart-legacy > [hidden] { display: none !important; }
 .dh-muted { color: var(--dh-muted); }
 .dh-num { font-family: var(--dh-mono); font-variant-numeric: tabular-nums; }
 
