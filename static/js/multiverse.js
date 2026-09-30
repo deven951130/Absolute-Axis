@@ -212,7 +212,7 @@ window.sendMCCommand = async function() {
         });
         const data = await res.json().catch(() => ({}));
         pendingLine.replaceWith(res.ok
-            ? _mvLogLine(ts, 'ok', command, '')
+            ? _mvLogLine(ts, 'ok', command, typeof data.response === 'string' ? data.response : '')
             : _mvLogLine(ts, 'bad', command, typeof data.detail === 'string' ? data.detail : '未知錯誤'));
     } catch (e) {
         pendingLine.replaceWith(_mvLogLine(ts, 'bad', command, '網路錯誤'));
