@@ -1,0 +1,15 @@
+# 執行期資料不進映像：compose 會把整個專案目錄掛到 /app，這些只會拖慢建置，
+# 而且 nas/ 裡 root 擁有的資料夾會讓建置直接失敗（permission denied）
+.git
+.env
+nas/
+nas_storage/
+minecraft-data/
+scratch/
+axis.db
+logs.json
+*.zip
+cloudflared.exe
+__pycache__/
+.pytest_cache/
+.venv/
