@@ -1,7 +1,10 @@
 import socket
 import paramiko
 import os
+import re
 import json
+import shutil
+import zipfile
 import requests
 from typing import Tuple
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
@@ -15,7 +18,11 @@ from app.config import BASE_PATH
 router = APIRouter(prefix="/api/minecraft", tags=["minecraft"])
 
 # Minecraft 主機（LXC／VM）連線設定；沒設定 MC_HOST＝不使用 Minecraft 模組
-MC_LXC_IP = os.getenv("MC_HOST", "").strip()
+# 內建容器模式：Minecraft 跑在這台主機的 Docker 容器（compose 的 minecraft profile）時填容器名稱。
+# 指令改走容器內的 rcon-cli、模組包直接換資料目錄裡的 zip，不用 SSH
+MC_CONTAINER = os.getenv("MC_CONTAINER", "").strip()
+MC_DATA_DIR = os.getenv("MC_DATA_DIR", "").strip() or os.path.join(BASE_PATH, "minecraft-data")
+MC_LXC_IP = os.getenv("MC_HOST", "").strip() or ("127.0.0.1" if MC_CONTAINER else "")
 MC_LXC_PORT = int(os.getenv("MC_PORT", "").strip()) if os.getenv("MC_PORT", "").strip().isdigit() else 25565
 # 玩家從外面連線用的網域（例如 DDNS 網域）；沒設定就不顯示
 MC_PUBLIC_HOST = os.getenv("MC_PUBLIC_HOST", "").strip()
@@ -53,6 +60,62 @@ def _ssh_exec(command: str) -> Tuple[str, str]:
         client.close()
 
 
+_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+_java_version_cache: dict = {}
+
+
+def _mc_container():
+    """取得 Minecraft 容器（容器模式）。"""
+    try:
+        import docker
+        return docker.from_env().containers.get(MC_CONTAINER)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"找不到 Minecraft 容器 {MC_CONTAINER}：{e}")
+
+
+def _container_env(container) -> dict:
+    return dict(e.split("=", 1) for e in (container.attrs.get("Config", {}).get("Env") or []) if "=" in e)
+
+
+def _container_exec(container, argv: list) -> str:
+    """在容器內執行指令，回傳去掉色碼的輸出；非 0 結束碼視為失敗。"""
+    res = container.exec_run(argv)
+    out = _ANSI.sub("", (res.output or b"").decode(errors="replace")).strip()
+    if res.exit_code != 0:
+        raise RuntimeError(out or f"exit code {res.exit_code}")
+    return out
+
+
+def _container_status() -> Tuple[str, str, dict]:
+    """容器模式的 (uptime, java_version, specs)。"""
+    container = _mc_container()
+    attrs = container.attrs
+    state = attrs.get("State", {})
+    host_cfg = attrs.get("HostConfig", {})
+    running = bool(state.get("Running"))
+    java_version = "Unknown"
+    if running:
+        started = state.get("StartedAt", "")
+        if started not in _java_version_cache:
+            try:
+                first = _container_exec(container, ["java", "-version"]).splitlines()[0]
+                _java_version_cache.clear()
+                _java_version_cache[started] = first.replace('"', '').strip()
+            except Exception:
+                pass
+        java_version = _java_version_cache.get(started, "Unknown")
+    mem = host_cfg.get("Memory") or 0
+    cpus = host_cfg.get("NanoCpus") or 0
+    heap = _container_env(container).get("MAX_MEMORY", "")
+    specs = {
+        "ram": f"{mem / 1024 ** 3:.1f} GB" if mem else "不限",
+        "jvm_heap": f"{heap} (-Xmx{heap})" if heap else "--",
+        "cpu_threads": int(cpus / 1e9) if cpus else (os.cpu_count() or 0),
+        "container": f"Docker {MC_CONTAINER}",
+    }
+    return ("Running" if running else "N/A"), java_version, specs
+
+
 def mask_ip(ip: str) -> str:
     if not ip or ip == "Unknown":
         return ip
@@ -73,7 +136,18 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
     # 若伺服器在線，嘗試讀取運行資訊
     uptime_str = "N/A"
     java_version = "Unknown"
-    if online:
+    specs = {
+        "ram": "16 GB",
+        "jvm_heap": "14 GB (-Xmx14G)",
+        "cpu_threads": 8,
+        "container": "Proxmox LXC #102",
+    }
+    if MC_CONTAINER:
+        try:
+            uptime_str, java_version, specs = _container_status()
+        except Exception:
+            specs = {"ram": "--", "jvm_heap": "--", "cpu_threads": 0, "container": f"Docker {MC_CONTAINER}"}
+    elif online:
         try:
             # 讀取 screen session 是否存在
             out, _ = _ssh_exec(f"screen -list | grep {MC_SCREEN_NAME}")
@@ -119,12 +193,7 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
             "address_wan_real": f"{public_ip}:{MC_LXC_PORT}" if public_ip != "Unknown" else "--",
             "address_ddns": f"{MC_PUBLIC_HOST}:{MC_LXC_PORT}" if MC_PUBLIC_HOST else "--"
         },
-        "specs": {
-            "ram": "16 GB",
-            "jvm_heap": "14 GB (-Xmx14G)",
-            "cpu_threads": 8,
-            "container": "Proxmox LXC #102",
-        },
+        "specs": specs,
     }
 
 # Dynu DDNS 自動更新背景背景程序
@@ -168,7 +237,8 @@ if os.getenv("DYNU_PASS") and os.getenv("DYNU_USER") and os.getenv("DYNU_HOSTNAM
 def send_mc_command(req: MCCommandRequest, user: dict = Depends(get_current_user_obj)):
     """
     向 Minecraft 伺服器注入指令（管理員限定）。
-    透過 SSH 連線至 LXC 容器，並使用 screen stuff 注入至伺服器控制台。
+    容器模式走容器內的 rcon-cli（會回傳伺服器的回應）；
+    否則透過 SSH 連線至 LXC 容器，並使用 screen stuff 注入至伺服器控制台。
     決策：方案 B（全指令放行，管理員自行負責）。
     """
     # 管理員權限驗證
@@ -179,6 +249,27 @@ def send_mc_command(req: MCCommandRequest, user: dict = Depends(get_current_user
     command = req.command.strip()
     if not command:
         raise HTTPException(status_code=400, detail="指令不得為空")
+
+    if MC_CONTAINER:
+        rcon_command = command.lstrip("/").strip()  # RCON 指令不帶開頭的斜線
+        if not rcon_command:
+            raise HTTPException(status_code=400, detail="指令不得為空")
+        try:
+            out = _container_exec(_mc_container(), ["rcon-cli", rcon_command])
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"RCON 指令失敗（伺服器可能還在啟動）：{str(e)}")
+        log_event(
+            user["username"],
+            f"MC_COMMAND: [{command}] -> container {MC_CONTAINER} | out={out[:100] if out else 'ok'}"
+        )
+        return {
+            "status": "ok",
+            "command": command,
+            "sent_at": datetime.now().isoformat(),
+            "response": out,
+        }
 
     # 確保指令前有斜線（Minecraft 控制台指令可不加斜線，但加上以保持一致性）
     # 注意：screen stuff 注入的指令不需要加斜線，原始指令即可
@@ -366,6 +457,113 @@ def _ssh_has_world(client, pack_name: str) -> bool:
     return result == "yes"
 
 
+# ---------- 容器模式：模組包與世界 ----------
+# 每個模組包的世界在停用時搬到這裡（資料目錄底下），切回來時再搬回去
+WORLD_STORE = ".axis-worlds"
+# 記錄資料目錄裡目前是哪個模組包（info.json 可能是舊的，不能拿來決定世界歸屬）
+ACTIVE_MARKER = ".axis-active-pack"
+_FORGE_LIB = re.compile(r"(?:^|/)libraries/net/minecraftforge/forge/(\d+(?:\.\d+)+)-[^/]+/")
+
+
+def _read_marker() -> str:
+    try:
+        with open(os.path.join(MC_DATA_DIR, ACTIVE_MARKER), "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def _pack_minecraft_version(zip_path: str) -> str:
+    """從伺服器包內附的 Forge 函式庫路徑看它是哪個 Minecraft 版本；看不出來回傳空字串。"""
+    try:
+        with zipfile.ZipFile(zip_path) as z:
+            for name in z.namelist():
+                m = _FORGE_LIB.search(name)
+                if m:
+                    return m.group(1)
+    except (OSError, zipfile.BadZipFile):
+        raise Exception("模組包不是有效的 zip 檔")
+    return ""
+
+
+def _container_has_world(pack_name: str) -> bool:
+    if not pack_name or pack_name in ("無", ""):
+        return False
+    return os.path.isdir(os.path.join(MC_DATA_DIR, WORLD_STORE, _pack_slug(pack_name)))
+
+
+def _deploy_pack_to_container(local_zip_path: str, reset_world: bool = False):
+    """
+    容器模式的部署（每包獨立世界）：
+    1. 檢查容器設定與模組包版本（不符就不動伺服器）
+    2. 停止容器（Minecraft 會先存檔）
+    3. 把目前的世界搬到 .axis-worlds/{目前包}
+    4. 換掉 GENERIC_PACK 指到的 zip（容器啟動時自動清掉舊包的檔案並解壓新包）
+    5. reset_world=True 就刪掉新包存過的世界；否則搬回來
+    6. 啟動容器
+    """
+    new_pack_name = os.path.basename(local_zip_path)
+    container = _mc_container()
+    env = _container_env(container)
+
+    pack_in_container = env.get("GENERIC_PACK", "").strip()
+    level = env.get("LEVEL", "").strip()
+    if not pack_in_container.startswith("/data/") or not level or "/" in level or level.startswith("."):
+        raise Exception(
+            "容器沒有設定 GENERIC_PACK（.env 的 MC_SERVER_PACK=/data/檔名.zip）或 LEVEL；"
+            "請更新 docker-compose.yml 後執行 docker compose up -d minecraft-server"
+        )
+    data_dir = os.path.realpath(MC_DATA_DIR)
+    pack_target = os.path.realpath(os.path.join(data_dir, pack_in_container[len("/data/"):]))
+    if not pack_target.startswith(data_dir + os.sep):
+        raise Exception("GENERIC_PACK 路徑不在資料目錄內")
+
+    want = env.get("VERSION", "").strip()
+    have = _pack_minecraft_version(local_zip_path)
+    if have and want and want.upper() != "LATEST" and have != want:
+        raise Exception(
+            f"這個模組包是 Minecraft {have}，容器設定的是 {want}；"
+            "請先改 .env 的 MC_VERSION／MC_FORGE_VERSION 並執行 docker compose up -d minecraft-server"
+        )
+
+    container.stop(timeout=120)
+
+    store = os.path.join(data_dir, WORLD_STORE)
+    os.makedirs(store, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    current = _read_marker()
+    world_dir = os.path.join(data_dir, level)
+
+    # 3. 目前的世界收起來；不知道是哪個包的世界就另外保留，不覆蓋、不刪除
+    if os.path.isdir(world_dir):
+        dest = os.path.join(store, _pack_slug(current) if current else f"unassigned_{stamp}")
+        if os.path.exists(dest):
+            os.rename(dest, f"{dest}.old-{stamp}")
+        os.rename(world_dir, dest)
+
+    # 4. 目前的 zip 若不是從函式庫複製來的（沒有標記），先收進函式庫，避免唯一的一份被蓋掉
+    if os.path.isfile(pack_target) and not current:
+        keep = os.path.join(PACKS_DIR, os.path.basename(pack_target))
+        if os.path.exists(keep):
+            keep = os.path.join(PACKS_DIR, f"{stamp}-{os.path.basename(pack_target)}")
+        shutil.move(pack_target, keep)
+    tmp = pack_target + ".axis-tmp"
+    shutil.copyfile(local_zip_path, tmp)
+    os.replace(tmp, pack_target)
+
+    # 5. 新包的世界
+    saved = os.path.join(store, _pack_slug(new_pack_name))
+    if reset_world and os.path.isdir(saved):
+        shutil.rmtree(saved)
+    if os.path.isdir(saved):
+        os.rename(saved, world_dir)
+
+    with open(os.path.join(data_dir, ACTIVE_MARKER), "w", encoding="utf-8") as f:
+        f.write(new_pack_name)
+
+    container.start()
+
+
 def _deploy_pack_to_lxc(
     local_zip_path: str,
     current_pack: str = "",
@@ -381,6 +579,8 @@ def _deploy_pack_to_lxc(
     6. 還原新包的地圖（若存在） → /root/minecraft/
     7. 啟動 MC
     """
+    if MC_CONTAINER:
+        return _deploy_pack_to_container(local_zip_path, reset_world=reset_world)
     new_pack_name = os.path.basename(local_zip_path)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -529,6 +729,29 @@ async def upload_server_pack(file: UploadFile = File(...), user: dict = Depends(
     return {"status": "ok", "filename": safe_filename}
 
 
+def _list_packs_container() -> dict:
+    """容器模式的函式庫清單：啟用中的包以資料目錄的標記為準。"""
+    active = _read_marker()
+    level = ""
+    try:
+        level = _container_env(_mc_container()).get("LEVEL", "").strip()
+    except HTTPException:
+        pass
+    live_world = bool(level) and os.path.isdir(os.path.join(MC_DATA_DIR, level))
+    packs = []
+    for fname in sorted(os.listdir(PACKS_DIR)):
+        if fname.lower().endswith(".zip"):
+            packs.append({
+                "name": fname,
+                "size_mb": round(os.path.getsize(os.path.join(PACKS_DIR, fname)) / 1024 / 1024, 1),
+                "active": fname == active,
+                "in_library": True,
+                # 啟用中的包，世界就在資料目錄裡；其他包看 .axis-worlds
+                "has_world": live_world if fname == active else _container_has_world(fname),
+            })
+    return {"packs": packs, "active_pack": active}
+
+
 @router.get("/packs")
 def list_packs(user: dict = Depends(get_current_user_obj)):
     """列出模組包函式庫中的所有 ZIP 檔（管理員限定），含每包是否有存檔地圖"""
@@ -541,6 +764,8 @@ def list_packs(user: dict = Depends(get_current_user_obj)):
 
     # 透過 SSH 一次取得所有包的世界存檔狀態
     world_status: dict[str, bool] = {}
+    if MC_CONTAINER:
+        return _list_packs_container()
     try:
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -646,7 +871,7 @@ def delete_pack(pack_name: str, user: dict = Depends(get_current_user_obj)):
         raise HTTPException(status_code=404, detail=f"找不到模組包：{safe_name}")
 
     info = _load_info()
-    if info.get("active_pack") == safe_name:
+    if (_read_marker() if MC_CONTAINER else info.get("active_pack")) == safe_name:
         raise HTTPException(status_code=400, detail="無法刪除目前正在使用的模組包，請先切換至其他包")
 
     os.remove(pack_path)
@@ -660,6 +885,11 @@ def uninstall_server_pack(user: dict = Depends(get_current_user_obj)):
     role = user.get("role", "")
     if role not in ("admin", "Administrator"):
         raise HTTPException(status_code=403, detail="僅限管理員卸載模組包")
+    if MC_CONTAINER:
+        raise HTTPException(
+            status_code=400,
+            detail="容器模式不支援卸載（容器一定要有伺服器包才能啟動）；請改切換到其他模組包，或到虛擬化中心停止容器",
+        )
 
     try:
         client = paramiko.SSHClient()

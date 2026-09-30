@@ -23,6 +23,8 @@ services:
       - MC_SSH_PASS=${MC_SSH_PASS:-}
       # Minecraft 模組（選用）：沒設定 MC_HOST＝不使用
       - MC_HOST=${MC_HOST:-}
+      # 用下面內建的 Minecraft 容器時填 axis-mc：指令走 rcon-cli、模組包直接換 ./minecraft-data 裡的 zip（不用 SSH）
+      - MC_CONTAINER=${MC_CONTAINER:-}
       - MC_PORT=${MC_PORT:-}
       - MC_PUBLIC_HOST=${MC_PUBLIC_HOST:-}
       - BLYNK_TOKEN=${BLYNK_TOKEN:-}
@@ -80,6 +82,8 @@ services:
       FORGE_VERSION: "${MC_FORGE_VERSION:-}"
       # 伺服器包 zip（容器內路徑，例如 /data/server.zip）：第一次啟動與 zip 更新時自動解壓到 /data
       GENERIC_PACK: "${MC_SERVER_PACK:-}"
+      # 世界資料夾名稱固定（不受伺服器包內附的 server.properties 影響），多重宇宙頁切換模組包時靠它搬世界
+      LEVEL: "${MC_LEVEL:-world}"
       # 堆積上限要比容器記憶體上限少 1.5 GB 左右，留給 JVM 本身，否則會被 OOM 砍掉
       INIT_MEMORY: "4G"
       MAX_MEMORY: "9G"
