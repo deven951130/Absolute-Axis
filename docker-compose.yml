@@ -94,6 +94,7 @@ services:
       resources:
         limits:
           cpus: '8'
-          memory: 10.5G
+          # 容器記憶體上限（.env 的 MC_MEMORY_LIMIT，預設 10.5G）；要比上面的 MAX_MEMORY 多 1.5 GB 以上
+          memory: ${MC_MEMORY_LIMIT:-10.5G}
     volumes:
       - ./minecraft-data:/data
