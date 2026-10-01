@@ -215,3 +215,69 @@ def test_container_missing_is_503(monkeypatch):
     with pytest.raises(HTTPException) as e:
         minecraft._mc_container()
     assert e.value.status_code == 503
+
+
+# ---------- Modrinth 模組包（TYPE=MODRINTH） ----------
+def _mrpack(path, mc="1.20.1", index=None):
+    import json
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("modrinth.index.json", index if index is not None else json.dumps(
+            {"formatVersion": 1, "game": "minecraft", "name": "pack", "files": [],
+             "dependencies": {"minecraft": mc, "forge": "47.4.18"}}))
+        z.writestr("overrides/config/a.toml", "x")
+    return str(path)
+
+
+MODRINTH_ENV = {"TYPE": "MODRINTH", "MODRINTH_MODPACK": "/data/modpack.mrpack", "GENERIC_PACK": ""}
+
+
+def _set_env(container, **env):
+    base = {"VERSION": "1.20.1", "GENERIC_PACK": "/data/server.zip", "LEVEL": "world", **env}
+    container.attrs["Config"]["Env"] = [f"{k}={v}" for k, v in base.items()]
+
+
+def test_modrinth_pack_goes_to_modrinth_modpack(mc):
+    container, data, packs = mc
+    _set_env(container, **MODRINTH_ENV)
+    (data / "world").mkdir()
+    a = _mrpack(packs / "通天之路 [女仆纪元].zip")
+    b = _mrpack(packs / "other.mrpack")
+
+    minecraft.switch_pack(minecraft.SwitchPackRequest(pack_name="通天之路 [女仆纪元].zip"), user=ADMIN)
+    assert container.calls == [("stop", 120), ("start",)]
+    assert (data / "modpack.mrpack").read_bytes() == open(a, "rb").read()
+    assert not (data / "server.zip").exists()
+    assert len(list((data / ".axis-worlds").iterdir())) == 1   # 原本的世界另外保留
+
+    # .mrpack 也列在函式庫裡，可以切換；切回來世界還在
+    (data / "world").mkdir()
+    (data / "world" / "level.dat").write_text("maid world")
+    listed = {p["name"]: p for p in minecraft.list_packs(user=ADMIN)["packs"]}
+    assert set(listed) == {"通天之路 [女仆纪元].zip", "other.mrpack"} and listed["通天之路 [女仆纪元].zip"]["active"]
+    minecraft.switch_pack(minecraft.SwitchPackRequest(pack_name="other.mrpack"), user=ADMIN)
+    assert (data / "modpack.mrpack").read_bytes() == open(b, "rb").read()
+    minecraft.switch_pack(minecraft.SwitchPackRequest(pack_name="通天之路 [女仆纪元].zip"), user=ADMIN)
+    assert (data / "world" / "level.dat").read_text() == "maid world"
+
+
+@pytest.mark.parametrize("env, make, words", [
+    ({}, lambda p: _mrpack(p / "m.zip"), ("Modrinth", "MC_TYPE")),                       # 一般容器收到 Modrinth 包
+    (MODRINTH_ENV, lambda p: _zip(p / "m.zip", ["mods/a.jar"]), ("modrinth.index.json",)),  # Modrinth 容器收到一般包
+    (MODRINTH_ENV, lambda p: _mrpack(p / "m.zip", mc="1.21.1"), ("1.21.1", "1.20.1")),     # 版本不同
+    (MODRINTH_ENV, lambda p: _mrpack(p / "m.zip", index="{not json"), ("modrinth.index.json",)),
+    ({"TYPE": "MODRINTH", "MODRINTH_MODPACK": ""}, lambda p: _mrpack(p / "m.zip"), ("MODRINTH_MODPACK",)),
+])
+def test_modrinth_mismatch_is_refused_before_stopping(mc, env, make, words):
+    container, data, packs = mc
+    _set_env(container, **env)
+    (data / "world").mkdir()
+    make(packs)
+    with pytest.raises(HTTPException) as e:
+        minecraft.switch_pack(minecraft.SwitchPackRequest(pack_name="m.zip"), user=ADMIN)
+    assert all(w in e.value.detail for w in words), e.value.detail
+    assert container.calls == [] and (data / "world").is_dir()
+
+
+def test_pack_slug_ignores_extension():
+    assert minecraft._pack_slug("abc.mrpack").startswith("abc_")
+    assert minecraft._pack_slug("abc.zip").startswith("abc_")

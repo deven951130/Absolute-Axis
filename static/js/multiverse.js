@@ -454,8 +454,10 @@ window.handleFileSelected = function(input) {
     const file = input.files[0];
     const type = window._mvUploadType;
 
-    if (!file.name.endsWith('.zip')) {
-        toastText("僅接受 .zip 壓縮包！", "warning");
+    // 伺服器包可以是一般的 .zip 或 Modrinth 模組包（.mrpack）；客戶端包給玩家下載，只收 .zip
+    const okExt = type === 'server' ? /\.(zip|mrpack)$/i : /\.zip$/i;
+    if (!okExt.test(file.name)) {
+        toastText(type === 'server' ? "僅接受 .zip 或 .mrpack 模組包" : "僅接受 .zip 壓縮包", "warning");
         return;
     }
 
@@ -494,6 +496,10 @@ window.handleFileSelected = function(input) {
         } else {
             let detail = '上傳失敗';
             try { detail = JSON.parse(xhr.responseText).detail || detail; } catch (_) {}
+            if (xhr.status === 413) {
+                // 經 Cloudflare Tunnel 連線時，免費方案單次上傳上限 100 MB
+                detail = '檔案太大，被連線途中的代理擋下（Cloudflare 上限 100 MB）；請在區網或 Tailscale 用 http://主機 IP:8000 開這個頁面再上傳';
+            }
             toastText(detail, "error");
         }
     });

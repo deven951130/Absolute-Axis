@@ -377,6 +377,14 @@ async def upload_client_pack(file: UploadFile = File(...), user: dict = Depends(
     return {"status": "ok", "filename": file.filename}
 
 
+# 模組包函式庫收的副檔名：一般伺服器包是 .zip；Modrinth 模組包是 .mrpack（也常被改名成 .zip）
+PACK_EXTS = (".zip", ".mrpack")
+
+
+def _is_pack_file(fname: str) -> bool:
+    return fname.lower().endswith(PACK_EXTS)
+
+
 # 各模組包世界資料存放根目錄（LXC 容器上）
 WORLDS_BASE = "/root/minecraft_worlds"
 # MC 的世界目錄名稱清單
@@ -388,8 +396,10 @@ def _pack_slug(pack_name: str) -> str:
     import re
     import hashlib
     slug = pack_name.strip()
-    if slug.lower().endswith(".zip"):
-        slug = slug[:-4]
+    for ext in PACK_EXTS:
+        if slug.lower().endswith(ext):
+            slug = slug[:-len(ext)]
+            break
     safe_slug = re.sub(r'[^a-zA-Z0-9_\-\.]', '', slug)
     md5_hex = hashlib.md5(pack_name.encode('utf-8')).hexdigest()[:8]
     if not safe_slug:
@@ -473,17 +483,30 @@ def _read_marker() -> str:
         return ""
 
 
-def _pack_minecraft_version(zip_path: str) -> str:
-    """從伺服器包內附的 Forge 函式庫路徑看它是哪個 Minecraft 版本；看不出來回傳空字串。"""
+def _pack_info(zip_path: str) -> Tuple[str, str]:
+    """
+    看模組包是哪一種、給哪個 Minecraft 版本，回傳 (格式, 版本)：
+    - "modrinth"：根目錄有 modrinth.index.json（模組由容器依清單下載），版本取 dependencies.minecraft
+    - "generic"：一般伺服器包（直接解壓），版本從內附的 Forge 函式庫路徑判斷
+    看不出版本時版本是空字串。
+    """
     try:
         with zipfile.ZipFile(zip_path) as z:
-            for name in z.namelist():
+            names = z.namelist()
+            if "modrinth.index.json" in names:
+                try:
+                    index = json.loads(z.read("modrinth.index.json"))
+                    version = str((index.get("dependencies") or {}).get("minecraft", "")).strip()
+                except (ValueError, AttributeError):
+                    raise Exception("Modrinth 模組包的 modrinth.index.json 讀不懂")
+                return "modrinth", version
+            for name in names:
                 m = _FORGE_LIB.search(name)
                 if m:
-                    return m.group(1)
+                    return "generic", m.group(1)
     except (OSError, zipfile.BadZipFile):
-        raise Exception("模組包不是有效的 zip 檔")
-    return ""
+        raise Exception("模組包不是有效的 zip／mrpack 檔")
+    return "generic", ""
 
 
 def _container_has_world(pack_name: str) -> bool:
@@ -498,7 +521,9 @@ def _deploy_pack_to_container(local_zip_path: str, reset_world: bool = False):
     1. 檢查容器設定與模組包版本（不符就不動伺服器）
     2. 停止容器（Minecraft 會先存檔）
     3. 把目前的世界搬到 .axis-worlds/{目前包}
-    4. 換掉 GENERIC_PACK 指到的 zip（容器啟動時自動清掉舊包的檔案並解壓新包）
+    4. 換掉容器的模組包檔：一般伺服器包是 GENERIC_PACK（啟動時解壓）；
+       TYPE=MODRINTH 是 MODRINTH_MODPACK（啟動時依清單下載模組、安裝對應的 Forge／Fabric）。
+       兩種都會在啟動時自動清掉舊包的檔案
     5. reset_world=True 就刪掉新包存過的世界；否則搬回來
     6. 啟動容器
     """
@@ -506,20 +531,34 @@ def _deploy_pack_to_container(local_zip_path: str, reset_world: bool = False):
     container = _mc_container()
     env = _container_env(container)
 
-    pack_in_container = env.get("GENERIC_PACK", "").strip()
+    modrinth_mode = env.get("TYPE", "").strip().upper() == "MODRINTH"
+    pack_var, env_name = (("MODRINTH_MODPACK", "MC_MODRINTH_PACK=/data/modpack.mrpack") if modrinth_mode
+                          else ("GENERIC_PACK", "MC_SERVER_PACK=/data/server.zip"))
+    pack_in_container = env.get(pack_var, "").strip()
     level = env.get("LEVEL", "").strip()
     if not pack_in_container.startswith("/data/") or not level or "/" in level or level.startswith("."):
         raise Exception(
-            "容器沒有設定 GENERIC_PACK（.env 的 MC_SERVER_PACK=/data/檔名.zip）或 LEVEL；"
-            "請更新 docker-compose.yml 後執行 docker compose up -d minecraft-server"
+            f"容器沒有設定 {pack_var}（.env 的 {env_name}）或 LEVEL；"
+            "請更新 .env／docker-compose.yml 後執行 docker compose up -d minecraft-server"
         )
     data_dir = os.path.realpath(MC_DATA_DIR)
     pack_target = os.path.realpath(os.path.join(data_dir, pack_in_container[len("/data/"):]))
     if not pack_target.startswith(data_dir + os.sep):
-        raise Exception("GENERIC_PACK 路徑不在資料目錄內")
+        raise Exception(f"{pack_var} 路徑不在資料目錄內")
 
+    pack_format, have = _pack_info(local_zip_path)
+    if pack_format == "modrinth" and not modrinth_mode:
+        raise Exception(
+            "這是 Modrinth 模組包（模組要依清單下載），容器目前設定為一般伺服器包；"
+            "請把 .env 的 MC_TYPE 改成 MODRINTH、設定 MC_MODRINTH_PACK=/data/modpack.mrpack，"
+            "再執行 docker compose up -d minecraft-server"
+        )
+    if pack_format != "modrinth" and modrinth_mode:
+        raise Exception(
+            "容器目前設定為 Modrinth 模式，這個檔案不是 Modrinth 模組包（沒有 modrinth.index.json）；"
+            "要用一般伺服器包，請把 .env 的 MC_TYPE 改回 FORGE（或其他類型）並設定 MC_SERVER_PACK"
+        )
     want = env.get("VERSION", "").strip()
-    have = _pack_minecraft_version(local_zip_path)
     if have and want and want.upper() != "LATEST" and have != want:
         raise Exception(
             f"這個模組包是 Minecraft {have}，容器設定的是 {want}；"
@@ -740,7 +779,7 @@ def _list_packs_container() -> dict:
     live_world = bool(level) and os.path.isdir(os.path.join(MC_DATA_DIR, level))
     packs = []
     for fname in sorted(os.listdir(PACKS_DIR)):
-        if fname.lower().endswith(".zip"):
+        if _is_pack_file(fname):
             packs.append({
                 "name": fname,
                 "size_mb": round(os.path.getsize(os.path.join(PACKS_DIR, fname)) / 1024 / 1024, 1),

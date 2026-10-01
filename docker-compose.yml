@@ -82,6 +82,11 @@ services:
       FORGE_VERSION: "${MC_FORGE_VERSION:-}"
       # 伺服器包 zip（容器內路徑，例如 /data/server.zip）：第一次啟動與 zip 更新時自動解壓到 /data
       GENERIC_PACK: "${MC_SERVER_PACK:-}"
+      # Modrinth 模組包（MC_TYPE=MODRINTH 時用）：容器內路徑，例如 /data/modpack.mrpack；
+      # 啟動時依包內清單下載模組、安裝包指定的 Forge／Fabric，並略過已知的客戶端專用模組
+      MODRINTH_MODPACK: "${MC_MODRINTH_PACK:-}"
+      # 另外不要裝到伺服器上的檔案（逗號分隔，比對檔名的一部分），例如只能在客戶端跑的模組
+      MODRINTH_EXCLUDE_FILES: "${MC_MODRINTH_EXCLUDE:-}"
       # 世界資料夾名稱固定（不受伺服器包內附的 server.properties 影響），多重宇宙頁切換模組包時靠它搬世界
       LEVEL: "${MC_LEVEL:-world}"
       # 堆積上限要比容器記憶體上限少 1.5 GB 左右，留給 JVM 本身，否則會被 OOM 砍掉
