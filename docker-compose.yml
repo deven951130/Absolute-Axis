@@ -87,6 +87,8 @@ services:
       # 容器內的連接埠固定 25565（上面 ports 對應的就是它）：伺服器包常附自己的 server.properties，
       # 裡面的 server-port 若是別的數字，伺服器會開在對外連不到的埠上
       SERVER_PORT: "25565"
+      # 正版驗證（.env 的 MC_ONLINE_MODE，預設 TRUE）：伺服器包常把 online-mode 關掉，關掉時任何人都能用任意名字進服
+      ONLINE_MODE: "${MC_ONLINE_MODE:-TRUE}"
       # 堆積上限要比容器記憶體上限少 1.5 GB 左右，留給 JVM 本身，否則會被 OOM 砍掉
       INIT_MEMORY: "4G"
       MAX_MEMORY: "9G"
