@@ -76,8 +76,19 @@ async function loadMultiverseInfo() {
 /**
  * 渲染伺服器狀態至各 DOM 元素。
  */
+// 分鐘數 → 「3 小時 20 分」
+function _mvDuration(min) {
+    const m = Math.max(0, Math.round(Number(min) || 0));
+    const h = Math.floor(m / 60);
+    return h ? `${h} 小時 ${m % 60} 分` : `${m} 分`;
+}
+
 function _mvRenderStatus(data) {
     const online = data.online;
+    // 省電（autopause）：沒人玩一段時間後暫停，有人連線就醒來（DeviceHub FR-19c）
+    const power = data.power || {};
+    const paused = power.state === 'paused';
+    const saved = power.week ? `本週省電 ${_mvDuration(power.week.paused_min)}（今天 ${_mvDuration(power.today.paused_min)}）` : '';
 
     // --- 頂部橫幅 ---
     const dot = document.getElementById('mv-banner-dot');
@@ -85,11 +96,18 @@ function _mvRenderStatus(data) {
     const sub = document.getElementById('mv-banner-sub');
     const banner = document.getElementById('mv-status-banner');
 
-    if (online) {
+    if (paused) {
+        dot.style.background = 'var(--accent-color)';
+        dot.style.boxShadow = '0 0 8px color-mix(in srgb, var(--accent-color) 60%, transparent)';
+        title.textContent = 'Minecraft 伺服器省電中';
+        sub.textContent = `沒有玩家，已自動暫停；有人連線就會醒來。${saved}`;
+    } else if (online) {
         dot.style.background = 'var(--success-color)';
         dot.style.boxShadow = '0 0 8px color-mix(in srgb, var(--success-color) 70%, transparent)';
         title.textContent = 'Minecraft 伺服器運作中';
-        sub.textContent = '連線正常，Java 版伺服器執行中';
+        sub.textContent = power.autopause
+            ? `連線正常；沒人玩一段時間會自動省電。${saved}`
+            : '連線正常，Java 版伺服器執行中';
     } else {
         dot.style.background = 'var(--danger-color)';
         dot.style.boxShadow = '0 0 8px color-mix(in srgb, var(--danger-color) 70%, transparent)';
@@ -126,7 +144,13 @@ function _mvRenderStatus(data) {
     // --- 脈搏狀態環 ---
     const ring = document.getElementById('mv-pulse-ring');
     const ringLabel = document.getElementById('mv-pulse-label');
-    if (online) {
+    if (paused) {
+        ring.style.border = '3px solid var(--accent-color)';
+        ring.style.boxShadow = 'none';
+        ring.style.animation = 'none';
+        ringLabel.textContent = '省電中';
+        ringLabel.style.color = 'var(--accent-color)';
+    } else if (online) {
         ring.style.border = '3px solid var(--success-color)';
         ring.style.boxShadow = '0 0 12px color-mix(in srgb, var(--success-color) 50%, transparent)';
         ring.style.animation = 'mv-pulse-anim 2s infinite';

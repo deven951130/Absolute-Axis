@@ -125,7 +125,12 @@ async function pollSensors() {
                 const mcCfg = document.getElementById('mc-config');
 
                 if (mcStatus) {
-                    if (d.minecraft.online) {
+                    if (d.minecraft.paused) {
+                        // 沒人玩、自動暫停省電中；有人連線就會醒來（DeviceHub FR-19c）
+                        mcStatus.innerText = '◐ 省電中（有人連線就會醒來）';
+                        mcStatus.style.background = 'var(--accent-color)';
+                        mcStatus.style.color = 'var(--on-accent)';
+                    } else if (d.minecraft.online) {
                         mcStatus.innerText = '● 連線中 (Online)';
                         mcStatus.style.background = 'var(--success-color)';
                         mcStatus.style.color = 'var(--on-accent)';

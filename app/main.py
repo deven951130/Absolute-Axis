@@ -51,6 +51,10 @@ except Exception as e:
 
 init_db_user()
 
+# Minecraft 省電成效：容器模式時每分鐘記錄一次狀態（DeviceHub spec/power-saving.md §6.3）
+if minecraft.MC_CONTAINER:
+    minecraft.start_power_logger()
+
 
 
 # CORS - 讀取環境變數 ALLOWED_ORIGINS，預設值為 * 向下相容
