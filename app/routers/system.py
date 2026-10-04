@@ -15,7 +15,7 @@ from app.models import MessageRequest
 from app.utils import get_current_user_obj, log_event, get_dir_size, require_admin
 from app.config import SYS_ROOT, NAS_ROOT, BLYNK_TOKEN, BASE_PATH
 from app.database import get_db, AuditLog
-from app.routers.minecraft import MC_LXC_IP, MC_LXC_PORT
+from app.routers.minecraft import MC_LXC_IP, MC_LXC_PORT, mc_paused
 
 router = APIRouter(tags=["system"])
 
@@ -195,13 +195,18 @@ def get_sensors(user: dict = Depends(get_current_user_obj)):
 
     mc_online = False
     mc_specs = {"ram": "16GB", "cores": 8}
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(0.2)
-            if MC_LXC_IP and s.connect_ex((MC_LXC_IP, MC_LXC_PORT)) == 0:
-                mc_online = True
-    except:
-        pass
+    # 省電中（autopause）連遊戲埠會把伺服器叫醒 → 只看狀態，不連線
+    mc_is_paused = mc_paused()
+    if mc_is_paused:
+        mc_online = True
+    else:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(0.2)
+                if MC_LXC_IP and s.connect_ex((MC_LXC_IP, MC_LXC_PORT)) == 0:
+                    mc_online = True
+        except:
+            pass
 
     is_admin = user.get("role") in ("admin", "Administrator")
     display_ip = public_ip if is_admin else mask_ip(public_ip)
@@ -213,6 +218,7 @@ def get_sensors(user: dict = Depends(get_current_user_obj)):
             "online": mc_online,
             "ip": display_ip,
             "port": MC_LXC_PORT,
+            "paused": mc_is_paused,
             "specs": mc_specs
         }
     }

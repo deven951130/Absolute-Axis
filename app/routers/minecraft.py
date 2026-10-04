@@ -1,4 +1,6 @@
 import socket
+import threading
+import time
 import paramiko
 import os
 import re
@@ -9,11 +11,12 @@ import requests
 from typing import Tuple
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.models import MCCommandRequest
 from app.utils import get_current_user_obj, log_event
 from app.config import BASE_PATH
+from app.database import SessionLocal, MCPowerDaily
 
 router = APIRouter(prefix="/api/minecraft", tags=["minecraft"])
 
@@ -116,6 +119,125 @@ def _container_status() -> Tuple[str, str, dict]:
     return ("Running" if running else "N/A"), java_version, specs
 
 
+# ---------- 省電：autopause（DeviceHub spec/power-saving.md §6，FR-19c） ----------
+# itzg 映像在 0 位玩家一段時間後凍結 Java 程序，並在資料目錄建立 .paused；
+# 有人連線（遊戲埠或 rcon 埠在容器網卡收到連線）就自動恢復並刪除 .paused。
+# Axis 只看這個檔案判斷，不碰遊戲埠、不送 rcon——否則每次查狀態都會把伺服器叫醒（R-09）。
+PAUSED_FLAG = ".paused"
+RESUME_SCRIPT = "/image/scripts/auto/resume.sh"
+_power_cache = {"t": 0.0, "v": "unknown"}
+
+
+def _started_ts(state: dict) -> float:
+    """容器 StartedAt（RFC3339，奈秒）→ Unix 秒；解析失敗回 0。"""
+    raw = str(state.get("StartedAt") or "")
+    try:
+        base, _, frac = raw.rstrip("Z").partition(".")
+        ts = datetime.strptime(base, "%Y-%m-%dT%H:%M:%S")
+        return (ts - datetime(1970, 1, 1)).total_seconds() + float(f"0.{frac or 0}")
+    except ValueError:
+        return 0.0
+
+
+def _flag_is_current(state: dict) -> bool:
+    """.paused 存在，且比這次容器啟動還新（容器在暫停中被停掉時，舊旗標會留在資料目錄）。"""
+    flag = os.path.join(MC_DATA_DIR, PAUSED_FLAG)
+    try:
+        return os.path.getmtime(flag) >= _started_ts(state)
+    except OSError:
+        return False
+
+
+def mc_power_state(max_age: float = 10.0) -> str:
+    """容器模式的 Minecraft 狀態：running／paused／stopped；不是容器模式或查不到時回 unknown。結果快取 max_age 秒。"""
+    if not MC_CONTAINER:
+        return "unknown"
+    now = time.monotonic()
+    if max_age and now - _power_cache["t"] < max_age:
+        return _power_cache["v"]
+    try:
+        state = _mc_container().attrs.get("State", {})
+    except Exception:
+        value = "unknown"
+    else:
+        if not state.get("Running"):
+            value = "stopped"
+        else:
+            value = "paused" if _flag_is_current(state) else "running"
+    _power_cache.update(t=now, v=value)
+    return value
+
+
+def mc_paused() -> bool:
+    return mc_power_state() == "paused"
+
+
+def _resume_if_paused(container) -> bool:
+    """管理員主動操作（送指令、切換模組包）前先叫醒；暫停中被停止的伺服器要等 60 秒才會被強制結束。回傳有沒有叫醒。"""
+    if mc_power_state(max_age=0) != "paused":
+        return False
+    _container_exec(container, [RESUME_SCRIPT])
+    _power_cache.update(t=0.0)
+    return True
+
+
+def record_power_minute(state: str, day: str = "") -> None:
+    """把這一分鐘記到 mc_power_daily（state ∈ running／paused／stopped；其他忽略）。"""
+    column = {"running": "running_min", "paused": "paused_min", "stopped": "stopped_min"}.get(state)
+    if not column:
+        return
+    day = day or datetime.now().strftime("%Y-%m-%d")
+    db = SessionLocal()
+    try:
+        row = db.get(MCPowerDaily, day)
+        if row is None:
+            row = MCPowerDaily(day=day, running_min=0, paused_min=0, stopped_min=0)
+            db.add(row)
+        setattr(row, column, (getattr(row, column) or 0) + 1)
+        db.commit()
+    finally:
+        db.close()
+
+
+def power_summary(today: str = "") -> dict:
+    """今天與最近 7 天（含今天）各狀態的分鐘數。"""
+    today_d = datetime.strptime(today, "%Y-%m-%d") if today else datetime.now()
+    days = [(today_d - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
+    db = SessionLocal()
+    try:
+        rows = {r.day: r for r in db.query(MCPowerDaily).filter(MCPowerDaily.day.in_(days)).all()}
+    finally:
+        db.close()
+
+    def pick(keys):
+        out = {"running_min": 0, "paused_min": 0, "stopped_min": 0}
+        for k in keys:
+            r = rows.get(k)
+            if r:
+                for f in out:
+                    out[f] += getattr(r, f) or 0
+        return out
+
+    return {"today": pick(days[:1]), "week": pick(days)}
+
+
+def start_power_logger(interval: float = 60.0, stop: threading.Event = None) -> threading.Thread:
+    """每分鐘記錄一次狀態（只讀容器狀態與 .paused，不會叫醒伺服器）。stop 給測試用來結束迴圈。"""
+    stop = stop or threading.Event()
+
+    def loop():
+        while not stop.is_set():
+            try:
+                record_power_minute(mc_power_state(max_age=0))
+            except Exception as e:
+                print(f"[MC power] 記錄失敗：{e}")
+            stop.wait(interval)
+
+    t = threading.Thread(target=loop, name="mc-power-logger", daemon=True)
+    t.start()
+    return t
+
+
 def mask_ip(ip: str) -> str:
     if not ip or ip == "Unknown":
         return ip
@@ -130,8 +252,10 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
     """
     取得 Minecraft 伺服器詳細狀態。
     包含連線狀態、設定規格、LAN/WAN 連線資訊。
+    省電中（autopause）不連遊戲埠，免得把伺服器叫醒。
     """
-    online = _check_online()
+    power = mc_power_state(max_age=0)
+    online = True if power == "paused" else _check_online()
 
     # 若伺服器在線，嘗試讀取運行資訊
     uptime_str = "N/A"
@@ -147,6 +271,8 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
             uptime_str, java_version, specs = _container_status()
         except Exception:
             specs = {"ram": "--", "jvm_heap": "--", "cpu_threads": 0, "container": f"Docker {MC_CONTAINER}"}
+        if power == "paused":
+            uptime_str = "省電中（有人連線就會醒來）"
     elif online:
         try:
             # 讀取 screen session 是否存在
@@ -194,7 +320,25 @@ def get_mc_status(user: dict = Depends(get_current_user_obj)):
             "address_ddns": f"{MC_PUBLIC_HOST}:{MC_LXC_PORT}" if MC_PUBLIC_HOST else "--"
         },
         "specs": specs,
+        "power": _power_payload(power),
     }
+
+
+def _power_payload(state: str) -> dict:
+    """狀態＋今天／本週分鐘數；資料庫讀不到時只回狀態。"""
+    payload = {"state": state, "autopause": False}
+    if not MC_CONTAINER:
+        return payload
+    try:
+        env = _container_env(_mc_container())
+        payload["autopause"] = env.get("ENABLE_AUTOPAUSE", "").strip().lower() in ("true", "1", "yes")
+    except Exception:
+        pass
+    try:
+        payload.update(power_summary())
+    except Exception:
+        pass
+    return payload
 
 # Dynu DDNS 自動更新背景背景程序
 import os
@@ -255,7 +399,9 @@ def send_mc_command(req: MCCommandRequest, user: dict = Depends(get_current_user
         if not rcon_command:
             raise HTTPException(status_code=400, detail="指令不得為空")
         try:
-            out = _container_exec(_mc_container(), ["rcon-cli", rcon_command])
+            container = _mc_container()
+            _resume_if_paused(container)   # 省電中的伺服器收不到 rcon（容器內的連線不會觸發喚醒）
+            out = _container_exec(container, ["rcon-cli", rcon_command])
         except HTTPException:
             raise
         except Exception as e:
@@ -526,6 +672,8 @@ def _deploy_pack_to_container(local_zip_path: str, reset_world: bool = False):
             "請先改 .env 的 MC_VERSION／MC_FORGE_VERSION 並執行 docker compose up -d minecraft-server"
         )
 
+    # 省電中直接停止的話，Java 收不到 stop、60 秒後被強制結束 → 先叫醒，讓它正常存檔關機
+    _resume_if_paused(container)
     container.stop(timeout=120)
 
     store = os.path.join(data_dir, WORLD_STORE)

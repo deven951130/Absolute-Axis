@@ -32,6 +32,14 @@ class AuditLog(Base):
     username = Column(String, index=True)
     action = Column(String, nullable=False)
 
+class MCPowerDaily(Base):
+    """Minecraft 每天處於各狀態的分鐘數（省電成效；DeviceHub spec/power-saving.md §6.3）。"""
+    __tablename__ = "mc_power_daily"
+    day = Column(String, primary_key=True)        # YYYY-MM-DD（容器時區 Asia/Taipei）
+    running_min = Column(Integer, default=0)
+    paused_min = Column(Integer, default=0)
+    stopped_min = Column(Integer, default=0)
+
 class FileStar(Base):
     __tablename__ = "file_stars"
     id = Column(Integer, primary_key=True, index=True)

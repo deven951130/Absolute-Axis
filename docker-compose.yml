@@ -72,6 +72,9 @@ services:
     profiles: ["minecraft"]
     container_name: axis-mc
     restart: unless-stopped
+    # autopause 的喚醒程式（knockd）要監聽網卡封包
+    cap_add:
+      - CAP_NET_RAW
     ports:
       - "25565:25565"
     environment:
@@ -95,6 +98,11 @@ services:
       USE_AIKAR_FLAGS: "true"
       # 大型模組包載入很久：停用內建 watchdog（max-tick-time=-1），避免被判定卡死而強制結束（見 UPDATE_LOG）
       MAX_TICK_TIME: "-1"
+      # 省電（DeviceHub FR-19c）：0 位玩家滿 MC_AUTOPAUSE_SECONDS 秒（預設 900＝15 分鐘）暫停 Java 程序，
+      # 有人連線就自動恢復；暫停時 CPU 幾乎歸零、記憶體保留。MC_AUTOPAUSE=FALSE 可關閉
+      ENABLE_AUTOPAUSE: "${MC_AUTOPAUSE:-TRUE}"
+      AUTOPAUSE_TIMEOUT_EST: "${MC_AUTOPAUSE_SECONDS:-900}"
+      AUTOPAUSE_TIMEOUT_INIT: "${MC_AUTOPAUSE_SECONDS:-900}"
     deploy:
       resources:
         limits:
