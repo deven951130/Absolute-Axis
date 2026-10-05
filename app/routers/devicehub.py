@@ -170,6 +170,55 @@ def _read_get(path: str, timeout: float = 8) -> dict:
     return {"ok": True, **data} if isinstance(data, dict) else _fail("bad_response")
 
 
+# ---------- 省電摘要（DeviceHub integration-api §3.1b、power-saving §5.2；唯讀） ----------
+# 規則只能在 DeviceHub 網頁改；這裡只顯示。另外附上 Axis 自己記錄的 Minecraft 省電分鐘數（§6.3）。
+_POWER_CACHE_SECONDS = 30
+_power_cache = {"ts": 0.0, "data": None}
+_POWER_RULE_KEYS = ("id", "name", "target_name", "action", "days", "time", "enabled", "next_run_at",
+                    "last_result", "state")
+_POWER_RUN_KEYS = ("rule_name", "started_at", "finished_at", "result", "detail")
+
+
+def _pick(items, keys) -> list:
+    return [{k: x.get(k) for k in keys} for x in (items or []) if isinstance(x, dict)]
+
+
+def _power_savings(s) -> dict | None:
+    if not isinstance(s, dict):
+        return None
+    return {"days": [d for d in s.get("days") or [] if isinstance(d, str)],
+            "targets": _pick(s.get("targets"), ("target_name", "off_h_total", "est_kwh_saved")),
+            "cpu_energy": _pick(s.get("cpu_energy"), ("name", "kwh", "kwh_total"))}
+
+
+def _minecraft_power() -> dict | None:
+    try:
+        from app.routers import minecraft
+        if not minecraft.MC_CONTAINER:
+            return None
+        s = minecraft.power_summary()
+        return {"today_paused_min": s["today"]["paused_min"], "week_paused_min": s["week"]["paused_min"]}
+    except Exception:  # noqa: BLE001 - optional extra; never break the DeviceHub card
+        return None
+
+
+@router.get("/api/devicehub/power")
+def devicehub_power(user: dict = Depends(require_admin)):
+    now = time.time()
+    if _power_cache["data"] is not None and now - _power_cache["ts"] < _POWER_CACHE_SECONDS:
+        return _power_cache["data"]
+    raw = _read_get("/api/v1/power/summary")
+    if raw.get("ok"):
+        data = {"ok": True, "rules": _pick(raw.get("rules"), _POWER_RULE_KEYS),
+                "paused_until": raw.get("paused_until") if isinstance(raw.get("paused_until"), int) else 0,
+                "runs": _pick(raw.get("runs"), _POWER_RUN_KEYS), "savings": _power_savings(raw.get("savings"))}
+    else:
+        data = raw  # {"ok": False, "error": ...}：舊版 DeviceHub 沒有這個端點時是 http_404
+    data["minecraft"] = _minecraft_power()
+    _power_cache.update(ts=now, data=data)
+    return data
+
+
 @router.get("/api/devicehub/history/{device_id}/fields")
 def devicehub_history_fields(device_id: str, user: dict = Depends(require_admin)):
     if not _DEVICE_ID.match(device_id):

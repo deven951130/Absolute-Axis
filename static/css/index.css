@@ -1940,6 +1940,15 @@ select.t-input option { background: var(--card-solid); color: var(--text-main); 
 .dh-vm-row[data-running="false"] .dh-vm-name b { color: var(--dh-text); }
 
 .dh-alert-list { list-style: none; margin: 0; padding: 4px 22px; display: flex; flex-direction: column; }
+/* 省電（DeviceHub FR-19，唯讀） */
+.dh-power-hint { font-family: inherit; font-size: 0.8rem; font-weight: 400; color: var(--dh-muted); }
+.dh-power { padding: 14px 22px; display: flex; flex-direction: column; gap: 8px; }
+.dh-power-status { margin: 0; font-weight: 600; }
+.dh-power-rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.dh-power-rules li { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--dh-line); font-size: 0.9rem; }
+.dh-power-rules li:last-child { border-bottom: none; }
+.dh-power-rules li[data-enabled="false"] { opacity: .6; }
+.dh-power-saved { margin: 0; font-size: 0.85rem; }
 .dh-alert-list li { display: flex; gap: 16px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--dh-line); font-size: 0.9rem; }
 .dh-alert-list li:last-child { border-bottom: none; }
 .dh-alert-list time { font-family: var(--dh-mono); font-size: 0.75rem; color: var(--dh-muted); white-space: nowrap; flex: none; }

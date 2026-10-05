@@ -285,3 +285,37 @@ def test_account_delete_sends_confirm(dh):
     assert calls[0]["method"] == "DELETE" and calls[0]["json"] == {"confirm": True}
     r = c.request("DELETE", "/api/devicehub/accounts/node1", headers=ADMIN)
     assert calls[1]["json"] == {"confirm": False}
+
+
+# ---------- 省電摘要（DeviceHub FR-19，integration-api §3.1b；唯讀） ----------
+def test_power_summary_proxies_whitelisted_fields(dh):
+    c, calls, state = dh
+    devicehub._power_cache.update(ts=0.0, data=None)
+    state["resp"] = Resp(200, {
+        "rules": [{"id": "r-1", "name": "夜間", "target_name": "桌機", "action": "host.shutdown", "days": "12345",
+                   "time": "02:00", "enabled": True, "next_run_at": 1, "last_result": None, "state": None,
+                   "created_by": "owner", "secret": "x"}],
+        "paused_until": 0, "runs": [{"rule_name": "夜間", "started_at": 1, "finished_at": 2, "result": "ok",
+                                     "detail": None, "extra": 1}],
+        "savings": {"days": ["2026-10-05"], "targets": [{"target_name": "桌機", "off_h_total": 5.0,
+                                                         "est_kwh_saved": 0.3, "watts": {"on": 60}}],
+                    "cpu_energy": [{"name": "pve-host", "kwh": [0.5], "kwh_total": 0.5, "device_id": "pve-host"}]}})
+    r = c.get("/api/devicehub/power", headers=ADMIN).json()
+    assert calls[0]["url"] == "http://192.168.0.50:8080/api/v1/power/summary"
+    assert calls[0]["headers"] == {"Authorization": "Bearer read-tok"}
+    assert r["ok"] is True and r["rules"][0]["name"] == "夜間"
+    assert "created_by" not in r["rules"][0] and "secret" not in r["rules"][0] and "extra" not in r["runs"][0]
+    assert "watts" not in r["savings"]["targets"][0] and "device_id" not in r["savings"]["cpu_energy"][0]
+    assert "minecraft" in r
+    c.get("/api/devicehub/power", headers=ADMIN)
+    assert len(calls) == 1                                   # cached 30 s
+
+
+def test_power_summary_old_hub_and_admin_only(dh):
+    c, calls, state = dh
+    devicehub._power_cache.update(ts=0.0, data=None)
+    assert c.get("/api/devicehub/power", headers={"Authorization": "Bearer member"}).status_code == 403
+    assert calls == []
+    state["resp"] = Resp(404, {"detail": "Not Found"})       # DeviceHub without FR-19
+    r = c.get("/api/devicehub/power", headers=ADMIN).json()
+    assert r["ok"] is False and r["error"] == "http_404"

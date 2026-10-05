@@ -289,6 +289,7 @@ async function loadDeviceHub(force = false) {
         home.hidden = false;
         if (legacy) legacy.hidden = true;
         _dhRender();
+        _dhLoadPower();
     } catch (e) {
         // authFetch 已顯示網路錯誤
     } finally {
@@ -514,6 +515,83 @@ function _dhRenderAlerts() {
         _dhEl('time', { text: _dhStamp(a.ts), title: new Date(a.ts * 1000).toLocaleString('zh-TW', { hour12: false }) }),
         _dhEl('span', { class: 'dh-msg', text: a.message }))));
     if (!alerts.length) list.append(_dhEl('li', { class: 'dh-calm', text: '目前沒有告警，一切安好。' }));
+}
+
+// ---------- 省電（DeviceHub FR-19；唯讀，30 秒更新一次） ----------
+
+const _DH_POWER_ACTIONS = {
+    'host.sleep': '睡眠', 'host.shutdown': '關機', 'host.wake': '開機（WOL）', 'pve.shutdown': '關機', 'pve.start': '開機',
+};
+const _DH_POWER_RESULTS = {
+    ok: '成功', error: '失敗', expired: '逾時', unknown: '中斷', cancelled: '已取消',
+    skipped_busy: '略過（使用中）', skipped_offline: '略過（本來就關著）', skipped_online: '略過（本來就開著）',
+};
+const _DH_DAYS = ['一', '二', '三', '四', '五', '六', '日'];
+
+function _dhPowerDays(days) {
+    if (!days) return '閒置時';
+    if (days === '1234567') return '每天';
+    if (days === '12345') return '週一～五';
+    if (days === '67') return '週六、日';
+    return '週' + [...days].map((d) => _DH_DAYS[Number(d) - 1] || '').join('、');
+}
+
+function _dhWhen(ts) {
+    return new Date(ts * 1000).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+async function _dhLoadPower(force = false) {
+    const now = Date.now();
+    if (!force && DH.powerAt && now - DH.powerAt < 30000) return;
+    DH.powerAt = now;
+    try {
+        const r = await authFetch('/api/devicehub/power');
+        DH.power = r.ok ? await r.json() : null;
+    } catch (e) {
+        DH.power = null;
+    }
+    _dhRenderPower();
+}
+
+function _dhRenderPower() {
+    const sec = document.getElementById('dh-power-sec');
+    if (!sec) return;
+    const p = DH.power;
+    const ok = !!(p && p.ok);
+    const rules = ok ? p.rules || [] : [];
+    const saved = ok && p.savings ? p.savings : { targets: [], cpu_energy: [] };
+    const mc = p && p.minecraft;
+    sec.hidden = !(rules.length || saved.targets.length || saved.cpu_energy.length || mc);
+    if (sec.hidden) return;
+
+    const paused = ok && p.paused_until > Date.now() / 1000;
+    const on = rules.filter((r) => r.enabled).length;
+    document.getElementById('dh-power-status').textContent = !ok ? 'DeviceHub 的省電資料暫時讀不到。'
+        : paused ? `省電自動化已暫停，${_dhWhen(p.paused_until)} 自動恢復。`
+        : `省電自動化運作中・${on} / ${rules.length} 條規則啟用`;
+
+    document.getElementById('dh-power-rules').replaceChildren(...rules.map((r) => {
+        const meta = [];
+        if (r.state === 'notice') meta.push('預告中');
+        else if (r.state === 'waiting') meta.push('等待閒置');
+        if (!r.enabled) meta.push('已停用');
+        else if (r.next_run_at) meta.push(`下次 ${_dhWhen(r.next_run_at)}`);
+        if (r.last_result) meta.push(`上次：${_DH_POWER_RESULTS[r.last_result] || r.last_result}`);
+        return _dhEl('li', { 'data-enabled': String(!!r.enabled) },
+            _dhEl('b', { text: r.name || '' }),
+            _dhEl('span', { text: `${_dhPowerDays(r.days)}${r.time ? ` ${r.time}` : ''}・${r.target_name || ''} → ${_DH_POWER_ACTIONS[r.action] || r.action || ''}` }),
+            _dhEl('span', { class: 'dh-muted', text: meta.join('・') }));
+    }));
+
+    const parts = [];
+    for (const t of saved.targets) {
+        let s = `${t.target_name} 省電 ${Number(t.off_h_total || 0).toFixed(0)} 小時`;
+        if (t.est_kwh_saved != null) s += `（約 ${Number(t.est_kwh_saved).toFixed(1)} kWh）`;
+        parts.push(s);
+    }
+    if (mc) parts.push(`Minecraft 暫停 ${(mc.week_paused_min / 60).toFixed(0)} 小時`);
+    for (const c of saved.cpu_energy) parts.push(`${c.name} CPU 耗電 ${Number(c.kwh_total || 0).toFixed(1)} kWh`);
+    document.getElementById('dh-power-saved').textContent = parts.length ? `最近 7 天：${parts.join('・')}` : '';
 }
 
 // ---------- 總覽頁的小工具（只給管理員）：快速控制、設備 ----------
