@@ -114,11 +114,20 @@ def get_current_user_obj_optional(authorization: str = Header(None), db: Session
         return None
 
 def safe_path(rel: str, username: str):
-    base = os.path.abspath(os.path.join(NAS_ROOT, username))
-    if not os.path.exists(base): 
+    """使用者私有雲裡的路徑；跳出 NAS_ROOT/<username> 一律 403。"""
+    nas_root = os.path.abspath(NAS_ROOT)
+    base = os.path.abspath(os.path.join(nas_root, username))
+    if os.path.dirname(base) != nas_root:  # 帳號名稱本身含 .. 或 /
+        raise HTTPException(status_code=403)
+    if not os.path.exists(base):
         os.makedirs(base)
-    p = os.path.abspath(os.path.join(base, rel.lstrip("/")))
-    if not p.startswith(base): 
+    try:
+        p = os.path.abspath(os.path.join(base, rel.lstrip("/")))
+        # 要比對整段目錄，不能用字串 startswith：帳號 ad 的 ../admin/x 也以 NAS_ROOT/ad 開頭
+        inside = os.path.commonpath([base, p]) == base
+    except ValueError:  # Windows 不同磁碟機、路徑含 NUL 字元
+        inside = False
+    if not inside:
         raise HTTPException(status_code=403)
     return p
 

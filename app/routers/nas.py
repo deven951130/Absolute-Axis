@@ -153,10 +153,28 @@ def share_file(req: ShareRequest, user: dict = Depends(get_current_user_obj), db
     return {"status": "ok"}
 
 
+def _trash_item(username: str, path: str) -> str:
+    """垃圾桶裡的項目（只取最後一段名稱）。
+
+    名稱是 "" / "." / ".." 時會指到垃圾桶本身或上一層（所有人的垃圾桶），一律拒絕。
+    """
+    name = os.path.basename(path)
+    if name in ("", ".", ".."):
+        raise HTTPException(status_code=400, detail="名稱不正確")
+    return os.path.join(NAS_ROOT, ".trash", username, name)
+
+
+def _not_drive_root(p: str, username: str) -> str:
+    """不能把整個雲端硬碟丟進垃圾桶或刪除。"""
+    if p == safe_path("", username):
+        raise HTTPException(status_code=400, detail="不能對整個雲端硬碟執行這個操作")
+    return p
+
+
 @router.post("/trash")
 def move_to_trash(req: ToggleRequest, user: dict = Depends(get_current_user_obj)):
     u = user["username"]
-    src = safe_path(req.path, u)
+    src = _not_drive_root(safe_path(req.path, u), u)
     dst_dir = os.path.join(NAS_ROOT, ".trash", u)
     if not os.path.exists(dst_dir): 
         os.makedirs(dst_dir, mode=0o700)
@@ -172,12 +190,13 @@ def move_to_trash(req: ToggleRequest, user: dict = Depends(get_current_user_obj)
 @router.post("/restore")
 def restore_from_trash(req: ToggleRequest, user: dict = Depends(get_current_user_obj)):
     u = user["username"]
-    trash_src = os.path.join(NAS_ROOT, ".trash", u, os.path.basename(req.path))
+    trash_src = _trash_item(u, req.path)
+    name = os.path.basename(trash_src)
     user_root = safe_path("", u)
-    dst = os.path.join(user_root, os.path.basename(req.path))
+    dst = os.path.join(user_root, name)
     if os.path.exists(trash_src):
-        if os.path.exists(dst): 
-            dst = os.path.join(user_root, f"restored_{os.path.basename(req.path)}")
+        if os.path.exists(dst):
+            dst = os.path.join(user_root, f"restored_{name}")
         shutil.move(trash_src, dst)
     return {"status": "ok"}
 
@@ -221,8 +240,8 @@ def download_nas(path: str, owner: Optional[str] = None, user: dict = Depends(ge
 @router.post("/delete")
 def delete_nas(req: ToggleRequest, user: dict = Depends(get_current_user_obj)):
     u = user["username"]
-    trash_path = os.path.join(NAS_ROOT, ".trash", u, os.path.basename(req.path))
-    p = trash_path if os.path.exists(trash_path) else safe_path(req.path, u)
+    trash_path = _trash_item(u, req.path)
+    p = trash_path if os.path.exists(trash_path) else _not_drive_root(safe_path(req.path, u), u)
     if os.path.exists(p):
         if os.path.isdir(p): shutil.rmtree(p)
         else: os.remove(p)
