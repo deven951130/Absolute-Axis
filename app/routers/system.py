@@ -1,5 +1,7 @@
 import os
+import re
 import json
+import subprocess
 import requests
 import psutil
 import socket
@@ -281,101 +283,366 @@ def get_services(user: dict = Depends(get_current_user_obj)):
     return res
 
 
+# ==================== NAS 管理：硬碟、儲存池（/api/system/hardware） ====================
+# 只讀資料、不改任何設定。主控台通常跑在容器裡（privileged、掛 /dev），所以：
+# - 看得到所有硬碟（lsblk、smartctl 走 /dev），/proc/mdstat 是主機核心的；
+# - 但看不到主機自己掛載的檔案系統（掛載點在主機的 mount namespace），這種分割區算不出已用空間，畫面上會說明原因。
+
+HW_CMD_TIMEOUT = 15
+DOCKER_USAGE_TTL = 300
+BTRFS_SYSFS = "/sys/fs/btrfs"
+_DOCKER_USAGE_CACHE = {"ts": 0.0, "bytes": None}
+
+# 屬於儲存池成員的檔案系統：本身不會被掛載，不算「主機另外掛載」
+POOL_MEMBER_FSTYPES = {"linux_raid_member", "zfs_member", "LVM2_member", "swap", "crypto_LUKS"}
+_STANDBY_RE = re.compile(r"in (STANDBY|SLEEP) mode", re.IGNORECASE)
+# SSD 剩餘壽命（ATA 屬性的正規化值就是剩餘 %）：各廠商用的編號不同
+SSD_LIFE_ATTR_IDS = (231, 169, 202, 233, 177)
+
+
+def _run_cmd(argv, timeout=HW_CMD_TIMEOUT):
+    """執行指令，回傳 (exit code, stdout)；指令不存在或逾時回傳 None。"""
+    try:
+        p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+        return p.returncode, p.stdout
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return None
+
+
+def _read_text(path):
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
+def _in_container() -> bool:
+    return os.path.exists("/.dockerenv") or os.path.exists("/run/.containerenv")
+
+
+def _as_bool(v):
+    """lsblk 舊版輸出 "0"/"1"，新版輸出 true/false。"""
+    if isinstance(v, bool):
+        return v
+    if v in ("1", 1):
+        return True
+    if v in ("0", 0):
+        return False
+    return None
+
+
+def _as_int(v):
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _lsblk_devices():
+    out = _run_cmd(["lsblk", "-J", "-b", "-o",
+                    "NAME,SIZE,TYPE,ROTA,TRAN,MOUNTPOINT,FSTYPE,UUID,LABEL,MODEL,SERIAL,VENDOR"])
+    if not out or out[0] != 0:
+        return None
+    try:
+        return json.loads(out[1]).get("blockdevices", [])
+    except ValueError:
+        return None
+
+
+def _walk(dev):
+    yield dev
+    for child in dev.get("children") or []:
+        yield from _walk(child)
+
+
+def _disk_usage(dev):
+    """看得到的掛載點的已用空間；回傳 (used_bytes, size_of_visible, mounts, hidden 分割區數)。"""
+    used = size = 0
+    mounts, hidden = [], 0
+    for item in _walk(dev):
+        mp = item.get("mountpoint")
+        fstype = item.get("fstype")
+        if mp and mp != "[SWAP]":
+            mounts.append(mp)
+            try:
+                u = shutil.disk_usage(mp)
+                used += u.used
+                size += u.total
+            except OSError:
+                pass
+        elif fstype and fstype not in POOL_MEMBER_FSTYPES:
+            hidden += 1
+    return used, size, mounts, hidden
+
+
+def _smart_attr(table, attr_id):
+    for attr in table:
+        if attr.get("id") == attr_id:
+            return attr
+    return None
+
+
+def parse_smart(sj: dict) -> dict:
+    """從 smartctl --json 取重點屬性；拿不到的欄位是 None。"""
+    smart = {"reallocated": None, "pending": None, "power_on_hours": None, "life_left": None, "temp": None}
+    temp = (sj.get("temperature") or {}).get("current")
+    hours = (sj.get("power_on_time") or {}).get("hours")
+
+    table = (sj.get("ata_smart_attributes") or {}).get("table") or []
+    if table:
+        def raw(attr_id):
+            a = _smart_attr(table, attr_id)
+            return (a.get("raw") or {}).get("value") if a else None
+        smart["reallocated"] = raw(5)
+        smart["pending"] = raw(197)
+        if hours is None:
+            hours = raw(9)
+        if temp is None:
+            t = raw(194) if raw(194) is not None else raw(190)
+            # 有些硬碟把最高／最低溫度包在高位元組
+            temp = t & 0xFF if isinstance(t, int) else None
+        for attr_id in SSD_LIFE_ATTR_IDS:
+            a = _smart_attr(table, attr_id)
+            if a and isinstance(a.get("value"), int):
+                smart["life_left"] = max(0, min(100, a["value"]))
+                break
+
+    nvme = sj.get("nvme_smart_health_information_log") or {}
+    if nvme:
+        if isinstance(nvme.get("percentage_used"), int):
+            smart["life_left"] = max(0, 100 - nvme["percentage_used"])
+        if hours is None:
+            hours = nvme.get("power_on_hours")
+        if temp is None:
+            temp = nvme.get("temperature")
+
+    smart["power_on_hours"] = hours
+    smart["temp"] = temp
+    return smart
+
+
+def read_smart(dev_path: str) -> dict:
+    """smartctl -n standby：硬碟在休眠就不讀（不把它叫醒）。
+
+    status：OK／WARNING（有重新配置或待處理磁區）／FAILING（SMART 自評失敗）／STANDBY／UNKNOWN
+    """
+    res = {"status": "UNKNOWN", "standby": False, "smart": None, "note": None}
+    out = _run_cmd(["smartctl", "-n", "standby", "-i", "-H", "-A", "--json", dev_path])
+    if out is None:
+        res["note"] = "沒有 smartctl 指令"
+        return res
+    _code, text = out
+    if _STANDBY_RE.search(text or ""):
+        res["status"] = "STANDBY"
+        res["standby"] = True
+        return res
+    try:
+        sj = json.loads(text)
+    except ValueError:
+        res["note"] = "無法讀取 SMART"
+        return res
+    if not isinstance(sj, dict):
+        res["note"] = "無法讀取 SMART"
+        return res
+    for msg in (sj.get("smartctl") or {}).get("messages") or []:
+        if _STANDBY_RE.search(msg.get("string", "")):
+            res["status"] = "STANDBY"
+            res["standby"] = True
+            return res
+
+    smart = parse_smart(sj)
+    passed = (sj.get("smart_status") or {}).get("passed")
+    if passed is False:
+        res["status"] = "FAILING"
+    elif (smart["reallocated"] or 0) > 0 or (smart["pending"] or 0) > 0:
+        res["status"] = "WARNING"
+    elif passed is True:
+        res["status"] = "OK"
+    else:
+        res["note"] = "這顆硬碟不支援或沒有開啟 SMART"
+    res["smart"] = smart
+    return res
+
+
+def _disk_type(dev):
+    rota = _as_bool(dev.get("rota"))
+    if rota is None:
+        return None
+    return "HDD" if rota else "SSD"
+
+
+def scan_disks(devices, in_container: bool) -> list:
+    disks = []
+    for dev in devices:
+        name = dev.get("name") or ""
+        if dev.get("type") != "disk" or name.startswith(("zram", "ram", "loop")):
+            continue
+        dev_path = f"/dev/{name}"
+        model = (dev.get("model") or "").strip()
+        vendor = (dev.get("vendor") or "").strip()
+        full_name = f"{vendor} {model}".strip() or name
+
+        total_bytes = _as_int(dev.get("size")) or 0
+        used_bytes, visible_size, mounts, hidden = _disk_usage(dev)
+
+        used_pct = used_gb = None
+        usage_note = None
+        if mounts and visible_size > 0:
+            used_gb = round(used_bytes / (1024 ** 3), 1)
+            used_pct = round(used_bytes / visible_size * 100, 1)
+            if hidden:
+                usage_note = f"另有 {hidden} 個分割區掛載在主機上，容器內看不到，已用只計入看得到的部分"
+        elif hidden:
+            usage_note = ("掛載在主機上，主控台在容器內看不到掛載點，所以算不出已用空間"
+                          if in_container else "沒有掛載，算不出已用空間")
+        elif any(item.get("fstype") in POOL_MEMBER_FSTYPES for item in _walk(dev)):
+            usage_note = "屬於儲存池，用量見儲存池"
+        else:
+            usage_note = "沒有檔案系統"
+
+        smart = read_smart(dev_path)
+        disks.append({
+            "name": full_name,
+            "device": dev_path,
+            "type": _disk_type(dev),
+            "transport": dev.get("tran"),
+            "total_gb": round(total_bytes / (1024 ** 3), 1),
+            "used_gb": used_gb,
+            "used_pct": used_pct,
+            "mounts": mounts,
+            "hidden_partitions": hidden,
+            "usage_note": usage_note,
+            "status": smart["status"],
+            "standby": smart["standby"],
+            "smart": smart["smart"],
+            "smart_note": smart["note"],
+            "temp": (smart["smart"] or {}).get("temp"),
+        })
+    return disks
+
+
+_MD_HEAD_RE = re.compile(r"^(md\S*)\s*:\s*(active|inactive)\s*(?:\((\S+)\)\s*)?(raid\d+|linear|multipath)?\s*(.*)$")
+
+
+def parse_mdstat(text: str) -> list:
+    """/proc/mdstat → 軟體 RAID（mdadm）清單。"""
+    pools = []
+    if not text:
+        return pools
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        m = _MD_HEAD_RE.match(line.strip())
+        if not m:
+            continue
+        name, state, _ro, level, rest = m.groups()
+        members = [re.sub(r"\[\d+\]", "", tok) for tok in rest.split()]
+        failed = [tok.replace("(F)", "") for tok in members if tok.endswith("(F)")]
+        members = [tok.replace("(F)", "").replace("(S)", "") for tok in members]
+        detail = " ".join(l.strip() for l in lines[i + 1:i + 3])
+        status = "ONLINE"
+        if state == "inactive":
+            status = "INACTIVE"
+        elif failed or re.search(r"\[U*_+[U_]*\]", detail):
+            status = "DEGRADED"
+        if re.search(r"(recovery|resync|reshape)\s*=", detail):
+            status = "REBUILDING" if status != "INACTIVE" else status
+        pools.append({"kind": "mdadm", "name": name, "level": level or "unknown",
+                      "status": status, "devices": members, "note": None})
+    return pools
+
+
+def detect_zfs(devices) -> list:
+    out = _run_cmd(["zpool", "list", "-H", "-o", "name,health"])
+    if out is not None:
+        pools = []
+        if out[0] == 0:
+            for line in out[1].splitlines():
+                parts = line.split("\t")
+                if len(parts) >= 2:
+                    pools.append({"kind": "zfs", "name": parts[0], "level": "zfs",
+                                  "status": parts[1].strip(), "devices": [], "note": None})
+        return pools
+    # 容器裡沒有 zpool 指令：從 lsblk 的 zfs_member 認出池（狀態未知）
+    groups = {}
+    for dev in devices or []:
+        for item in _walk(dev):
+            if item.get("fstype") == "zfs_member":
+                groups.setdefault(item.get("label") or item.get("uuid") or "zfs", []).append(item.get("name"))
+    return [{"kind": "zfs", "name": label, "level": "zfs", "status": "UNKNOWN", "devices": members,
+             "note": "主控台沒有 zpool 指令，讀不到池的狀態"} for label, members in groups.items()]
+
+
+def detect_btrfs(devices) -> list:
+    """多顆硬碟組成的 btrfs（同一個 UUID 出現在 ≥2 個裝置）；RAID 等級從 /sys/fs/btrfs 讀（掛載中才有）。"""
+    groups = {}
+    for dev in devices or []:
+        for item in _walk(dev):
+            if item.get("fstype") == "btrfs" and item.get("uuid"):
+                g = groups.setdefault(item["uuid"], {"label": item.get("label"), "devices": []})
+                g["devices"].append(item.get("name"))
+    pools = []
+    for uuid, g in groups.items():
+        if len(g["devices"]) < 2:
+            continue
+        alloc = os.path.join(BTRFS_SYSFS, uuid, "allocation", "data")
+        level, status, note = "btrfs", "UNKNOWN", "沒有掛載，讀不到 RAID 等級"
+        if os.path.isdir(alloc):
+            profiles = [p for p in os.listdir(alloc)
+                        if os.path.isdir(os.path.join(alloc, p)) and (p.startswith("raid") or p in ("single", "dup"))]
+            level = "btrfs " + "/".join(sorted(profiles)) if profiles else "btrfs"
+            status, note = "ONLINE", None
+        pools.append({"kind": "btrfs", "name": g["label"] or uuid[:8], "level": level,
+                      "status": status, "devices": g["devices"], "note": note})
+    return pools
+
+
+def detect_pools(devices) -> list:
+    return parse_mdstat(_read_text("/proc/mdstat")) + detect_zfs(devices) + detect_btrfs(devices)
+
+
+def docker_usage_bytes():
+    """Docker 映像＋容器可寫層＋volume＋build cache 的總量（docker system df）；5 分鐘快取，拿不到回傳 None。"""
+    now = time.time()
+    if now - _DOCKER_USAGE_CACHE["ts"] < DOCKER_USAGE_TTL:
+        return _DOCKER_USAGE_CACHE["bytes"]
+    total = None
+    try:
+        import docker
+        df = docker.from_env(timeout=30).df()
+        total = int(df.get("LayersSize") or 0)
+        total += sum(int(c.get("SizeRw") or 0) for c in df.get("Containers") or [])
+        total += sum(max(0, int((v.get("UsageData") or {}).get("Size") or 0)) for v in df.get("Volumes") or [])
+        total += sum(int(b.get("Size") or 0) for b in df.get("BuildCache") or [] if not b.get("Shared"))
+    except Exception as e:
+        print(f"Docker df Error: {e}")
+        total = None
+    _DOCKER_USAGE_CACHE.update(ts=now, bytes=total)
+    return total
+
+
+def _gb(n):
+    return f"{round(n / (1024 ** 3), 1)}G"
+
+
 @router.get("/api/system/hardware")
 def get_hardware_info(user: dict = Depends(get_current_user_obj)):
-    import subprocess
-    import json
-
-    disks = []
-
-    try:
-        lsblk_cmd = ["lsblk", "-J", "-b", "-o", "NAME,SIZE,TYPE,MOUNTPOINT,MODEL,SERIAL,VENDOR"]
-        res = subprocess.check_output(lsblk_cmd).decode('utf-8')
-        data = json.loads(res)
-
-        block_devices = data.get("blockdevices", [])
-
-        for dev in block_devices:
-            if dev.get("type") != "disk":
-                continue
-
-            name = dev.get("name")
-            dev_path = f"/dev/{name}"
-
-            model = dev.get("model") or "Generic Disk"
-            vendor = dev.get("vendor") or ""
-            full_name = f"{vendor} {model}".strip()
-
-            total_bytes = int(dev.get("size") or 0)
-            total_gb = round(total_bytes / (1024**3), 1)
-
-            used_bytes = 0
-            mounts = []
-
-            def scan_mounts(item):
-                nonlocal used_bytes
-                mp = item.get("mountpoint")
-                if mp:
-                    mounts.append(mp)
-                    try:
-                        usage = shutil.disk_usage(mp)
-                        used_bytes += usage.used
-                    except:
-                        pass
-                for child in item.get("children", []):
-                    scan_mounts(child)
-
-            scan_mounts(dev)
-
-            used_pct = (used_bytes / total_bytes * 100) if total_bytes > 0 else 0
-
-            status = "Healthy"
-            temp = 35
-            smart_hint = "Standard"
-
-            try:
-                smart_res = subprocess.getoutput(f"smartctl -i -H -A {dev_path} --json")
-                if "{" in smart_res:
-                    sj = json.loads(smart_res)
-                    if sj.get("smart_status", {}).get("passed") is False:
-                        status = "ATTENTION"
-
-                    if "temperature" in sj:
-                        temp = sj["temperature"].get("current", temp)
-                    elif "ata_smart_attributes" in sj:
-                        for attr in sj["ata_smart_attributes"].get("table", []):
-                            if attr.get("id") in [194, 190]:
-                                temp = attr.get("raw", {}).get("value", temp)
-                                break
-                    smart_hint = "SMART Capable"
-            except:
-                smart_hint = "Simulation (No SMART)"
-
-            disks.append({
-                "name": full_name,
-                "device": dev_path,
-                "status": status,
-                "temp": temp,
-                "used_pct": round(used_pct, 1),
-                "total_gb": total_gb,
-                "used_gb": round(used_bytes / (1024**3), 1),
-                "type": "SSD" if "SSD" in full_name.upper() or total_gb < 1000 else "HDD",
-                "smart_hint": smart_hint,
-                "mounts": mounts
-            })
-
-    except Exception as e:
-        print(f"Hardware Scan Error: {e}")
+    in_container = _in_container()
+    devices = _lsblk_devices()
+    disks = scan_disks(devices, in_container) if devices is not None else []
+    docker_bytes = docker_usage_bytes()
 
     return {
         "disks": disks,
-        "raid": {"name": "Dynamic Storage Pool", "status": "ONLINE", "type": "Detected"},
+        "disks_error": None if devices is not None else "無法執行 lsblk，讀不到硬碟清單",
+        "pools": detect_pools(devices or []),
+        "in_container": in_container,
         "details": {
             "count": len(disks),
             "updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "core": f"{round(shutil.disk_usage('/').used / (1024**3), 1)}G",
-            "user": f"{round(get_dir_size(NAS_ROOT) / (1024**3), 1)}G",
-            "docker": "Detected"
+            "core": _gb(shutil.disk_usage('/').used),
+            "user": _gb(get_dir_size(NAS_ROOT)),
+            "docker": _gb(docker_bytes) if docker_bytes is not None else None,
         }
     }
 
