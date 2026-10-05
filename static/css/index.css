@@ -2205,8 +2205,17 @@ label.ios-row { cursor: pointer; }
 /* ---------- NAS 管理（nas-mgnt.html／nas-mgnt.js） ---------- */
 .nas-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .nas-disk, .nas-details, .nas-pool { gap: 12px; min-height: 0 !important; }
-.nas-details { grid-row: span 2; }
 .nas-pool { grid-column: span 2; }
+.nas-disks, .nas-wide { grid-column: 1 / -1; }
+.nas-disks { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.nas-pool-item { padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+.nas-pool-item:last-child { border-bottom: 0; }
+.nas-pool-text { min-width: 0; }
+.nas-pool-text p { margin: 2px 0 0; }
+.nas-smart { display: flex; flex-direction: column; border-top: 1px solid var(--border-color); padding-top: 6px; }
+.nas-smart-row { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; font-size: 14px; }
+.nas-bad { color: var(--danger-color); }
+.nas-note { margin: 0; }
 .nas-disk-top, .nas-pool-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .nas-disk-name { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .nas-big { display: flex; align-items: baseline; gap: 8px; }
@@ -2220,7 +2229,8 @@ label.ios-row { cursor: pointer; }
 .nas-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 @media (max-width: 900px) {
     .nas-grid { grid-template-columns: minmax(0, 1fr); }
-    .nas-details, .nas-pool { grid-row: auto; grid-column: auto; }
+    .nas-pool { grid-column: auto; }
+    .nas-disks { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ---------- 開源分享（opensource.html／opensource.js） ---------- */

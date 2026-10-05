@@ -1,28 +1,11 @@
-<!-- Absolute Axis - NAS 管理（玻璃小工具；nas-mgnt.js 每 30 秒更新，所有值用 textContent） -->
+<!-- Absolute Axis - NAS 管理（玻璃小工具；nas-mgnt.js 每 30 秒更新：硬碟卡片與儲存池依 API 動態產生，所有值用 textContent） -->
 <div id="view-nas-mgnt" class="view-section">
     <div class="nas-grid">
-        <section class="widget nas-disk" aria-labelledby="disk-0-name">
-            <p class="w-cap" style="color:#8E8E96"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="13" width="17" height="7" rx="2"></rect><path d="M5.5 13l2.5-8h8l2.5 8M16.5 16.5h.01"></path></svg><span id="disk-0-dev">系統碟</span></p>
-            <div class="nas-disk-top">
-                <h3 id="disk-0-name" class="nas-disk-name">讀取中…</h3>
-                <span id="disk-0-status" class="pill">—</span>
+        <section class="widget w2 nas-pool" aria-labelledby="nas-pool-title">
+            <p id="nas-pool-title" class="w-cap" style="color:#2FB463"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M8.5 12l2.5 2.5 4.5-5"></path></svg>儲存池</p>
+            <div id="nas-pools" class="nas-rows">
+                <p class="w-muted nas-info">偵測中…</p>
             </div>
-            <div class="nas-big"><b id="disk-0-val" class="w-big">--%</b><span class="w-muted">已使用</span></div>
-            <div class="w-bar"><div id="disk-0-bar" style="width:0%"></div></div>
-            <p id="disk-0-info" class="w-muted nas-info">偵測中…</p>
-            <span id="disk-0-temp" hidden></span>
-        </section>
-
-        <section class="widget nas-disk" aria-labelledby="disk-1-name">
-            <p class="w-cap" style="color:#2E9BF0"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="13" width="17" height="7" rx="2"></rect><path d="M5.5 13l2.5-8h8l2.5 8M16.5 16.5h.01"></path></svg><span id="disk-1-dev">資料碟</span></p>
-            <div class="nas-disk-top">
-                <h3 id="disk-1-name" class="nas-disk-name">讀取中…</h3>
-                <span id="disk-1-status" class="pill">—</span>
-            </div>
-            <div class="nas-big"><b id="disk-1-val" class="w-big">--%</b><span class="w-muted">已使用</span></div>
-            <div class="w-bar"><div id="disk-1-bar" style="width:0%"></div></div>
-            <p id="disk-1-info" class="w-muted nas-info">偵測中…</p>
-            <span id="disk-1-temp" hidden></span>
         </section>
 
         <section class="widget nas-details" aria-labelledby="nas-details-title">
@@ -31,21 +14,15 @@
             <div class="nas-rows">
                 <div class="nas-row"><span class="nas-dot" style="background:#8E8E96"></span><span>核心系統</span><b id="det-core">--</b></div>
                 <div class="nas-row"><span class="nas-dot" style="background:#2E9BF0"></span><span>成員檔案（NAS）</span><b id="det-user">--</b></div>
-                <div class="nas-row"><span class="nas-dot" style="background:#5E5CE6"></span><span>Docker 掛載區</span><b id="det-docker">--</b></div>
+                <div class="nas-row"><span class="nas-dot" style="background:#5E5CE6"></span><span>Docker（映像、容器、volume）</span><b id="det-docker">--</b></div>
             </div>
-            <p class="w-muted nas-note">每 30 秒自動更新磁碟健康（S.M.A.R.T）。</p>
+            <p class="w-muted nas-note">每 30 秒自動更新磁碟健康（S.M.A.R.T）；休眠中的硬碟不讀取，避免把它叫醒。</p>
         </section>
 
-        <section class="widget w2 nas-pool" aria-labelledby="raid-name">
-            <p class="w-cap" style="color:#2FB463"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"></path><path d="M8.5 12l2.5 2.5 4.5-5"></path></svg>儲存池</p>
-            <div class="nas-pool-row">
-                <div class="nas-pool-text">
-                    <h3 id="raid-name" class="nas-disk-name">儲存池</h3>
-                    <p id="raid-type" class="w-muted">—</p>
-                </div>
-                <span id="raid-status" class="pill">—</span>
-            </div>
-            <div class="w-bar"><div id="raid-bar" style="width:100%"></div></div>
-        </section>
+        <div id="nas-disks" class="nas-disks" aria-live="polite">
+            <section class="widget nas-disk"><p class="w-muted nas-info">讀取硬碟中…</p></section>
+        </div>
+
+        <p id="nas-container-note" class="w-muted nas-note nas-wide" hidden>主控台跑在容器裡：主機另外掛載的硬碟，容器內看不到它的掛載點，所以只能顯示容量與健康狀態，算不出已用空間。</p>
     </div>
 </div>
