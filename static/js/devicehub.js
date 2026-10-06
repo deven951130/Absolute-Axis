@@ -550,6 +550,7 @@ async function _dhLoadPower(force = false) {
     } catch (e) {
         DH.power = null;
     }
+    await _dhLoadSchedules();
     _dhRenderPower();
 }
 
@@ -561,14 +562,25 @@ function _dhRenderPower() {
     const rules = ok ? p.rules || [] : [];
     const saved = ok && p.savings ? p.savings : { targets: [], cpu_energy: [] };
     const mc = p && p.minecraft;
-    sec.hidden = !(rules.length || saved.targets.length || saved.cpu_energy.length || mc);
+    const sched = DH.sched && DH.sched.ok ? DH.sched : null;   // 有控制權杖：可以設定（FR-19h）
+    sec.hidden = !(sched || rules.length || saved.targets.length || saved.cpu_energy.length || mc);
     if (sec.hidden) return;
 
-    const paused = ok && p.paused_until > Date.now() / 1000;
-    const on = rules.filter((r) => r.enabled).length;
-    document.getElementById('dh-power-status').textContent = !ok ? 'DeviceHub 的省電資料暫時讀不到。'
-        : paused ? `省電自動化已暫停，${_dhWhen(p.paused_until)} 自動恢復。`
-        : `省電自動化運作中・${on} / ${rules.length} 條規則啟用`;
+    const pausedUntil = sched ? sched.paused_until : ok ? p.paused_until : 0;
+    const paused = pausedUntil > Date.now() / 1000;
+    const all = sched ? sched.rules : rules;
+    const on = all.filter((r) => r.enabled).length;
+    document.getElementById('dh-power-status').textContent = !ok && !sched ? 'DeviceHub 的省電資料暫時讀不到。'
+        : paused ? `省電自動化已暫停，${_dhWhen(pausedUntil)} 自動恢復。`
+        : `省電自動化運作中・${on} / ${all.length} 條規則啟用`;
+    document.getElementById('dh-power-hint').textContent = sched
+        ? '每台裝置可以設定自己的開關機時間；DeviceHub 網頁也能設定' : '規則請到 DeviceHub 網頁設定';
+    document.getElementById('dh-power-rules').hidden = !!sched;
+    document.getElementById('dh-sched-list').hidden = !sched;
+    document.getElementById('dh-power-pause').hidden = !sched;
+    if (sched) {
+        _dhRenderSchedules(sched, paused);
+    }
 
     document.getElementById('dh-power-rules').replaceChildren(...rules.map((r) => {
         const meta = [];
@@ -593,6 +605,275 @@ function _dhRenderPower() {
     if (mc) parts.push(`Minecraft 暫停 ${(mc.week_paused_min / 60).toFixed(0)} 小時`);
     for (const c of saved.cpu_energy) parts.push(`${c.name} CPU 耗電 ${Number(c.kwh_total || 0).toFixed(1)} kWh`);
     document.getElementById('dh-power-saved').textContent = parts.length ? `最近 7 天：${parts.join('・')}` : '';
+}
+
+// ---------- 排程設定（FR-19h；DeviceHub power-saving §10.6，只給管理員、需要控制權杖） ----------
+// 驗證、衝突檢查都在 DeviceHub；這裡用和 DeviceHub 網頁相同的白話句確認（NFR-04），文字一律 textContent。
+
+const _DH_POWER_OFF = ['host.sleep', 'host.shutdown', 'pve.shutdown'];
+const _DH_RULE_FIELDS = {
+    name: '名稱', target: '裝置', action: '動作', days: '星期', time: '時間', idle_min: '閒置分鐘數',
+    window_min: '時窗', notice_min: '預告分鐘數', cpu_below: 'CPU 門檻',
+};
+const _DH_RULE_ERRORS = {
+    rule_conflict: '同一台裝置在同一時間已經有方向相反的排程（例如同時關機又開機）',
+    self_protected: 'DeviceHub 自己所在的容器不能排程',
+    rate_limited: '操作太頻繁，請 10 分鐘後再試',
+    nothing_pending: '這條排程現在沒有進行中的一次可以跳過',
+    already_sent: '指令已經送出，來不及跳過',
+    unknown_rule: '找不到這條排程（可能已被刪除）',
+    control_not_configured: 'Axis 沒有設定 DeviceHub 控制權杖',
+    unreachable: 'DeviceHub 無法連線',
+    bad_pause: '暫停時間不正確',
+    confirm_required: '需要先確認',
+};
+
+function _dhRuleError(r) {
+    if (r && r.error === 'bad_rule') return `設定有誤：${_DH_RULE_FIELDS[r.detail] || '請檢查欄位'}`;
+    return (r && _DH_RULE_ERRORS[r.error]) || `失敗（${(r && r.error) || '未知錯誤'}）`;
+}
+
+function _dhDescribeRule(b, targetName) {
+    const when = b.days ? `${_dhPowerDays(b.days)} ${b.time}` : '不看時間，只要閒置';
+    let text = `${when}，對「${targetName}」${_DH_POWER_ACTIONS[b.action] || b.action}`;
+    if (b.idle_min) text += `（要閒置滿 ${b.idle_min} 分鐘、CPU 一直低於 ${b.cpu_below}% 才執行）`;
+    if (_DH_POWER_OFF.includes(b.action) && b.notice_min) text += `，先預告 ${b.notice_min} 分鐘`;
+    if (b.action === 'host.shutdown') text += '；關機時 Windows 會再倒數，人在電腦前可用 shutdown /a 取消';
+    text += '。';
+    if (b.days && b.enabled !== false) text += '\n如果現在已經在今天這次的時間範圍內，今天這次可能會立刻開始。';
+    return text;
+}
+
+async function _dhLoadSchedules() {
+    if (!(DH.data && DH.data.control)) { DH.sched = null; return; }
+    try {
+        const r = await authFetch('/api/devicehub/power/rules');
+        DH.sched = r.ok ? await r.json() : null;
+    } catch (e) {
+        DH.sched = null;
+    }
+}
+
+async function _dhSchedCall(method, url, body) {
+    try {
+        const r = await authFetch(url, {
+            method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined,
+        });
+        const data = await r.json().catch(() => ({}));
+        return r.ok ? data : { ok: false, error: `http_${r.status}` };
+    } catch (e) {
+        return { ok: false, error: 'unreachable' };
+    }
+}
+
+function _dhRuleBody(r) {
+    return { name: r.name, target: r.target, action: r.action, days: r.days, time: r.time, window_min: r.window_min,
+        idle_min: r.idle_min, cpu_below: r.cpu_below, notice_min: r.notice_min, enabled: r.enabled };
+}
+
+function _dhRenderSchedules(sched, paused) {
+    const pause = document.getElementById('dh-power-pause');
+    const pauseBtn = (label, hours) => _dhEl('button', { type: 'button', class: 'dh-btn small', text: label,
+        onclick: () => _dhPausePower(hours) });
+    pause.replaceChildren(...(paused ? [pauseBtn('恢復自動化', 0)]
+        : [pauseBtn('暫停 1 小時', 1), pauseBtn('暫停到明天早上', 'until_morning'), pauseBtn('暫停 7 天', 168)]));
+
+    const groups = new Map(sched.targets.map((t) => [t.target, { target: t, rules: [] }]));
+    for (const r of sched.rules) {
+        if (!groups.has(r.target)) groups.set(r.target, { target: null, name: r.target_name, rules: [] });
+        groups.get(r.target).rules.push(r);
+    }
+    const order = (r) => `${r.days ? r.time : '99:99'}|${r.action}`;
+    document.getElementById('dh-sched-list').replaceChildren(...[...groups.values()].map((g) => {
+        const name = g.target ? g.target.name : g.name;
+        const head = _dhEl('div', { class: 'dh-sched-head' }, _dhEl('h4', { text: name || '' }),
+            g.target ? _dhEl('button', { type: 'button', class: 'dh-btn small', text: '新增排程',
+                onclick: () => _dhOpenRule(null, g.target.target) })
+                : _dhEl('span', { class: 'dh-muted', text: '裝置已不在清單' }));
+        const list = _dhEl('ul', { class: 'dh-sched-rules' },
+            ...g.rules.sort((a, b) => order(a).localeCompare(order(b))).map(_dhSchedRow));
+        if (!g.rules.length) list.append(_dhEl('li', { class: 'dh-muted dh-sched-empty', text: '還沒有排程。' }));
+        return _dhEl('section', { class: 'dh-sched', 'aria-label': `${name}的排程` }, head, list);
+    }));
+}
+
+function _dhSchedRow(r) {
+    const meta = [];
+    if (r.state === 'sending') meta.push('執行中');
+    else if (r.state === 'notice') meta.push(`預告中・${r.notice_until ? _dhWhen(r.notice_until) : ''} 執行`);
+    else if (r.state === 'waiting') meta.push('等待閒置');
+    if (!r.enabled) meta.push(r.fail_count >= 3 ? '已自動停用（連續失敗）' : '已停用');
+    else if (r.next_run_at) meta.push(`下次 ${_dhWhen(r.next_run_at)}`);
+    if (r.last_result) meta.push(`上次：${_DH_POWER_RESULTS[r.last_result] || r.last_result}`);
+    const when = r.days ? `${_dhPowerDays(r.days)} ${r.time}` : '閒置時';
+    return _dhEl('li', { 'data-enabled': String(!!r.enabled) },
+        _dhEl('div', { class: 'dh-sched-what' },
+            _dhEl('b', { text: `${when} → ${_DH_POWER_ACTIONS[r.action] || r.action}` }),
+            _dhEl('span', { class: 'dh-muted', text: `${r.name}${meta.length ? '・' + meta.join('・') : ''}` })),
+        _dhEl('div', { class: 'dh-sched-ops' },
+            r.state && r.state !== 'sending'
+                ? _dhEl('button', { type: 'button', class: 'dh-btn small', text: '跳過這次', onclick: () => _dhSkipRule(r) }) : null,
+            _dhEl('button', { type: 'button', class: 'dh-btn small', text: r.enabled ? '停用' : '啟用', onclick: () => _dhToggleRule(r) }),
+            _dhEl('button', { type: 'button', class: 'dh-btn small', text: '編輯', onclick: () => _dhOpenRule(r) }),
+            _dhEl('button', { type: 'button', class: 'dh-btn small danger', text: '刪除', onclick: () => _dhDeleteRule(r) })));
+}
+
+async function _dhAfterWrite(res, okText) {
+    if (res && res.ok) {
+        toastText(okText, 'success');
+        await _dhLoadPower(true);
+        return true;
+    }
+    toastText(_dhRuleError(res), 'error');
+    return false;
+}
+
+async function _dhPausePower(hours) {
+    const res = await _dhSchedCall('POST', '/api/devicehub/power/pause', { hours });
+    _dhAfterWrite(res, hours === 0 ? '自動化已恢復' : `自動化暫停到 ${_dhWhen(res.paused_until || 0)}`);
+}
+
+async function _dhSkipRule(r) {
+    _dhAfterWrite(await _dhSchedCall('POST', `/api/devicehub/power/rules/${encodeURIComponent(r.id)}/skip`),
+        `已跳過「${r.name}」這一次`);
+}
+
+async function _dhToggleRule(r) {
+    const body = { ..._dhRuleBody(r), enabled: !r.enabled };
+    // 啟用要用完整白話句確認（NFR-04）；停用一定安全
+    if (body.enabled && !(await axisAsk({ title: `啟用排程「${r.name}」？`, message: _dhDescribeRule(body, r.target_name), ok: '啟用' }))) return;
+    _dhAfterWrite(await _dhSchedCall('PUT', `/api/devicehub/power/rules/${encodeURIComponent(r.id)}`, { ...body, confirm: true }),
+        `已${body.enabled ? '啟用' : '停用'}「${r.name}」`);
+}
+
+async function _dhDeleteRule(r) {
+    if (!(await axisAsk({ title: `刪除排程「${r.name}」？`, message: _dhDescribeRule(_dhRuleBody(r), r.target_name), ok: '刪除', danger: true }))) return;
+    _dhAfterWrite(await _dhSchedCall('DELETE', `/api/devicehub/power/rules/${encodeURIComponent(r.id)}`, { confirm: true }),
+        `已刪除「${r.name}」`);
+}
+
+// ----- 新增／編輯視窗 -----
+function _dhRuleDialog() {
+    let dlg = document.getElementById('dh-rule-dialog');
+    if (dlg) return dlg;
+    const field = (label, input, unit = null) => h('label', {}, h('span', { text: label }), input, unit);
+    dlg = h('dialog', { id: 'dh-rule-dialog', class: 'bind-dialog', 'aria-labelledby': 'dh-rule-title' },
+        h('form', { id: 'dh-rule-form' },
+            h('h3', { id: 'dh-rule-title', class: 'bind-dlg-title', text: '新增排程' }),
+            h('div', { class: 'ios-group ios-form' },
+                field('名稱', h('input', { id: 'dh-r-name', type: 'text', maxlength: '40', required: true, autocomplete: 'off',
+                    placeholder: '例如 桌機平日晚上關機' })),
+                field('裝置', h('select', { id: 'dh-r-target' })),
+                field('動作', h('select', { id: 'dh-r-action' })),
+                field('時間', h('input', { id: 'dh-r-time', type: 'time', value: '23:00' }))),
+            h('p', { class: 'ios-caption dh-r-caption', text: '星期（都不選＝不看時間，只要閒置就執行；只有睡眠、關機可以）' }),
+            h('div', { id: 'dh-r-days', class: 'seg dh-r-days', role: 'group', 'aria-label': '星期' },
+                ..._DH_DAYS.map((d, i) => h('button', { type: 'button', 'data-day': String(i + 1), 'aria-pressed': 'false', text: d }))),
+            h('div', { class: 'ios-group ios-form dh-r-more' },
+                field('閒置', h('input', { id: 'dh-r-idle', type: 'number', min: '5', max: '720', step: '5' }),
+                    h('span', { class: 'dh-r-unit', text: '分鐘' })),
+                field('預告', h('input', { id: 'dh-r-notice', type: 'number', min: '0', max: '15' }),
+                    h('span', { class: 'dh-r-unit', text: '分鐘' })),
+                h('label', { class: 'dh-r-check' }, h('span', { text: '啟用' }), h('input', { id: 'dh-r-enabled', type: 'checkbox' }))),
+            h('p', { id: 'dh-r-hint', class: 'ios-footnote' }),
+            h('p', { id: 'dh-r-error', class: 'bind-error', role: 'alert' }),
+            h('div', { class: 'bind-actions' },
+                h('button', { type: 'button', class: 'btn btn-outline', text: '取消', onclick: () => dlg.close() }),
+                h('button', { type: 'submit', class: 'btn btn-primary', text: '儲存' }))));
+    document.body.append(dlg);
+    for (const b of dlg.querySelectorAll('#dh-r-days button')) {
+        b.addEventListener('click', () => { b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); _dhRuleFormUpdate(); });
+    }
+    dlg.querySelector('#dh-r-target').addEventListener('change', () => _dhFillActions());
+    dlg.querySelector('#dh-r-action').addEventListener('change', _dhRuleFormUpdate);
+    dlg.querySelector('#dh-rule-form').addEventListener('submit', (e) => { e.preventDefault(); _dhSaveRule(); });
+    return dlg;
+}
+
+function _dhFillActions(selected) {
+    const t = (DH.sched.targets || []).find((x) => x.target === document.getElementById('dh-r-target').value);
+    const sel = document.getElementById('dh-r-action');
+    const actions = t ? t.actions : [];
+    sel.replaceChildren(...actions.map((a) => h('option', { value: a, text: _DH_POWER_ACTIONS[a] || a })));
+    if (actions.includes(selected)) sel.value = selected;
+    _dhRuleFormUpdate();
+}
+
+function _dhRuleFormUpdate() {
+    const a = document.getElementById('dh-r-action').value;
+    const needsIdle = a === 'host.sleep' || a === 'host.shutdown';
+    document.getElementById('dh-r-idle').closest('label').hidden = !needsIdle;
+    document.getElementById('dh-r-notice').closest('label').hidden = !_DH_POWER_OFF.includes(a);
+    const noDays = !document.querySelector('#dh-r-days button[aria-pressed="true"]');
+    document.getElementById('dh-r-time').closest('label').hidden = noDays;
+    const hints = {
+        'host.sleep': '電腦閒置滿設定的分鐘數（CPU 一直很低）才會睡眠；有人在用就延後，時間範圍內一直沒閒置就放棄這次。',
+        'host.shutdown': '閒置才關機；關機前先預告，Windows 還會再倒數，人在電腦前可以取消。',
+        'host.wake': '用 Wake-on-LAN 開機（電腦要接網路線、BIOS 允許喚醒）。',
+        'pve.shutdown': '讓虛擬機或容器正常關機。',
+        'pve.start': '啟動虛擬機或容器。',
+    };
+    document.getElementById('dh-r-hint').textContent = hints[a] || '';
+}
+
+let _dhEditingRule = null;
+
+function _dhOpenRule(r = null, presetTarget = null) {
+    const targets = (DH.sched && DH.sched.targets) || [];
+    if (!targets.length) { toastText('DeviceHub 還沒有可以排程的裝置', 'warning'); return; }
+    const dlg = _dhRuleDialog();
+    _dhEditingRule = r;
+    document.getElementById('dh-rule-title').textContent = r ? '編輯排程' : '新增排程';
+    document.getElementById('dh-r-error').textContent = '';
+    const tsel = document.getElementById('dh-r-target');
+    tsel.replaceChildren(...targets.map((t) => h('option', { value: t.target, text: t.name })));
+    const target = r ? r.target : (targets.some((t) => t.target === presetTarget) ? presetTarget : targets[0].target);
+    const b = r ? _dhRuleBody(r) : { name: '', target, action: 'host.shutdown', days: '12345', time: '23:00',
+        window_min: 60, idle_min: 30, cpu_below: 15, notice_min: 5, enabled: true };
+    document.getElementById('dh-r-name').value = b.name;
+    tsel.value = b.target;
+    tsel.disabled = !!r && !targets.some((t) => t.target === r.target);
+    for (const btn of document.querySelectorAll('#dh-r-days button')) btn.setAttribute('aria-pressed', String(b.days.includes(btn.dataset.day)));
+    document.getElementById('dh-r-time').value = b.time || '23:00';
+    document.getElementById('dh-r-idle').value = b.idle_min == null ? 30 : b.idle_min;
+    document.getElementById('dh-r-notice').value = b.notice_min;
+    document.getElementById('dh-r-enabled').checked = b.enabled;
+    _dhFillActions(b.action);
+    dlg.showModal();
+    document.getElementById('dh-r-name').focus();
+}
+
+function _dhReadRuleForm() {
+    const a = document.getElementById('dh-r-action').value;
+    const days = [...document.querySelectorAll('#dh-r-days button[aria-pressed="true"]')].map((x) => x.dataset.day).join('');
+    const base = _dhEditingRule ? _dhRuleBody(_dhEditingRule) : { window_min: 60, cpu_below: 15 };
+    return {
+        name: document.getElementById('dh-r-name').value.trim(), target: document.getElementById('dh-r-target').value,
+        action: a, days, time: days ? document.getElementById('dh-r-time').value : '',
+        window_min: base.window_min, cpu_below: base.cpu_below,
+        idle_min: a === 'host.sleep' || a === 'host.shutdown' ? Number(document.getElementById('dh-r-idle').value) : null,
+        notice_min: _DH_POWER_OFF.includes(a) ? Number(document.getElementById('dh-r-notice').value) : 0,
+        enabled: document.getElementById('dh-r-enabled').checked,
+    };
+}
+
+async function _dhSaveRule() {
+    const b = _dhReadRuleForm();
+    const t = (DH.sched.targets || []).find((x) => x.target === b.target);
+    const dlg = document.getElementById('dh-rule-dialog');
+    dlg.close();   // 確認視窗要在最上層
+    if (!(await axisAsk({ title: '儲存這個排程？', message: _dhDescribeRule(b, t ? t.name : b.target), ok: '儲存' }))) {
+        dlg.showModal();
+        return;
+    }
+    const url = _dhEditingRule ? `/api/devicehub/power/rules/${encodeURIComponent(_dhEditingRule.id)}` : '/api/devicehub/power/rules';
+    const res = await _dhSchedCall(_dhEditingRule ? 'PUT' : 'POST', url, { ...b, confirm: true });
+    if (res && res.ok) {
+        _dhAfterWrite(res, `已儲存「${b.name}」`);
+    } else {
+        document.getElementById('dh-r-error').textContent = _dhRuleError(res);
+        dlg.showModal();
+    }
 }
 
 // ---------- 總覽頁的小工具（只給管理員）：快速控制、設備 ----------

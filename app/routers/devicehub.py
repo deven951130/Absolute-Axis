@@ -170,8 +170,8 @@ def _read_get(path: str, timeout: float = 8) -> dict:
     return {"ok": True, **data} if isinstance(data, dict) else _fail("bad_response")
 
 
-# ---------- 省電摘要（DeviceHub integration-api §3.1b、power-saving §5.2；唯讀） ----------
-# 規則只能在 DeviceHub 網頁改；這裡只顯示。另外附上 Axis 自己記錄的 Minecraft 省電分鐘數（§6.3）。
+# ---------- 省電摘要（DeviceHub integration-api §3.1b、power-saving §5.2） ----------
+# 摘要用讀取權杖；設定排程（FR-19h）在檔案最後，用控制權杖。另外附上 Axis 自己記錄的 Minecraft 省電分鐘數（§6.3）。
 _POWER_CACHE_SECONDS = 30
 _power_cache = {"ts": 0.0, "data": None}
 _POWER_RULE_KEYS = ("id", "name", "target_name", "action", "days", "time", "enabled", "next_run_at",
@@ -245,8 +245,8 @@ class AccountBody(BaseModel):
     kind: str = Field(max_length=16)
 
 
-def _account_call(method: str, path: str, user: dict, body: dict | None = None) -> tuple[dict, int | None]:
-    """(DeviceHub 的 JSON, 狀態碼)；錯誤時 JSON 是 _fail(...)。只轉送白名單欄位。"""
+def _control_call(method: str, path: str, user: dict, body: dict | None = None) -> tuple[dict, int | None]:
+    """(DeviceHub 的 JSON, 狀態碼)；錯誤時 JSON 是 _fail(...)＋detail（DeviceHub 給的欄位名稱等短字串）。"""
     if not DEVICEHUB_CONTROL_TOKEN:
         return _fail("control_not_configured"), None
     try:
@@ -263,13 +263,17 @@ def _account_call(method: str, path: str, user: dict, body: dict | None = None) 
         data = {}
     if r.status_code not in (200, 201):
         code = data.get("error") if isinstance(data.get("error"), str) else None
-        return _fail((code or f"http_{r.status_code}")[:40], r.status_code), r.status_code
+        out = _fail((code or f"http_{r.status_code}")[:40], r.status_code)
+        detail = data.get("detail")
+        if isinstance(detail, str) and len(detail) <= 32:
+            out["detail"] = detail
+        return out, r.status_code
     return data, r.status_code
 
 
 @router.get("/api/devicehub/accounts")
 def devicehub_accounts(user: dict = Depends(require_admin)):
-    data, _ = _account_call("GET", "/api/v1/accounts", user)
+    data, _ = _control_call("GET", "/api/v1/accounts", user)
     if data.get("ok") is False:
         return data
     keep = ("id", "name", "type", "status", "last_seen", "connected")
@@ -282,7 +286,7 @@ def devicehub_account_add(body: AccountBody, user: dict = Depends(require_admin)
     if not _ACCOUNT_ID.match(body.id) or body.kind not in _ACCOUNT_KINDS:
         return _fail("bad_request", 400)
     name = (body.name or "").strip() or None
-    data, _ = _account_call("POST", "/api/v1/accounts", user, {"id": body.id, "name": name, "kind": body.kind})
+    data, _ = _control_call("POST", "/api/v1/accounts", user, {"id": body.id, "name": name, "kind": body.kind})
     if data.get("ok") is False:
         return data
     _cache.update(ts=0.0, data=None)
@@ -299,9 +303,102 @@ def devicehub_account_add(body: AccountBody, user: dict = Depends(require_admin)
 def devicehub_account_delete(device_id: str, body: PowerBody | None = None, user: dict = Depends(require_admin)):
     if not _ACCOUNT_ID.match(device_id):
         return _fail("bad_request", 400)
-    data, _ = _account_call("DELETE", f"/api/v1/accounts/{device_id}", user,
+    data, _ = _control_call("DELETE", f"/api/v1/accounts/{device_id}", user,
                             {"confirm": bool(body and body.confirm)})
     if data.get("ok") is False:
         return data
     _cache.update(ts=0.0, data=None)
     return {"ok": True, "id": data.get("id"), "removed": bool(data.get("removed"))}
+
+
+# ---------- 省電排程設定（DeviceHub power-saving §10.6、integration API v0.6；FR-19h、D-24） ----------
+# 只給管理員；寫入一律要 confirm（畫面先用白話句確認，NFR-04）。驗證、衝突檢查都在 DeviceHub 做，
+# 這裡只轉送白名單欄位；DeviceHub 會寫稽核（操作者＝目前登入的帳號）並推播 🛰️。
+_RULE_ID = re.compile(r"^r-[0-9a-f]{4,32}$")
+_RULE_KEYS = ("id", "name", "target", "target_name", "action", "days", "time", "window_min", "idle_min",
+              "cpu_below", "notice_min", "enabled", "fail_count", "last_run_at", "last_result", "next_run_at",
+              "state", "notice_until")
+_TARGET_KEYS = ("target", "name", "kind", "actions")
+_PAUSE_MAX_H = 168
+
+
+class RuleBody(BaseModel):
+    name: str = Field(max_length=80)
+    target: str = Field(max_length=64)
+    action: str = Field(max_length=32)
+    days: str = Field(default="", max_length=7)
+    time: str = Field(default="", max_length=5)
+    window_min: int = 60
+    idle_min: int | None = None
+    cpu_below: int = 15
+    notice_min: int = 5
+    enabled: bool = True
+    confirm: bool = False
+
+
+class PauseBody(BaseModel):
+    hours: int | str = 1   # 0＝恢復、1～168 小時、"until_morning"
+
+
+def _rule_written(data: dict) -> dict:
+    _power_cache.update(ts=0.0, data=None)   # 省電卡片下一次重新抓
+    return {"ok": True, "rule": {k: data.get(k) for k in _RULE_KEYS}}
+
+
+@router.get("/api/devicehub/power/rules")
+def devicehub_power_rules(user: dict = Depends(require_admin)):
+    data, _ = _control_call("GET", "/api/v1/power/rules", user)
+    if data.get("ok") is False:
+        return data
+    targets = [{k: t.get(k) for k in _TARGET_KEYS} for t in data.get("targets") or [] if isinstance(t, dict)]
+    for t in targets:
+        t["actions"] = [a for a in t["actions"] or [] if isinstance(a, str)]
+    return {"ok": True, "rules": _pick(data.get("rules"), _RULE_KEYS), "targets": targets,
+            "paused_until": data.get("paused_until") if isinstance(data.get("paused_until"), int) else 0}
+
+
+@router.post("/api/devicehub/power/rules")
+def devicehub_power_rule_add(body: RuleBody, user: dict = Depends(require_admin)):
+    data, _ = _control_call("POST", "/api/v1/power/rules", user, body.model_dump())
+    return data if data.get("ok") is False else _rule_written(data)
+
+
+@router.put("/api/devicehub/power/rules/{rule_id}")
+def devicehub_power_rule_put(rule_id: str, body: RuleBody, user: dict = Depends(require_admin)):
+    if not _RULE_ID.match(rule_id):
+        return _fail("bad_request", 400)
+    data, _ = _control_call("PUT", f"/api/v1/power/rules/{rule_id}", user, body.model_dump())
+    return data if data.get("ok") is False else _rule_written(data)
+
+
+@router.delete("/api/devicehub/power/rules/{rule_id}")
+def devicehub_power_rule_delete(rule_id: str, body: PowerBody | None = None, user: dict = Depends(require_admin)):
+    if not _RULE_ID.match(rule_id):
+        return _fail("bad_request", 400)
+    data, _ = _control_call("DELETE", f"/api/v1/power/rules/{rule_id}", user, {"confirm": bool(body and body.confirm)})
+    if data.get("ok") is False:
+        return data
+    _power_cache.update(ts=0.0, data=None)
+    return {"ok": True, "id": data.get("id"), "deleted": bool(data.get("deleted"))}
+
+
+@router.post("/api/devicehub/power/rules/{rule_id}/skip")
+def devicehub_power_rule_skip(rule_id: str, user: dict = Depends(require_admin)):
+    if not _RULE_ID.match(rule_id):
+        return _fail("bad_request", 400)
+    data, _ = _control_call("POST", f"/api/v1/power/rules/{rule_id}/skip", user)
+    return data if data.get("ok") is False else _rule_written(data)
+
+
+@router.post("/api/devicehub/power/pause")
+def devicehub_power_pause(body: PauseBody, user: dict = Depends(require_admin)):
+    hours = body.hours
+    ok = hours == "until_morning" or (isinstance(hours, int) and not isinstance(hours, bool) and 0 <= hours <= _PAUSE_MAX_H)
+    if not ok:
+        return _fail("bad_pause", 400)
+    data, _ = _control_call("POST", "/api/v1/power/pause", user, {"hours": hours})
+    if data.get("ok") is False:
+        return data
+    _power_cache.update(ts=0.0, data=None)
+    until = data.get("paused_until")
+    return {"ok": True, "paused_until": until if isinstance(until, int) else 0}

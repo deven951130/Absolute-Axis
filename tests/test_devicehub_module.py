@@ -319,3 +319,98 @@ def test_power_summary_old_hub_and_admin_only(dh):
     state["resp"] = Resp(404, {"detail": "Not Found"})       # DeviceHub without FR-19
     r = c.get("/api/devicehub/power", headers=ADMIN).json()
     assert r["ok"] is False and r["error"] == "http_404"
+
+
+# ---------- 省電排程設定（DeviceHub power-saving §10.6、integration API v0.6；FR-19h） ----------
+RULE = {"name": "桌機夜間", "target": "desktop", "action": "host.shutdown", "days": "12345", "time": "23:30",
+        "idle_min": 30, "notice_min": 5, "confirm": True}
+
+
+def test_schedule_list_uses_control_token_and_passes_known_fields(dh):
+    c, calls, state = dh
+    state["resp"] = Resp(200, {
+        "rules": [{"id": "r-1a2b", "name": "夜間", "target": "desktop", "target_name": "桌機", "action": "host.shutdown",
+                   "days": "12345", "time": "23:30", "window_min": 60, "idle_min": 30, "cpu_below": 15,
+                   "notice_min": 5, "enabled": True, "fail_count": 0, "last_run_at": None, "last_result": None,
+                   "next_run_at": 1, "state": None, "notice_until": None, "created_by": "axis:sparkle", "x": 1}],
+        "targets": [{"target": "desktop", "name": "桌機", "kind": "host", "actions": ["host.sleep", 3, "host.wake"],
+                     "mac": "AA"}],
+        "paused_until": 0})
+    body = c.get("/api/devicehub/power/rules", headers=ADMIN).json()
+    assert body["ok"] is True and "created_by" not in body["rules"][0] and "x" not in body["rules"][0]
+    assert body["targets"] == [{"target": "desktop", "name": "桌機", "kind": "host",
+                                "actions": ["host.sleep", "host.wake"]}]
+    assert calls[0]["url"].endswith("/api/v1/power/rules")
+    assert calls[0]["headers"]["Authorization"] == "Bearer control-tok"
+    assert calls[0]["headers"]["X-DH-Operator"] == "sparkle"
+
+
+def test_schedule_writes_forward_with_confirm_and_operator(dh):
+    c, calls, state = dh
+    devicehub._power_cache.update(ts=1e18, data={"stale": True})
+    state["resp"] = Resp(201, {"id": "r-1a2b", "name": "桌機夜間", "target": "desktop", "secret": "x"})
+    r = c.post("/api/devicehub/power/rules", headers=ADMIN, json=RULE).json()
+    assert r["ok"] is True and r["rule"]["id"] == "r-1a2b" and "secret" not in r["rule"]
+    assert calls[-1]["method"] == "POST" and calls[-1]["json"]["confirm"] is True
+    assert calls[-1]["json"]["target"] == "desktop" and calls[-1]["headers"]["X-DH-Operator"] == "sparkle"
+    assert devicehub._power_cache["data"] is None          # 省電卡片下次重新抓
+
+    state["resp"] = Resp(200, {"id": "r-1a2b", "enabled": False})
+    assert c.put("/api/devicehub/power/rules/r-1a2b", headers=ADMIN, json=RULE | {"enabled": False}).json()["ok"]
+    assert calls[-1]["method"] == "PUT" and calls[-1]["url"].endswith("/api/v1/power/rules/r-1a2b")
+
+    state["resp"] = Resp(200, {"id": "r-1a2b", "deleted": True})
+    assert c.request("DELETE", "/api/devicehub/power/rules/r-1a2b", headers=ADMIN,
+                     json={"confirm": True}).json() == {"ok": True, "id": "r-1a2b", "deleted": True}
+    assert calls[-1]["json"] == {"confirm": True}
+    c.request("DELETE", "/api/devicehub/power/rules/r-1a2b", headers=ADMIN)
+    assert calls[-1]["json"] == {"confirm": False}             # 沒確認：DeviceHub 會回 428
+
+    state["resp"] = Resp(200, {"id": "r-1a2b", "state": None})
+    assert c.post("/api/devicehub/power/rules/r-1a2b/skip", headers=ADMIN).json()["ok"] is True
+    state["resp"] = Resp(200, {"paused_until": 1790000000})
+    assert c.post("/api/devicehub/power/pause", headers=ADMIN, json={"hours": "until_morning"}).json() == \
+        {"ok": True, "paused_until": 1790000000}
+    assert calls[-1]["json"] == {"hours": "until_morning"}
+
+
+def test_schedule_errors_carry_the_field(dh):
+    c, _, state = dh
+    state["resp"] = Resp(400, {"error": "bad_rule", "detail": "time"})
+    assert c.post("/api/devicehub/power/rules", headers=ADMIN, json=RULE).json() == \
+        {"ok": False, "error": "bad_rule", "http": 400, "detail": "time"}
+    state["resp"] = Resp(409, {"error": "rule_conflict", "detail": "x" * 100})   # 太長的 detail 不轉送
+    assert c.post("/api/devicehub/power/rules", headers=ADMIN, json=RULE).json() == \
+        {"ok": False, "error": "rule_conflict", "http": 409}
+
+
+@pytest.mark.parametrize("method, path, body", [
+    ("PUT", "/api/devicehub/power/rules/../x", RULE), ("PUT", "/api/devicehub/power/rules/r-ZZ", RULE),
+    ("DELETE", "/api/devicehub/power/rules/1;rm", {"confirm": True}), ("POST", "/api/devicehub/power/rules/x/skip", None),
+    ("POST", "/api/devicehub/power/pause", {"hours": 999}), ("POST", "/api/devicehub/power/pause", {"hours": "forever"}),
+    ("POST", "/api/devicehub/power/pause", {"hours": -1}),
+])
+def test_schedule_bad_input_never_reaches_devicehub(dh, method, path, body):
+    c, calls, _ = dh
+    r = c.request(method, path, headers=ADMIN, json=body)
+    assert r.status_code in (200, 404, 422) and calls == []
+    if r.status_code == 200:
+        assert r.json()["ok"] is False
+
+
+def test_schedule_is_admin_only(dh):
+    c, calls, _ = dh
+    member = {"Authorization": "Bearer member"}
+    for method, path, body in (("GET", "/api/devicehub/power/rules", None), ("POST", "/api/devicehub/power/rules", RULE),
+                               ("POST", "/api/devicehub/power/pause", {"hours": 1})):
+        assert c.request(method, path, headers=member, json=body).status_code == 403
+        assert c.request(method, path, json=body).status_code == 401
+    assert calls == []
+
+
+def test_schedule_without_control_token(dh, monkeypatch):
+    c, calls, _ = dh
+    monkeypatch.setattr(devicehub, "DEVICEHUB_CONTROL_TOKEN", "")
+    assert c.get("/api/devicehub/power/rules", headers=ADMIN).json()["error"] == "control_not_configured"
+    assert c.post("/api/devicehub/power/rules", headers=ADMIN, json=RULE).json()["error"] == "control_not_configured"
+    assert calls == []
