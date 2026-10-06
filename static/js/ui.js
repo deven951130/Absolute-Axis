@@ -153,7 +153,7 @@ function switchView(v, pushHistory = true) {
 
     const titles = {
         'dashboard': '戰情總覽',
-        'virtual': '虛密化中心',
+        'virtual': '虛擬化中心',
         'cloud': '私有雲儲存',
         'nas-mgnt': 'NAS 管理中樞',
         'admin': '帳號管理',
