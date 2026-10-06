@@ -45,6 +45,8 @@ services:
       - ./nas:/app/nas
       - /var/run/docker.sock:/var/run/docker.sock
       - /dev:/dev
+      # 主機的 udev 資料（唯讀）：NAS 管理頁用 lsblk 讀檔案系統類型／UUID／標籤，不必讀硬碟（不會叫醒休眠的硬碟）
+      - /run/udev:/run/udev:ro
     privileged: true
     working_dir: /app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000

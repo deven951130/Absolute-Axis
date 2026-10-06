@@ -266,3 +266,56 @@ def test_docker_usage_unavailable_is_none(monkeypatch):
     monkeypatch.setitem(sys.modules, "docker", SimpleNamespace(from_env=boom))
     monkeypatch.setattr(system, "_DOCKER_USAGE_CACHE", {"ts": 0.0, "bytes": None})
     assert system.docker_usage_bytes() is None
+
+
+# ---------- 部署前在 axis-main（Proxmox VM 100）實機看到的三個問題 ----------
+QEMU_SMART_UNAVAILABLE = json.dumps({
+    "device": {"name": "/dev/sdb", "type": "scsi", "protocol": "SCSI"},
+    "smart_support": {"available": False},
+    "temperature": {"current": 0, "drive_trip": 0},
+})
+
+
+def test_virtual_disks_are_not_hdd_and_skip_smartctl(env, tmp_path):
+    # QEMU 把虛擬硬碟標成旋轉式（ROTA=1）；smartctl 回不支援 SMART 卻帶 temperature 0
+    runner = env(lsblk=[disk("sda", True, model="QEMU HARDDISK"),
+                        disk("sdb", True, model="QEMU HARDDISK",
+                             children=[part("sdb1", mountpoint=str(tmp_path))]),
+                        disk("sdc", False, model="VBOX HARDDISK")],
+                 smart={"/dev/sdb": QEMU_SMART_UNAVAILABLE})
+    disks = system.get_hardware_info(USER)["disks"]
+    assert [d["type"] for d in disks] == ["VIRTUAL"] * 3
+    for d in disks:
+        assert d["status"] == "VIRTUAL" and d["smart"] is None and d["temp"] is None
+        assert "實體主機" in d["smart_note"]
+    assert not [c for c in runner.calls if c[0] == "smartctl"]
+    assert disks[1]["used_pct"] is not None
+
+
+def test_smart_unavailable_does_not_report_zero_degrees(env):
+    # 實體硬碟接在不轉 SMART 的 USB 外接盒：一樣不能顯示 0°C
+    env(lsblk=[disk("sde", True, model="USB 3.0 Bridge")], smart={"/dev/sde": QEMU_SMART_UNAVAILABLE})
+    d = system.get_hardware_info(USER)["disks"][0]
+    assert d["type"] == "HDD"
+    assert d["status"] == "UNKNOWN" and d["smart"] is None and d["temp"] is None
+    assert "沒有提供 SMART" in d["smart_note"]
+
+
+def test_missing_udev_data_is_not_called_no_filesystem(env):
+    # 容器沒掛 /run/udev：lsblk 的 FSTYPE 全空 → 說讀不到，而不是「沒有檔案系統」
+    def bare(name):
+        return part(name, fstype=None)
+    env(lsblk=[disk("sda", True, children=[bare("sda1"), bare("sda2")]),
+               disk("sdb", True, children=[bare("sdb1")])], smart={})
+    for d in system.get_hardware_info(USER)["disks"]:
+        assert "沒有檔案系統" not in d["usage_note"]
+        assert "/run/udev" in d["usage_note"]
+    # 有讀到檔案系統資訊時，真的沒有檔案系統的硬碟照舊
+    env(lsblk=[disk("sda", True, children=[part("sda1", fstype="ext4", mountpoint=None)]),
+               disk("sdb", True)], smart={})
+    assert system.get_hardware_info(USER)["disks"][1]["usage_note"] == "沒有檔案系統"
+
+
+def test_compose_mounts_host_udev_read_only():
+    text = open(os.path.join(os.path.dirname(__file__), "..", "docker-compose.yml"), encoding="utf-8").read()
+    assert "- /run/udev:/run/udev:ro" in text
