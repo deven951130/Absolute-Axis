@@ -10,7 +10,10 @@ const NAS_DISK_STATUS = {
     FAILING: ['異常', 'pill bad'],
     STANDBY: ['休眠中', 'pill info'],
     UNKNOWN: ['無法讀取', 'pill'],
+    VIRTUAL: ['不適用', 'pill'],
 };
+
+const NAS_DISK_TYPE = { HDD: 'HDD', SSD: 'SSD', VIRTUAL: '虛擬硬碟' };
 
 const NAS_POOL_STATUS = {
     ONLINE: ['運作中', 'pill ok'],
@@ -46,9 +49,10 @@ function nasDiskCard(disk) {
     card.setAttribute('aria-label', `${disk.name}（${disk.device}）`);
 
     const cap = nasEl('p', 'w-cap');
-    cap.style.color = disk.type === 'HDD' ? '#8E8E96' : '#2E9BF0';
+    cap.style.color = disk.type === 'SSD' ? '#2E9BF0' : '#8E8E96';
     cap.innerHTML = NAS_DISK_ICON;   // 固定的圖示，沒有 API 資料
-    cap.appendChild(nasEl('span', '', [disk.device, disk.type || '類型不明', disk.transport ? disk.transport.toUpperCase() : null].filter(Boolean).join(' · ')));
+    const typeLabel = NAS_DISK_TYPE[disk.type] || '類型不明';
+    cap.appendChild(nasEl('span', '', [disk.device, typeLabel, disk.transport ? disk.transport.toUpperCase() : null].filter(Boolean).join(' · ')));
     card.appendChild(cap);
 
     const top = nasEl('div', 'nas-disk-top');

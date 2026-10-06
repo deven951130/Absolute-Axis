@@ -298,6 +298,9 @@ POOL_MEMBER_FSTYPES = {"linux_raid_member", "zfs_member", "LVM2_member", "swap",
 _STANDBY_RE = re.compile(r"in (STANDBY|SLEEP) mode", re.IGNORECASE)
 # SSD 剩餘壽命（ATA 屬性的正規化值就是剩餘 %）：各廠商用的編號不同
 SSD_LIFE_ATTR_IDS = (231, 169, 202, 233, 177)
+# 虛擬機的虛擬硬碟（QEMU／Proxmox、VirtualBox、VMware、Hyper-V）：ROTA 與 SMART 都沒有意義
+_VIRTUAL_DISK_RE = re.compile(r"QEMU|VBOX|VMware|Virtual", re.IGNORECASE)
+VIRTUAL_DISK_NOTE = "虛擬硬碟：健康狀態與溫度要在實體主機（例如 Proxmox）上看，虛擬機裡讀不到"
 
 
 def _run_cmd(argv, timeout=HW_CMD_TIMEOUT):
@@ -451,6 +454,11 @@ def read_smart(dev_path: str) -> dict:
             res["standby"] = True
             return res
 
+    # 不支援 SMART 時 smartctl 仍會帶 temperature.current: 0 之類的欄位，不能當成真的讀數
+    if (sj.get("smart_support") or {}).get("available") is False:
+        res["note"] = "這顆硬碟沒有提供 SMART（虛擬硬碟、部分 USB 外接盒常見）"
+        return res
+
     smart = parse_smart(sj)
     passed = (sj.get("smart_status") or {}).get("passed")
     if passed is False:
@@ -465,14 +473,30 @@ def read_smart(dev_path: str) -> dict:
     return res
 
 
+def _is_virtual(dev) -> bool:
+    return bool(_VIRTUAL_DISK_RE.search(f"{dev.get('vendor') or ''} {dev.get('model') or ''}"))
+
+
+def _has_fs_info(devices) -> bool:
+    """lsblk 有沒有讀到任何檔案系統類型。
+
+    容器沒有掛載主機的 /run/udev 時，lsblk 的 FSTYPE／UUID／LABEL 全是空的；
+    這時不能說「沒有檔案系統」，儲存池（zfs／btrfs）也偵測不到。
+    """
+    return any(item.get("fstype") for dev in devices or [] for item in _walk(dev))
+
+
 def _disk_type(dev):
+    """HDD／SSD 看 ROTA；虛擬硬碟回傳 VIRTUAL（QEMU 預設把虛擬硬碟標成旋轉式，ROTA 沒有意義）。"""
+    if _is_virtual(dev):
+        return "VIRTUAL"
     rota = _as_bool(dev.get("rota"))
     if rota is None:
         return None
     return "HDD" if rota else "SSD"
 
 
-def scan_disks(devices, in_container: bool) -> list:
+def scan_disks(devices, in_container: bool, fs_known: bool = True) -> list:
     disks = []
     for dev in devices:
         name = dev.get("name") or ""
@@ -498,10 +522,17 @@ def scan_disks(devices, in_container: bool) -> list:
                           if in_container else "沒有掛載，算不出已用空間")
         elif any(item.get("fstype") in POOL_MEMBER_FSTYPES for item in _walk(dev)):
             usage_note = "屬於儲存池，用量見儲存池"
+        elif not fs_known:
+            usage_note = ("讀不到檔案系統資訊：主控台容器需要唯讀掛載主機的 /run/udev"
+                          if in_container else "讀不到檔案系統資訊")
         else:
             usage_note = "沒有檔案系統"
 
-        smart = read_smart(dev_path)
+        if _is_virtual(dev):
+            # 不執行 smartctl：虛擬硬碟沒有 SMART，讀到的溫度等數值都是假的
+            smart = {"status": "VIRTUAL", "standby": False, "smart": None, "note": VIRTUAL_DISK_NOTE}
+        else:
+            smart = read_smart(dev_path)
         disks.append({
             "name": full_name,
             "device": dev_path,
@@ -629,7 +660,7 @@ def _gb(n):
 def get_hardware_info(user: dict = Depends(get_current_user_obj)):
     in_container = _in_container()
     devices = _lsblk_devices()
-    disks = scan_disks(devices, in_container) if devices is not None else []
+    disks = scan_disks(devices, in_container, _has_fs_info(devices)) if devices is not None else []
     docker_bytes = docker_usage_bytes()
 
     return {
