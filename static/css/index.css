@@ -1947,6 +1947,30 @@ select.t-input option { background: var(--card-solid); color: var(--text-main); 
 .dh-power-rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .dh-power-rules li { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--dh-line); font-size: 0.9rem; }
 .dh-power-rules li:last-child { border-bottom: none; }
+/* 排程設定（FR-19h）：每台裝置一張排程表 */
+.dh-power-pause { display: flex; gap: 8px; flex-wrap: wrap; }
+.dh-sched-list { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
+.dh-sched { border-top: 1px solid var(--dh-line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.dh-sched:first-child { border-top: none; padding-top: 0; }
+.dh-sched-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dh-sched-head h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+.dh-sched-rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.dh-sched-rules li { display: flex; align-items: center; justify-content: space-between; gap: 8px 14px; flex-wrap: wrap;
+    padding: 8px 0; border-bottom: 1px solid var(--dh-line); font-size: 0.9rem; }
+.dh-sched-rules li:last-child { border-bottom: none; }
+.dh-sched-rules li[data-enabled="false"] { opacity: .6; }
+.dh-sched-what { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dh-sched-ops { display: flex; gap: 6px; flex-wrap: wrap; }
+.dh-sched-empty { padding: 6px 0; }
+.dh-r-caption { margin: 14px 16px 6px; }
+.dh-r-days { display: flex; width: 100%; }
+.dh-r-days button { flex: 1; padding: 0; }
+.dh-r-more { margin-top: 14px; }
+#dh-rule-dialog select { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--text-main); font: inherit; }
+#dh-rule-dialog select option { color: #000; }
+#dh-rule-dialog label[hidden] { display: none; }
+.dh-r-check input { flex: none; width: 20px; height: 20px; margin-left: auto; }
+#dh-rule-dialog .ios-group label span.dh-r-unit { width: auto; color: var(--text-muted); }
 .dh-power-rules li[data-enabled="false"] { opacity: .6; }
 .dh-power-saved { margin: 0; font-size: 0.85rem; }
 .dh-alert-list li { display: flex; gap: 16px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--dh-line); font-size: 0.9rem; }

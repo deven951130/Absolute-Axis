@@ -1,4 +1,4 @@
-"""Local stand-in for the DeviceHub integration API v0.4 (for viewing the Axis UI only).
+"""Local stand-in for the DeviceHub integration API v0.6 (for viewing the Axis UI only).
 Shapes follow DeviceHub docs/spec/integration-api.md; commands change a little state so the
 UI can be exercised. Run: python fake_devicehub.py  (listens on 127.0.0.1:18080)"""
 import time
@@ -173,6 +173,146 @@ async def delete_account(device_id: str, request: Request, authorization: str = 
     devices.pop(device_id, None)
     alerts.insert(0, {"ts": now(), "level": "notice", "message": f"🛰️ axis（{x_dh_operator}）移除裝置帳號「{device_id}」：ok"})
     return {"id": device_id, "removed": True}
+
+
+# ---------- 省電（v0.5 摘要、v0.6 排程設定；DeviceHub power-saving §5.2、§10.6） ----------
+POWER_ACTIONS = {"host.sleep": True, "host.shutdown": True, "host.wake": False, "pve.shutdown": True, "pve.start": False}
+power = {"paused_until": 0, "rules": {}, "seq": 0}
+
+
+def power_targets():
+    out = [{"target": "desktop", "name": "桌機", "kind": "host", "actions": ["host.sleep", "host.shutdown", "host.wake"]},
+           {"target": "laptop", "name": "laptop", "kind": "host", "actions": ["host.sleep", "host.shutdown"]}]
+    out += [{"target": f"pve:{g['vmid']}", "name": f"{g['name']}（{'CT' if g['type'] == 'lxc' else 'VM'} {g['vmid']}）",
+             "kind": "pve", "actions": ["pve.shutdown", "pve.start"]} for g in guests if not g["self"]]
+    return out
+
+
+def next_run(r):
+    import datetime as dt
+    if not r["enabled"] or not r["days"]:
+        return None
+    tz = dt.timezone(dt.timedelta(hours=8))
+    t = dt.datetime.now(tz)
+    hh, mm = map(int, r["time"].split(":"))
+    for add in range(8):
+        d = (t + dt.timedelta(days=add)).replace(hour=hh, minute=mm, second=0, microsecond=0)
+        if str(d.isoweekday()) in r["days"] and d > t:
+            return int(d.timestamp())
+    return None
+
+
+def public(r):
+    names = {t["target"]: t["name"] for t in power_targets()}
+    return r | {"target_name": names.get(r["target"], r["target"]), "next_run_at": next_run(r)}
+
+
+def check_rule(b, exclude=None):
+    t = next((x for x in power_targets() if x["target"] == b.get("target")), None)
+    if not str(b.get("name") or "").strip():
+        return JSONResponse({"error": "bad_rule", "detail": "name"}, 400)
+    if t is None:
+        return JSONResponse({"error": "bad_rule", "detail": "target"}, 400)
+    if b.get("action") not in t["actions"]:
+        return JSONResponse({"error": "bad_rule", "detail": "action"}, 400)
+    if b.get("days") and not b.get("time"):
+        return JSONResponse({"error": "bad_rule", "detail": "time"}, 400)
+    if b.get("action") in ("host.sleep", "host.shutdown") and not b.get("idle_min"):
+        return JSONResponse({"error": "bad_rule", "detail": "idle_min"}, 400)
+    if not b.get("days") and b.get("action") not in ("host.sleep", "host.shutdown"):
+        return JSONResponse({"error": "bad_rule", "detail": "days"}, 400)
+    for o in power["rules"].values():
+        if o["id"] != exclude and o["target"] == b["target"] and o["time"] == b.get("time") and b.get("days")                 and set(o["days"]) & set(b["days"]) and POWER_ACTIONS[o["action"]] != POWER_ACTIONS[b["action"]]:
+            return JSONResponse({"error": "rule_conflict", "detail": "time"}, 409)
+    return None
+
+
+@app.get("/api/v1/power/summary")
+def power_summary(authorization: str = Header(None)):
+    if not auth(authorization):
+        return err(401, "unauthorized")
+    rules = [public(r) for r in power["rules"].values()]
+    return {"rules": rules, "paused_until": power["paused_until"], "runs": [],
+            "savings": {"days": [], "targets": [], "cpu_energy": []}}
+
+
+@app.get("/api/v1/power/rules")
+def power_rules(authorization: str = Header(None)):
+    if not auth(authorization, control=True):
+        return err(401, "unauthorized")
+    return {"rules": [public(r) for r in power["rules"].values()], "paused_until": power["paused_until"],
+            "targets": power_targets()}
+
+
+@app.post("/api/v1/power/rules")
+async def power_add(request: Request, authorization: str = Header(None), x_dh_operator: str = Header(None)):
+    if not auth(authorization, control=True):
+        return err(401, "unauthorized")
+    b = await request.json()
+    if not b.get("confirm"):
+        return err(428, "confirm_required")
+    if (bad := check_rule(b)):
+        return bad
+    power["seq"] += 1
+    rid = f"r-{power['seq']:04x}"
+    r = {k: b.get(k) for k in ("name", "target", "action", "days", "time", "window_min", "idle_min", "cpu_below",
+                               "notice_min", "enabled")} | {"id": rid, "fail_count": 0, "last_run_at": None,
+                                                            "last_result": None, "state": None, "notice_until": None}
+    if not r["days"]:
+        r["time"] = ""
+    power["rules"][rid] = r
+    notice(x_dh_operator, r["target"], "power.rule.add", "ok")
+    return JSONResponse(public(r), 201)
+
+
+@app.put("/api/v1/power/rules/{rid}")
+async def power_put(rid: str, request: Request, authorization: str = Header(None), x_dh_operator: str = Header(None)):
+    if not auth(authorization, control=True):
+        return err(401, "unauthorized")
+    if rid not in power["rules"]:
+        return err(404, "unknown_rule")
+    b = await request.json()
+    if not b.get("confirm"):
+        return err(428, "confirm_required")
+    if (bad := check_rule(b, exclude=rid)):
+        return bad
+    power["rules"][rid].update({k: b.get(k) for k in ("name", "target", "action", "days", "time", "window_min",
+                                                      "idle_min", "cpu_below", "notice_min", "enabled")})
+    return public(power["rules"][rid])
+
+
+@app.delete("/api/v1/power/rules/{rid}")
+async def power_delete(rid: str, request: Request, authorization: str = Header(None)):
+    if not auth(authorization, control=True):
+        return err(401, "unauthorized")
+    b = await request.json()
+    if not b.get("confirm"):
+        return err(428, "confirm_required")
+    if power["rules"].pop(rid, None) is None:
+        return err(404, "unknown_rule")
+    return {"id": rid, "deleted": True}
+
+
+@app.post("/api/v1/power/rules/{rid}/skip")
+def power_skip(rid: str, authorization: str = Header(None)):
+    if not auth(authorization, control=True):
+        return err(401, "unauthorized")
+    r = power["rules"].get(rid)
+    if r is None:
+        return err(404, "unknown_rule")
+    if not r["state"]:
+        return err(409, "nothing_pending")
+    r["state"] = None
+    return public(r)
+
+
+@app.post("/api/v1/power/pause")
+async def power_pause(request: Request, authorization: str = Header(None)):
+    if not auth(authorization, control=True):
+        return err(401, "unauthorized")
+    hours = (await request.json()).get("hours")
+    power["paused_until"] = 0 if hours == 0 else now() + (12 * 3600 if hours == "until_morning" else int(hours) * 3600)
+    return {"paused_until": power["paused_until"]}
 
 
 if __name__ == "__main__":
