@@ -574,6 +574,7 @@ function _dhRenderPower() {
         const meta = [];
         if (r.state === 'notice') meta.push('預告中');
         else if (r.state === 'waiting') meta.push('等待閒置');
+        else if (r.state === 'sending') meta.push('執行中');   // 指令已送出、等結果（integration-api §3.1b）
         if (!r.enabled) meta.push('已停用');
         else if (r.next_run_at) meta.push(`下次 ${_dhWhen(r.next_run_at)}`);
         if (r.last_result) meta.push(`上次：${_DH_POWER_RESULTS[r.last_result] || r.last_result}`);
