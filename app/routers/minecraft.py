@@ -608,7 +608,11 @@ def _ssh_has_world(client, pack_name: str) -> bool:
 WORLD_STORE = ".axis-worlds"
 # 記錄資料目錄裡目前是哪個模組包（info.json 可能是舊的，不能拿來決定世界歸屬）
 ACTIVE_MARKER = ".axis-active-pack"
-_FORGE_LIB = re.compile(r"(?:^|/)libraries/net/minecraftforge/forge/(\d+(?:\.\d+)+)-[^/]+/")
+# 切換模組包時寫入的版本設定（VERSION／FORGE_VERSION）；docker-compose.yml 的 entrypoint 啟動前會讀它，
+# 蓋過 .env 的 MC_VERSION／MC_FORGE_VERSION——換不同版本的模組包不用再手動改 .env
+PACK_ENV = ".axis-pack.env"
+_FORGE_LIB = re.compile(r"(?:^|/)libraries/net/minecraftforge/forge/(\d+(?:\.\d+)+)-(\d+(?:\.\d+)+)[^/]*/")
+_VERSION_OK = re.compile(r"^\d+(?:\.\d+)+$")
 
 
 def _read_marker() -> str:
@@ -619,17 +623,54 @@ def _read_marker() -> str:
         return ""
 
 
-def _pack_minecraft_version(zip_path: str) -> str:
-    """從伺服器包內附的 Forge 函式庫路徑看它是哪個 Minecraft 版本；看不出來回傳空字串。"""
+def _pack_versions(zip_path: str) -> Tuple[str, str]:
+    """從伺服器包內附的 Forge 函式庫路徑看它是哪個 (Minecraft 版本, Forge 版本)；看不出來回傳空字串。"""
     try:
         with zipfile.ZipFile(zip_path) as z:
             for name in z.namelist():
                 m = _FORGE_LIB.search(name)
                 if m:
-                    return m.group(1)
+                    return m.group(1), m.group(2)
     except (OSError, zipfile.BadZipFile):
         raise Exception("模組包不是有效的 zip 檔")
-    return ""
+    return "", ""
+
+
+def _needs_java21(mc_version: str) -> bool:
+    """Minecraft 1.20.5 起要 Java 21，容器映像是 java17。"""
+    parts = [int(p) for p in mc_version.split(".")]
+    return parts[:2] > [1, 20] or (parts[:2] == [1, 20] and len(parts) > 2 and parts[2] >= 5)
+
+
+def _container_reads_pack_env(container) -> bool:
+    """容器的 entrypoint 有沒有讀 PACK_ENV（舊的 docker-compose.yml 沒有）。"""
+    return PACK_ENV in " ".join(container.attrs.get("Config", {}).get("Entrypoint") or [])
+
+
+def _read_pack_env(data_dir: str) -> dict:
+    try:
+        with open(os.path.join(data_dir, PACK_ENV), "r", encoding="utf-8") as f:
+            return dict(line.strip().split("=", 1) for line in f if "=" in line)
+    except OSError:
+        return {}
+
+
+def _write_pack_env(data_dir: str, mc_version: str, forge_version: str):
+    """寫入新模組包的版本；看不出版本就刪掉，回到 .env 的設定。內容會被 shell 讀取，只接受純數字版本。"""
+    path = os.path.join(data_dir, PACK_ENV)
+    if not mc_version:
+        if os.path.exists(path):
+            os.remove(path)
+        return
+    lines = [f"VERSION={mc_version}"]
+    if forge_version:
+        lines.append(f"FORGE_VERSION={forge_version}")
+    if not all(_VERSION_OK.match(v) for v in (mc_version, forge_version or "0")):
+        raise Exception("模組包的版本格式不正確")
+    tmp = path + ".axis-tmp"
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(lines) + "\n")
+    os.replace(tmp, path)
 
 
 def _container_has_world(pack_name: str) -> bool:
@@ -641,12 +682,12 @@ def _container_has_world(pack_name: str) -> bool:
 def _deploy_pack_to_container(local_zip_path: str, reset_world: bool = False):
     """
     容器模式的部署（每包獨立世界）：
-    1. 檢查容器設定與模組包版本（不符就不動伺服器）
+    1. 檢查容器設定與模組包版本（容器會讀 PACK_ENV 就之後自動套用；不會讀又不符就不動伺服器）
     2. 停止容器（Minecraft 會先存檔）
     3. 把目前的世界搬到 .axis-worlds/{目前包}
     4. 換掉 GENERIC_PACK 指到的 zip（容器啟動時自動清掉舊包的檔案並解壓新包）
     5. reset_world=True 就刪掉新包存過的世界；否則搬回來
-    6. 啟動容器
+    6. 寫入新包的 Minecraft／Forge 版本（PACK_ENV），啟動容器
     """
     new_pack_name = os.path.basename(local_zip_path)
     container = _mc_container()
@@ -664,12 +705,16 @@ def _deploy_pack_to_container(local_zip_path: str, reset_world: bool = False):
     if not pack_target.startswith(data_dir + os.sep):
         raise Exception("GENERIC_PACK 路徑不在資料目錄內")
 
-    want = env.get("VERSION", "").strip()
-    have = _pack_minecraft_version(local_zip_path)
-    if have and want and want.upper() != "LATEST" and have != want:
+    have, have_forge = _pack_versions(local_zip_path)
+    auto_version = _container_reads_pack_env(container)
+    if have and _needs_java21(have):
+        raise Exception(f"這個模組包是 Minecraft {have}，需要 Java 21；目前的 Minecraft 容器是 Java 17")
+    want = (_read_pack_env(data_dir) if auto_version else {}).get("VERSION") or env.get("VERSION", "").strip()
+    if not auto_version and have and want and want.upper() != "LATEST" and have != want:
         raise Exception(
             f"這個模組包是 Minecraft {have}，容器設定的是 {want}；"
             "請先改 .env 的 MC_VERSION／MC_FORGE_VERSION 並執行 docker compose up -d minecraft-server"
+            "（更新 docker-compose.yml 後，之後切換會自動套用模組包的版本）"
         )
 
     # 省電中直接停止的話，Java 收不到 stop、60 秒後被強制結束 → 先叫醒，讓它正常存檔關機
@@ -708,6 +753,8 @@ def _deploy_pack_to_container(local_zip_path: str, reset_world: bool = False):
 
     with open(os.path.join(data_dir, ACTIVE_MARKER), "w", encoding="utf-8") as f:
         f.write(new_pack_name)
+    if auto_version:
+        _write_pack_env(data_dir, have, have_forge)
 
     container.start()
 

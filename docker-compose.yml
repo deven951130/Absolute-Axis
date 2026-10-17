@@ -74,6 +74,9 @@ services:
     profiles: ["minecraft"]
     container_name: axis-mc
     restart: unless-stopped
+    # 多重宇宙頁切換模組包時，會把該包的 Minecraft／Forge 版本寫到 /data/.axis-pack.env；
+    # 啟動前讀它，蓋過下面 .env 的 MC_VERSION／MC_FORGE_VERSION（沒有這個檔就照 .env）
+    entrypoint: ["/bin/sh", "-c", "if [ -f /data/.axis-pack.env ]; then set -a; . /data/.axis-pack.env; set +a; fi; exec /image/scripts/start"]
     # autopause 的喚醒程式（knockd）要監聽網卡封包
     cap_add:
       - CAP_NET_RAW

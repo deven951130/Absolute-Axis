@@ -176,6 +176,47 @@ def test_switch_refuses_other_minecraft_version_before_stopping(mc):
     assert container.calls == [] and (data / "world").is_dir()
 
 
+AUTO_ENTRYPOINT = ["/bin/sh", "-c", "if [ -f /data/.axis-pack.env ]; then set -a; . /data/.axis-pack.env; "
+                   "set +a; fi; exec /image/scripts/start"]
+
+
+def test_switch_applies_pack_version_when_container_reads_pack_env(mc):
+    container, data, packs = mc
+    container.attrs["Config"]["Entrypoint"] = AUTO_ENTRYPOINT
+    container.start = lambda: container.calls.append(("start", (data / ".axis-pack.env").read_text()))
+    _zip(packs / "old.zip", ["转世/libraries/net/minecraftforge/forge/1.19.2-43.4.16/forge-1.19.2-43.4.16-server.jar"])
+    _zip(packs / "new.zip", ["libraries/net/minecraftforge/forge/1.20.1-47.4.0/unix_args.txt"])
+    _zip(packs / "plain.zip", ["mods/a.jar"])
+
+    minecraft.switch_pack(minecraft.SwitchPackRequest(pack_name="old.zip"), user=ADMIN)
+    # 版本要在啟動之前寫好
+    assert container.calls == [("stop", 120), ("start", "VERSION=1.19.2\nFORGE_VERSION=43.4.16\n")]
+
+    minecraft.switch_pack(minecraft.SwitchPackRequest(pack_name="new.zip"), user=ADMIN)
+    assert (data / ".axis-pack.env").read_text() == "VERSION=1.20.1\nFORGE_VERSION=47.4.0\n"
+
+    # 看不出版本的包：刪掉覆寫，回到 .env 的設定
+    container.start = lambda: container.calls.append(("start",))
+    minecraft.switch_pack(minecraft.SwitchPackRequest(pack_name="plain.zip"), user=ADMIN)
+    assert not (data / ".axis-pack.env").exists()
+
+
+def test_switch_refuses_java21_pack_before_stopping(mc):
+    container, data, packs = mc
+    container.attrs["Config"]["Entrypoint"] = AUTO_ENTRYPOINT
+    _zip(packs / "new.zip", ["libraries/net/minecraftforge/forge/1.20.6-50.1.0/unix_args.txt"])
+    with pytest.raises(HTTPException) as e:
+        minecraft.switch_pack(minecraft.SwitchPackRequest(pack_name="new.zip"), user=ADMIN)
+    assert "Java 21" in e.value.detail and container.calls == []
+    assert not (data / ".axis-pack.env").exists()
+
+
+@pytest.mark.parametrize("version,want", [("1.19.2", False), ("1.20.1", False), ("1.20.4", False),
+                                          ("1.20.5", True), ("1.21", True), ("1.21.1", True)])
+def test_needs_java21(version, want):
+    assert minecraft._needs_java21(version) is want
+
+
 @pytest.mark.parametrize("env", [{"LEVEL": ""}, {"GENERIC_PACK": ""}, {"GENERIC_PACK": "/data/../etc/x.zip"},
                                  {"LEVEL": "../x"}])
 def test_switch_needs_container_settings(mc, env):
