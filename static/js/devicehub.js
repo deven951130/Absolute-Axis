@@ -520,12 +520,20 @@ function _dhRenderAlerts() {
 // ---------- 省電（DeviceHub FR-19；唯讀，30 秒更新一次） ----------
 
 const _DH_POWER_ACTIONS = {
-    'host.sleep': '睡眠', 'host.shutdown': '關機', 'host.wake': '開機（WOL）', 'pve.shutdown': '關機', 'pve.start': '開機',
+    'host.sleep': '睡眠', 'host.shutdown': '關機', 'host.wake': '開機（WOL）',
 };
+// DeviceHub v0.4（power-saving §11、D-25）：虛擬機跟著伺服器開關機，不再排程；只用來顯示舊規則
+const _DH_LEGACY_ACTIONS = { 'pve.shutdown': '虛擬機關機', 'pve.start': '虛擬機開機' };
+const _DH_LEGACY_LABEL = '已停用：虛擬機不再支援排程';
 const _DH_POWER_RESULTS = {
     ok: '成功', error: '失敗', expired: '逾時', unknown: '中斷', cancelled: '已取消',
     skipped_busy: '略過（使用中）', skipped_offline: '略過（本來就關著）', skipped_online: '略過（本來就開著）',
+    unsupported: _DH_LEGACY_LABEL,
 };
+
+function _dhActionLabel(a) {
+    return _DH_POWER_ACTIONS[a] || _DH_LEGACY_ACTIONS[a] || a || '';
+}
 const _DH_DAYS = ['一', '二', '三', '四', '五', '六', '日'];
 
 function _dhPowerDays(days) {
@@ -568,7 +576,7 @@ function _dhRenderPower() {
 
     const pausedUntil = sched ? sched.paused_until : ok ? p.paused_until : 0;
     const paused = pausedUntil > Date.now() / 1000;
-    const all = sched ? sched.rules : rules;
+    const all = (sched ? sched.rules : rules).filter((r) => !r.unsupported);   // 舊的虛擬機規則不會執行
     const on = all.filter((r) => r.enabled).length;
     document.getElementById('dh-power-status').textContent = !ok && !sched ? 'DeviceHub 的省電資料暫時讀不到。'
         : paused ? `省電自動化已暫停，${_dhWhen(pausedUntil)} 自動恢復。`
@@ -587,12 +595,13 @@ function _dhRenderPower() {
         if (r.state === 'notice') meta.push('預告中');
         else if (r.state === 'waiting') meta.push('等待閒置');
         else if (r.state === 'sending') meta.push('執行中');   // 指令已送出、等結果（integration-api §3.1b）
-        if (!r.enabled) meta.push('已停用');
+        if (r.unsupported) meta.push(_DH_LEGACY_LABEL);
+        else if (!r.enabled) meta.push('已停用');
         else if (r.next_run_at) meta.push(`下次 ${_dhWhen(r.next_run_at)}`);
-        if (r.last_result) meta.push(`上次：${_DH_POWER_RESULTS[r.last_result] || r.last_result}`);
+        if (r.last_result && !r.unsupported) meta.push(`上次：${_DH_POWER_RESULTS[r.last_result] || r.last_result}`);
         return _dhEl('li', { 'data-enabled': String(!!r.enabled) },
             _dhEl('b', { text: r.name || '' }),
-            _dhEl('span', { text: `${_dhPowerDays(r.days)}${r.time ? ` ${r.time}` : ''}・${r.target_name || ''} → ${_DH_POWER_ACTIONS[r.action] || r.action || ''}` }),
+            _dhEl('span', { text: `${_dhPowerDays(r.days)}${r.time ? ` ${r.time}` : ''}・${r.target_name || ''} → ${_dhActionLabel(r.action)}` }),
             _dhEl('span', { class: 'dh-muted', text: meta.join('・') }));
     }));
 
@@ -610,14 +619,13 @@ function _dhRenderPower() {
 // ---------- 排程設定（FR-19h；DeviceHub power-saving §10.6，只給管理員、需要控制權杖） ----------
 // 驗證、衝突檢查都在 DeviceHub；這裡用和 DeviceHub 網頁相同的白話句確認（NFR-04），文字一律 textContent。
 
-const _DH_POWER_OFF = ['host.sleep', 'host.shutdown', 'pve.shutdown'];
+const _DH_POWER_OFF = ['host.sleep', 'host.shutdown'];
 const _DH_RULE_FIELDS = {
     name: '名稱', target: '裝置', action: '動作', days: '星期', time: '時間', idle_min: '閒置分鐘數',
     window_min: '時窗', notice_min: '預告分鐘數', cpu_below: 'CPU 門檻',
 };
 const _DH_RULE_ERRORS = {
     rule_conflict: '同一台裝置在同一時間已經有方向相反的排程（例如同時關機又開機）',
-    self_protected: 'DeviceHub 自己所在的容器不能排程',
     rate_limited: '操作太頻繁，請 10 分鐘後再試',
     nothing_pending: '這條排程現在沒有進行中的一次可以跳過',
     already_sent: '指令已經送出，來不及跳過',
@@ -635,7 +643,7 @@ function _dhRuleError(r) {
 
 function _dhDescribeRule(b, targetName) {
     const when = b.days ? `${_dhPowerDays(b.days)} ${b.time}` : '不看時間，只要閒置';
-    let text = `${when}，對「${targetName}」${_DH_POWER_ACTIONS[b.action] || b.action}`;
+    let text = `${when}，對「${targetName}」${_dhActionLabel(b.action)}`;
     if (b.idle_min) text += `（要閒置滿 ${b.idle_min} 分鐘、CPU 一直低於 ${b.cpu_below}% 才執行）`;
     if (_DH_POWER_OFF.includes(b.action) && b.notice_min) text += `，先預告 ${b.notice_min} 分鐘`;
     if (b.action === 'host.shutdown') text += '；關機時 Windows 會再倒數，人在電腦前可用 shutdown /a 取消';
@@ -680,8 +688,10 @@ function _dhRenderSchedules(sched, paused) {
 
     const groups = new Map(sched.targets.map((t) => [t.target, { target: t, rules: [] }]));
     for (const r of sched.rules) {
-        if (!groups.has(r.target)) groups.set(r.target, { target: null, name: r.target_name, rules: [] });
-        groups.get(r.target).rules.push(r);
+        const key = r.unsupported ? 'legacy:' : r.target;   // 舊的虛擬機規則放在同一組，只能刪除
+        if (!groups.has(key)) groups.set(key, { target: null, legacy: !!r.unsupported,
+            name: r.unsupported ? '虛擬機（不再支援排程）' : r.target_name, rules: [] });
+        groups.get(key).rules.push(r);
     }
     const order = (r) => `${r.days ? r.time : '99:99'}|${r.action}`;
     document.getElementById('dh-sched-list').replaceChildren(...[...groups.values()].map((g) => {
@@ -689,7 +699,7 @@ function _dhRenderSchedules(sched, paused) {
         const head = _dhEl('div', { class: 'dh-sched-head' }, _dhEl('h4', { text: name || '' }),
             g.target ? _dhEl('button', { type: 'button', class: 'dh-btn small', text: '新增排程',
                 onclick: () => _dhOpenRule(null, g.target.target) })
-                : _dhEl('span', { class: 'dh-muted', text: '裝置已不在清單' }));
+                : _dhEl('span', { class: 'dh-muted', text: g.legacy ? '只能刪除' : '裝置已不在清單' }));
         const list = _dhEl('ul', { class: 'dh-sched-rules' },
             ...g.rules.sort((a, b) => order(a).localeCompare(order(b))).map(_dhSchedRow));
         if (!g.rules.length) list.append(_dhEl('li', { class: 'dh-muted dh-sched-empty', text: '還沒有排程。' }));
@@ -698,6 +708,15 @@ function _dhRenderSchedules(sched, paused) {
 }
 
 function _dhSchedRow(r) {
+    if (r.unsupported) {   // DeviceHub power-saving §11：唯讀，只能刪除
+        const when = r.days ? `${_dhPowerDays(r.days)} ${r.time}` : '閒置時';
+        return _dhEl('li', { 'data-enabled': 'false' },
+            _dhEl('div', { class: 'dh-sched-what' },
+                _dhEl('b', { text: `${when} → ${_dhActionLabel(r.action)}（${r.target_name || ''}）` }),
+                _dhEl('span', { class: 'dh-muted', text: `${r.name}・${_DH_LEGACY_LABEL}；虛擬機會跟著伺服器一起開關機` })),
+            _dhEl('div', { class: 'dh-sched-ops' },
+                _dhEl('button', { type: 'button', class: 'dh-btn small danger', text: '刪除', onclick: () => _dhDeleteRule(r) })));
+    }
     const meta = [];
     if (r.state === 'sending') meta.push('執行中');
     else if (r.state === 'notice') meta.push(`預告中・${r.notice_until ? _dhWhen(r.notice_until) : ''} 執行`);
@@ -708,7 +727,7 @@ function _dhSchedRow(r) {
     const when = r.days ? `${_dhPowerDays(r.days)} ${r.time}` : '閒置時';
     return _dhEl('li', { 'data-enabled': String(!!r.enabled) },
         _dhEl('div', { class: 'dh-sched-what' },
-            _dhEl('b', { text: `${when} → ${_DH_POWER_ACTIONS[r.action] || r.action}` }),
+            _dhEl('b', { text: `${when} → ${_dhActionLabel(r.action)}` }),
             _dhEl('span', { class: 'dh-muted', text: `${r.name}${meta.length ? '・' + meta.join('・') : ''}` })),
         _dhEl('div', { class: 'dh-sched-ops' },
             r.state && r.state !== 'sending'
@@ -794,7 +813,7 @@ function _dhFillActions(selected) {
     const t = (DH.sched.targets || []).find((x) => x.target === document.getElementById('dh-r-target').value);
     const sel = document.getElementById('dh-r-action');
     const actions = t ? t.actions : [];
-    sel.replaceChildren(...actions.map((a) => h('option', { value: a, text: _DH_POWER_ACTIONS[a] || a })));
+    sel.replaceChildren(...actions.filter((a) => _DH_POWER_ACTIONS[a]).map((a) => h('option', { value: a, text: _DH_POWER_ACTIONS[a] })));
     if (actions.includes(selected)) sel.value = selected;
     _dhRuleFormUpdate();
 }
@@ -810,8 +829,6 @@ function _dhRuleFormUpdate() {
         'host.sleep': '電腦閒置滿設定的分鐘數（CPU 一直很低）才會睡眠；有人在用就延後，時間範圍內一直沒閒置就放棄這次。',
         'host.shutdown': '閒置才關機；關機前先預告，Windows 還會再倒數，人在電腦前可以取消。',
         'host.wake': '用 Wake-on-LAN 開機（電腦要接網路線、BIOS 允許喚醒）。',
-        'pve.shutdown': '讓虛擬機或容器正常關機。',
-        'pve.start': '啟動虛擬機或容器。',
     };
     document.getElementById('dh-r-hint').textContent = hints[a] || '';
 }

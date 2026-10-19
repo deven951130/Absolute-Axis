@@ -345,6 +345,33 @@ def test_schedule_list_uses_control_token_and_passes_known_fields(dh):
     assert calls[0]["headers"]["X-DH-Operator"] == "sparkle"
 
 
+def test_schedule_list_drops_guest_targets_and_passes_unsupported(dh):
+    # DeviceHub v0.4（power-saving §11、D-25）：虛擬機不是排程目標；舊規則帶 unsupported，Axis 只給刪除
+    c, calls, state = dh
+    legacy = {"id": "r-0001", "name": "kali 夜間", "target": "pve:101", "target_name": "虛擬機 101",
+              "action": "pve.shutdown", "days": "12345", "time": "01:00", "enabled": False,
+              "last_result": "unsupported", "next_run_at": None, "state": None, "unsupported": True}
+    old_hub = {k: v for k, v in legacy.items() if k != "unsupported"} | {"id": "r-0003"}   # DeviceHub 舊版：沒有這個欄位
+    state["resp"] = Resp(200, {
+        "rules": [legacy, legacy | {"id": "r-0002", "unsupported": "yes"}, old_hub],
+        "targets": [{"target": "desktop", "name": "桌機", "kind": "host", "actions": ["host.shutdown", "pve.start"]},
+                    {"target": "pve:101", "name": "kali（VM 101）", "kind": "pve", "actions": ["pve.shutdown"]}],
+        "paused_until": 0})
+    body = c.get("/api/devicehub/power/rules", headers=ADMIN).json()
+    assert body["targets"] == [{"target": "desktop", "name": "桌機", "kind": "host", "actions": ["host.shutdown"]}]
+    assert [r["unsupported"] for r in body["rules"]] == [True, False, False]   # 只認 DeviceHub 明確給的 true
+
+
+def test_power_summary_passes_unsupported(dh):
+    c, calls, state = dh
+    devicehub._power_cache.update(ts=0.0, data=None)
+    state["resp"] = Resp(200, {"rules": [{"id": "r-1", "name": "kali 夜間", "action": "pve.shutdown", "unsupported": True},
+                                         {"id": "r-2", "name": "桌機夜間", "action": "host.shutdown"}],
+                               "paused_until": 0, "runs": [], "savings": None})
+    r = c.get("/api/devicehub/power", headers=ADMIN).json()
+    assert [x["unsupported"] for x in r["rules"]] == [True, False]
+
+
 def test_schedule_writes_forward_with_confirm_and_operator(dh):
     c, calls, state = dh
     devicehub._power_cache.update(ts=1e18, data={"stale": True})
