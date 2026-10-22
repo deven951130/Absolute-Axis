@@ -97,6 +97,9 @@ services:
       SERVER_PORT: "25565"
       # 正版驗證（.env 的 MC_ONLINE_MODE，預設 TRUE）：伺服器包常把 online-mode 關掉，關掉時任何人都能用任意名字進服
       ONLINE_MODE: "${MC_ONLINE_MODE:-TRUE}"
+      # 允許飛行（.env 的 MC_ALLOW_FLIGHT，預設 TRUE）：模組包的飛行技能／道具會被當成作弊踢掉（「Flying is not enabled on this server」）；
+      # 伺服器包常附自己的 server.properties，多重宇宙頁切換模組包時會被蓋回 false，所以每次啟動都從這裡套用
+      ALLOW_FLIGHT: "${MC_ALLOW_FLIGHT:-TRUE}"
       # 堆積上限要比容器記憶體上限少 1.5 GB 左右，留給 JVM 本身，否則會被 OOM 砍掉
       INIT_MEMORY: "4G"
       MAX_MEMORY: "9G"
