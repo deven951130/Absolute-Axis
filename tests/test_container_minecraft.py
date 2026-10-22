@@ -3,9 +3,13 @@
 檔名以 c 開頭：要比 test_devicehub_module.py（會用假的 app.utils 取代真的）先被收集。
 執行：在 repo 根目錄 `python -m pytest tests`
 """
+import json
 import os
+import shutil
+import subprocess
 import tempfile
 import zipfile
+from pathlib import Path
 from types import SimpleNamespace
 
 os.environ.setdefault("AXIS_BASE_PATH", tempfile.mkdtemp(prefix="axis-test-"))
@@ -256,3 +260,17 @@ def test_container_missing_is_503(monkeypatch):
     with pytest.raises(HTTPException) as e:
         minecraft._mc_container()
     assert e.value.status_code == 503
+
+
+# ---------- compose 設定 ----------
+@pytest.mark.skipif(shutil.which("docker") is None, reason="沒有 docker CLI")
+@pytest.mark.parametrize("extra, want", [("", "TRUE"), ("MC_ALLOW_FLIGHT=FALSE\n", "FALSE")])
+def test_compose_allow_flight(tmp_path, extra, want):
+    env = tmp_path / "test.env"
+    env.write_text(f"AXIS_JWT_SECRET={'t' * 64}\nCOMPOSE_PROFILES=minecraft\n{extra}", encoding="utf-8")
+    repo = Path(__file__).resolve().parents[1]
+    out = subprocess.run(["docker", "compose", "-f", "docker-compose.yml", "--env-file", str(env), "config", "--format", "json"],
+                         cwd=repo, capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0, out.stderr
+    svc = json.loads(out.stdout)["services"]["minecraft-server"]
+    assert svc["environment"]["ALLOW_FLIGHT"] == want
