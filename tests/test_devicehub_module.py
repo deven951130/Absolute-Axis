@@ -411,6 +411,63 @@ def test_schedule_errors_carry_the_field(dh):
         {"ok": False, "error": "rule_conflict", "http": 409}
 
 
+# ---------- 伺服器排程（DeviceHub power-saving §10.3、§10.10；FR-19 第 3b 期） ----------
+SERVER_OFF = {"name": "伺服器夜間關機", "target": "esp-server", "action": "server.off", "days": "12345",
+              "time": "23:30", "confirm": True}
+
+
+def test_server_rule_notice_defaults_to_the_hub(dh):
+    # 沒給 notice_min＝交給 DeviceHub 用該動作的預設（伺服器關機 10 分鐘，D-21），不再送 0
+    c, calls, state = dh
+    state["resp"] = Resp(201, {"id": "r-1a2b", "action": "server.off", "notice_min": 10})
+    c.post("/api/devicehub/power/rules", headers=ADMIN, json=SERVER_OFF)
+    assert calls[-1]["json"]["notice_min"] is None
+    c.post("/api/devicehub/power/rules", headers=ADMIN, json=SERVER_OFF | {"notice_min": 25})
+    assert calls[-1]["json"]["notice_min"] == 25
+
+
+def test_server_off_conflict_carries_the_window_and_rules(dh):
+    c, _, state = dh
+    state["resp"] = Resp(409, {"error": "server_off", "detail": "桌機週六關機", "off": "週六 01:00–08:00",
+                               "rules": ["桌機週六關機", 3, "x" * 80]})
+    r = c.post("/api/devicehub/power/rules", headers=ADMIN, json=RULE).json()
+    assert r == {"ok": False, "error": "server_off", "http": 409, "detail": "桌機週六關機",
+                 "off": "週六 01:00–08:00", "rules": ["桌機週六關機", "x" * 40]}
+
+
+def test_schedule_list_passes_server_fields_and_server_off(dh):
+    c, _, state = dh
+    state["resp"] = Resp(200, {
+        "rules": [{"id": "r-0001", "name": "桌機早上開機", "target": "desktop", "action": "host.wake", "days": "12345",
+                   "time": "07:30", "esp_days": "2345", "skipped_date": None},
+                  {"id": "r-0002", "name": "夜間關機", "target": "esp-server", "action": "server.off", "days": "12345",
+                   "time": "23:30", "esp_days": "", "skipped_date": "2026-11-26", "state": "notice",
+                   "notice_until": 1795700000}],
+        "targets": [{"target": "esp-server", "name": "伺服器（esp-server）", "kind": "server",
+                     "actions": ["server.off", "server.on"]}],
+        "paused_until": 0,
+        "server_off": {"windows": [{"from": 1, "to": 2}], "text": "週一～五 23:30–隔天 08:00", "esp_wake": ["r-0001", 5],
+                       "not_run": [], "no_on_rule": False, "secret": "x",
+                       "sync": [{"device": "esp-server", "name": "伺服器", "online": True, "hub_ver": 3, "esp_ver": 2,
+                                 "time_ok": True, "in_sync": False, "error": None}]}})
+    body = c.get("/api/devicehub/power/rules", headers=ADMIN).json()
+    assert body["targets"][0]["actions"] == ["server.off", "server.on"]
+    assert body["rules"][0]["esp_days"] == "2345" and body["rules"][1]["skipped_date"] == "2026-11-26"
+    assert body["rules"][1]["notice_until"] == 1795700000
+    assert body["server_off"] == {"text": "週一～五 23:30–隔天 08:00", "esp_wake": ["r-0001"], "not_run": [],
+                                  "no_on_rule": False,
+                                  "sync": [{"device": "esp-server", "online": True, "time_ok": True,
+                                            "in_sync": False, "error": None}]}
+
+
+def test_power_summary_passes_notice_until(dh):
+    c, _, state = dh
+    devicehub._power_cache.update(ts=0.0, data=None)
+    state["resp"] = Resp(200, {"rules": [{"id": "r-2", "name": "夜間關機", "action": "server.off", "state": "notice",
+                                          "notice_until": 1795700000}], "paused_until": 0, "runs": [], "savings": None})
+    assert c.get("/api/devicehub/power", headers=ADMIN).json()["rules"][0]["notice_until"] == 1795700000
+
+
 @pytest.mark.parametrize("method, path, body", [
     ("PUT", "/api/devicehub/power/rules/../x", RULE), ("PUT", "/api/devicehub/power/rules/r-ZZ", RULE),
     ("DELETE", "/api/devicehub/power/rules/1;rm", {"confirm": True}), ("POST", "/api/devicehub/power/rules/x/skip", None),

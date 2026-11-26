@@ -521,13 +521,17 @@ function _dhRenderAlerts() {
 
 const _DH_POWER_ACTIONS = {
     'host.sleep': '睡眠', 'host.shutdown': '關機', 'host.wake': '開機（WOL）',
+    // DeviceHub power-saving §10.3：ESP32 依自己的時鐘短按伺服器電源鍵（伺服器關著也會執行）
+    'server.off': '伺服器關機', 'server.on': '伺服器開機',
 };
+const _DH_SERVER_ACTIONS = ['server.off', 'server.on'];
 // DeviceHub v0.4（power-saving §11、D-25）：虛擬機跟著伺服器開關機，不再排程；只用來顯示舊規則
 const _DH_LEGACY_ACTIONS = { 'pve.shutdown': '虛擬機關機', 'pve.start': '虛擬機開機' };
 const _DH_LEGACY_LABEL = '已停用：虛擬機不再支援排程';
 const _DH_POWER_RESULTS = {
     ok: '成功', error: '失敗', expired: '逾時', unknown: '中斷', cancelled: '已取消',
     skipped_busy: '略過（使用中）', skipped_offline: '略過（本來就關著）', skipped_online: '略過（本來就開著）',
+    skipped_no_net: '略過（ESP32 沒有網路）', skipped_no_time: '略過（ESP32 還沒校時）',
     unsupported: _DH_LEGACY_LABEL,
 };
 
@@ -592,7 +596,8 @@ function _dhRenderPower() {
 
     document.getElementById('dh-power-rules').replaceChildren(...rules.map((r) => {
         const meta = [];
-        if (r.state === 'notice') meta.push('預告中');
+        if (r.state === 'notice' && r.action === 'server.off' && r.notice_until) meta.push(`伺服器將於 ${_dhWhen(r.notice_until)} 關機`);
+        else if (r.state === 'notice') meta.push('預告中');
         else if (r.state === 'waiting') meta.push('等待閒置');
         else if (r.state === 'sending') meta.push('執行中');   // 指令已送出、等結果（integration-api §3.1b）
         if (r.unsupported) meta.push(_DH_LEGACY_LABEL);
@@ -619,7 +624,8 @@ function _dhRenderPower() {
 // ---------- 排程設定（FR-19h；DeviceHub power-saving §10.6，只給管理員、需要控制權杖） ----------
 // 驗證、衝突檢查都在 DeviceHub；這裡用和 DeviceHub 網頁相同的白話句確認（NFR-04），文字一律 textContent。
 
-const _DH_POWER_OFF = ['host.sleep', 'host.shutdown'];
+const _DH_POWER_OFF = ['host.sleep', 'host.shutdown', 'server.off'];
+const _dhNoticeMax = (a) => (a === 'server.off' ? 30 : 15);   // DeviceHub §10.4：伺服器關機預告 0～30（預設 10）
 const _DH_RULE_FIELDS = {
     name: '名稱', target: '裝置', action: '動作', days: '星期', time: '時間', idle_min: '閒置分鐘數',
     window_min: '時窗', notice_min: '預告分鐘數', cpu_below: 'CPU 門檻',
@@ -628,7 +634,9 @@ const _DH_RULE_ERRORS = {
     rule_conflict: '同一台裝置在同一時間已經有方向相反的排程（例如同時關機又開機）',
     rate_limited: '操作太頻繁，請 10 分鐘後再試',
     nothing_pending: '這條排程現在沒有進行中的一次可以跳過',
-    already_sent: '指令已經送出，來不及跳過',
+    already_sent: '指令已經送出（或 ESP32 已經判斷過這一次），來不及跳過',
+    skip_failed: '沒有送到 ESP32，這次還是會關機；請再按一次「跳過這次」',
+    sched_full: 'ESP32 最多只能存 16 筆排程（伺服器開關機＋代送的喚醒）',
     unknown_rule: '找不到這條排程（可能已被刪除）',
     control_not_configured: 'Axis 沒有設定 DeviceHub 控制權杖',
     unreachable: 'DeviceHub 無法連線',
@@ -638,10 +646,26 @@ const _DH_RULE_ERRORS = {
 
 function _dhRuleError(r) {
     if (r && r.error === 'bad_rule') return `設定有誤：${_DH_RULE_FIELDS[r.detail] || '請檢查欄位'}`;
+    if (r && r.error === 'server_off') {   // DeviceHub §10.10 (22)
+        const names = (r.rules || []).map((n) => `「${n}」`).join('、');
+        return `這樣會讓${names || '其他排程'}落在伺服器關機時段（${r.off || '伺服器關著'}），那時 DeviceHub 也是關的，無法執行。`;
+    }
     return (r && _DH_RULE_ERRORS[r.error]) || `失敗（${(r && r.error) || '未知錯誤'}）`;
 }
 
 function _dhDescribeRule(b, targetName) {
+    if (_DH_SERVER_ACTIONS.includes(b.action)) {   // DeviceHub §10.3：由 ESP32 執行
+        const verb = b.action === 'server.off' ? '關閉' : '開啟';
+        let text = `${_dhPowerDays(b.days)} ${b.time}，由 ESP32 短按「${targetName}」的電源鍵${verb}伺服器`;
+        if (b.action === 'server.off') {
+            const n = b.notice_min == null ? 10 : b.notice_min;
+            text += n ? `；${n} 分鐘前預告（Minecraft 有玩家時會在遊戲內廣播），可按「跳過這次」` : '；不預告';
+            text += '。Axis、DeviceHub、Minecraft 都會跟著關機';
+        } else {
+            text += '。主機已經開著、或剛關機不到 2 分鐘時不會按';
+        }
+        return `${text}。`;
+    }
     const when = b.days ? `${_dhPowerDays(b.days)} ${b.time}` : '不看時間，只要閒置';
     let text = `${when}，對「${targetName}」${_dhActionLabel(b.action)}`;
     if (b.idle_min) text += `（要閒置滿 ${b.idle_min} 分鐘、CPU 一直低於 ${b.cpu_below}% 才執行）`;
@@ -703,8 +727,30 @@ function _dhRenderSchedules(sched, paused) {
         const list = _dhEl('ul', { class: 'dh-sched-rules' },
             ...g.rules.sort((a, b) => order(a).localeCompare(order(b))).map(_dhSchedRow));
         if (!g.rules.length) list.append(_dhEl('li', { class: 'dh-muted dh-sched-empty', text: '還沒有排程。' }));
-        return _dhEl('section', { class: 'dh-sched', 'aria-label': `${name}的排程` }, head, list);
+        const notes = g.target && g.target.kind === 'server' ? _dhServerNotes(sched, g.target.target) : null;
+        return _dhEl('section', { class: 'dh-sched', 'aria-label': `${name}的排程` }, head, notes, list);
     }));
+}
+
+// DeviceHub §10.7、§10.10 (23)(24)：關機時段、不會執行的規則、ESP32 是否已同步
+function _dhServerNotes(sched, target) {
+    const so = sched.server_off;
+    if (!so) return null;
+    const lines = [];
+    if (so.text) lines.push(`伺服器關機時段：${so.text}（這段時間 Axis 與 DeviceHub 也是關的）`);
+    const notRun = (sched.rules || []).filter((r) => (so.not_run || []).includes(r.id)).map((r) => `「${r.name}」`);
+    if (notRun.length) lines.push(`落在關機時段、不會執行：${notRun.join('、')}`);
+    if ((so.esp_wake || []).length) lines.push('關機時段內的喚醒（WOL）改由 ESP32 代送。');
+    const warn = [];
+    if (so.no_on_rule) warn.push('沒有開機排程：關機後要手動開機（外網控制頁或電源鍵）。');
+    const sync = (so.sync || []).find((x) => x.device === target);
+    if (sync && !sync.online) warn.push('ESP32 目前離線：排程照它上次收到的版本執行。');
+    else if (sync && sync.time_ok === false) warn.push('ESP32 尚未校時：校時完成前不會執行伺服器排程。');
+    else if (sync && !sync.in_sync) warn.push('排程尚未同步到 ESP32，DeviceHub 會自動重送。');
+    if (!lines.length && !warn.length) return null;
+    return _dhEl('div', { class: 'dh-sched-notes dh-muted' },
+        ...lines.map((t) => _dhEl('p', { text: t })),
+        ...warn.map((t) => _dhEl('p', { class: 'dh-warn', text: t })));
 }
 
 function _dhSchedRow(r) {
@@ -719,8 +765,12 @@ function _dhSchedRow(r) {
     }
     const meta = [];
     if (r.state === 'sending') meta.push('執行中');
+    else if (r.state === 'notice' && r.action === 'server.off') meta.push(`伺服器將於 ${r.notice_until ? _dhWhen(r.notice_until) : ''} 關機`);
     else if (r.state === 'notice') meta.push(`預告中・${r.notice_until ? _dhWhen(r.notice_until) : ''} 執行`);
     else if (r.state === 'waiting') meta.push('等待閒置');
+    if (_DH_SERVER_ACTIONS.includes(r.action)) meta.push('由 ESP32 執行');
+    if (r.esp_days) meta.push(`伺服器關機時由 ESP32 喚醒（${_dhPowerDays(r.esp_days)}）`);
+    if (r.skipped_date) meta.push(`${r.skipped_date.slice(5).replace('-', '/')} 這次跳過`);
     if (!r.enabled) meta.push(r.fail_count >= 3 ? '已自動停用（連續失敗）' : '已停用');
     else if (r.next_run_at) meta.push(`下次 ${_dhWhen(r.next_run_at)}`);
     if (r.last_result) meta.push(`上次：${_DH_POWER_RESULTS[r.last_result] || r.last_result}`);
@@ -803,8 +853,8 @@ function _dhRuleDialog() {
     for (const b of dlg.querySelectorAll('#dh-r-days button')) {
         b.addEventListener('click', () => { b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); _dhRuleFormUpdate(); });
     }
-    dlg.querySelector('#dh-r-target').addEventListener('change', () => _dhFillActions());
-    dlg.querySelector('#dh-r-action').addEventListener('change', _dhRuleFormUpdate);
+    dlg.querySelector('#dh-r-target').addEventListener('change', () => { _dhFillActions(); _dhActionChanged(); });
+    dlg.querySelector('#dh-r-action').addEventListener('change', _dhActionChanged);
     dlg.querySelector('#dh-rule-form').addEventListener('submit', (e) => { e.preventDefault(); _dhSaveRule(); });
     return dlg;
 }
@@ -823,17 +873,33 @@ function _dhRuleFormUpdate() {
     const needsIdle = a === 'host.sleep' || a === 'host.shutdown';
     document.getElementById('dh-r-idle').closest('label').hidden = !needsIdle;
     document.getElementById('dh-r-notice').closest('label').hidden = !_DH_POWER_OFF.includes(a);
+    const notice = document.getElementById('dh-r-notice');
+    notice.max = String(_dhNoticeMax(a));
+    if (Number(notice.value) > _dhNoticeMax(a)) notice.value = String(_dhNoticeMax(a));
     const noDays = !document.querySelector('#dh-r-days button[aria-pressed="true"]');
     document.getElementById('dh-r-time').closest('label').hidden = noDays;
     const hints = {
         'host.sleep': '電腦閒置滿設定的分鐘數（CPU 一直很低）才會睡眠；有人在用就延後，時間範圍內一直沒閒置就放棄這次。',
         'host.shutdown': '閒置才關機；關機前先預告，Windows 還會再倒數，人在電腦前可以取消。',
         'host.wake': '用 Wake-on-LAN 開機（電腦要接網路線、BIOS 允許喚醒）。',
+        'server.off': '時間到後 ESP32 重新偵測一次，伺服器開著才短按電源鍵（正常關機）；5 分鐘內有人按過電源鍵、或看門狗正在處理時不按。星期一定要選。',
+        'server.on': '時間到後 ESP32 重新偵測一次，伺服器關著超過 2 分鐘才短按電源鍵開機。伺服器關著時這條排程完全由 ESP32 執行。星期一定要選。',
     };
     document.getElementById('dh-r-hint').textContent = hints[a] || '';
 }
 
 let _dhEditingRule = null;
+let _dhLastAction = null;
+
+// 伺服器關機和其他動作的預告預設不同（10／5 分鐘）：換動作時換成該動作的預設
+function _dhActionChanged() {
+    const a = document.getElementById('dh-r-action').value;
+    if ((a === 'server.off') !== (_dhLastAction === 'server.off')) {
+        document.getElementById('dh-r-notice').value = a === 'server.off' ? '10' : '5';
+    }
+    _dhLastAction = a;
+    _dhRuleFormUpdate();
+}
 
 function _dhOpenRule(r = null, presetTarget = null) {
     const targets = (DH.sched && DH.sched.targets) || [];
@@ -845,8 +911,10 @@ function _dhOpenRule(r = null, presetTarget = null) {
     const tsel = document.getElementById('dh-r-target');
     tsel.replaceChildren(...targets.map((t) => h('option', { value: t.target, text: t.name })));
     const target = r ? r.target : (targets.some((t) => t.target === presetTarget) ? presetTarget : targets[0].target);
-    const b = r ? _dhRuleBody(r) : { name: '', target, action: 'host.shutdown', days: '12345', time: '23:00',
-        window_min: 60, idle_min: 30, cpu_below: 15, notice_min: 5, enabled: true };
+    const kind = (targets.find((t) => t.target === target) || {}).kind;
+    const b = r ? _dhRuleBody(r) : { name: '', target, action: kind === 'server' ? 'server.off' : 'host.shutdown',
+        days: '12345', time: kind === 'server' ? '23:30' : '23:00',
+        window_min: 60, idle_min: 30, cpu_below: 15, notice_min: kind === 'server' ? 10 : 5, enabled: true };
     document.getElementById('dh-r-name').value = b.name;
     tsel.value = b.target;
     tsel.disabled = !!r && !targets.some((t) => t.target === r.target);
@@ -856,6 +924,7 @@ function _dhOpenRule(r = null, presetTarget = null) {
     document.getElementById('dh-r-notice').value = b.notice_min;
     document.getElementById('dh-r-enabled').checked = b.enabled;
     _dhFillActions(b.action);
+    _dhLastAction = document.getElementById('dh-r-action').value;
     dlg.showModal();
     document.getElementById('dh-r-name').focus();
 }

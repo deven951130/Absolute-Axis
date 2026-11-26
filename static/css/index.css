@@ -1954,6 +1954,10 @@ select.t-input option { background: var(--card-solid); color: var(--text-main); 
 .dh-sched:first-child { border-top: none; padding-top: 0; }
 .dh-sched-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .dh-sched-head h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+/* DeviceHub power-saving §10.7：伺服器排程表下方的提示 */
+.dh-sched-notes { margin: 4px 0 8px; font-size: .88rem; }
+.dh-sched-notes p { margin: 2px 0; }
+.dh-sched-notes .dh-warn { color: var(--dh-danger); }
 .dh-sched-rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .dh-sched-rules li { display: flex; align-items: center; justify-content: space-between; gap: 8px 14px; flex-wrap: wrap;
     padding: 8px 0; border-bottom: 1px solid var(--dh-line); font-size: 0.9rem; }
