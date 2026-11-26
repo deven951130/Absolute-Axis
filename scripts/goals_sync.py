@@ -50,6 +50,8 @@ def api(method, path, body=None):
     data = json.dumps(body).encode("utf-8") if body is not None else None
     req = urllib.request.Request(url + path, data=data, method=method)
     req.add_header("X-Goals-Token", token)
+    # Cloudflare 會擋 Python 預設的 "Python-urllib/x.y" UA（error code 1010）
+    req.add_header("User-Agent", "AbsoluteAxis-goals-sync/1.0")
     if data is not None:
         req.add_header("Content-Type", "application/json")
     try:
