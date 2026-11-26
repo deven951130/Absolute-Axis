@@ -176,16 +176,17 @@ async def delete_account(device_id: str, request: Request, authorization: str = 
 
 
 # ---------- 省電（v0.5 摘要、v0.6 排程設定；DeviceHub power-saving §5.2、§10.6） ----------
-POWER_ACTIONS = {"host.sleep": True, "host.shutdown": True, "host.wake": False, "pve.shutdown": True, "pve.start": False}
-power = {"paused_until": 0, "rules": {}, "seq": 0}
+POWER_ACTIONS = {"host.sleep": True, "host.shutdown": True, "host.wake": False}
+# v0.4（power-saving §11）：舊版 hub 留下的虛擬機規則——已停用、唯讀、只能刪除
+power = {"paused_until": 0, "seq": 0, "rules": {"r-1e9ac001": {
+    "id": "r-1e9ac001", "name": "kali 夜間關機", "target": "pve:101", "action": "pve.shutdown", "days": "12345",
+    "time": "01:00", "window_min": 60, "idle_min": None, "cpu_below": 15, "notice_min": 0, "enabled": False,
+    "fail_count": 0, "last_run_at": None, "last_result": "unsupported", "state": None, "notice_until": None}}}
 
 
 def power_targets():
-    out = [{"target": "desktop", "name": "桌機", "kind": "host", "actions": ["host.sleep", "host.shutdown", "host.wake"]},
-           {"target": "laptop", "name": "laptop", "kind": "host", "actions": ["host.sleep", "host.shutdown"]}]
-    out += [{"target": f"pve:{g['vmid']}", "name": f"{g['name']}（{'CT' if g['type'] == 'lxc' else 'VM'} {g['vmid']}）",
-             "kind": "pve", "actions": ["pve.shutdown", "pve.start"]} for g in guests if not g["self"]]
-    return out
+    return [{"target": "desktop", "name": "桌機", "kind": "host", "actions": ["host.sleep", "host.shutdown", "host.wake"]},
+            {"target": "laptop", "name": "laptop", "kind": "host", "actions": ["host.sleep", "host.shutdown"]}]
 
 
 def next_run(r):
@@ -204,7 +205,9 @@ def next_run(r):
 
 def public(r):
     names = {t["target"]: t["name"] for t in power_targets()}
-    return r | {"target_name": names.get(r["target"], r["target"]), "next_run_at": next_run(r)}
+    legacy = r["target"].startswith("pve:")
+    return r | {"target_name": f"虛擬機 {r['target'][4:]}" if legacy else names.get(r["target"], r["target"]),
+                "next_run_at": None if legacy else next_run(r), "unsupported": legacy}
 
 
 def check_rule(b, exclude=None):
@@ -274,6 +277,8 @@ async def power_put(rid: str, request: Request, authorization: str = Header(None
     b = await request.json()
     if not b.get("confirm"):
         return err(428, "confirm_required")
+    if power["rules"][rid]["target"].startswith("pve:"):
+        return JSONResponse({"error": "bad_rule", "detail": "target"}, 400)   # §11：只能刪除
     if (bad := check_rule(b, exclude=rid)):
         return bad
     power["rules"][rid].update({k: b.get(k) for k in ("name", "target", "action", "days", "time", "window_min",

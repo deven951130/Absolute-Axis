@@ -175,12 +175,21 @@ def _read_get(path: str, timeout: float = 8) -> dict:
 _POWER_CACHE_SECONDS = 30
 _power_cache = {"ts": 0.0, "data": None}
 _POWER_RULE_KEYS = ("id", "name", "target_name", "action", "days", "time", "enabled", "next_run_at",
-                    "last_result", "state")
+                    "last_result", "state", "unsupported")
 _POWER_RUN_KEYS = ("rule_name", "started_at", "finished_at", "result", "detail")
 
 
 def _pick(items, keys) -> list:
     return [{k: x.get(k) for k in keys} for x in (items or []) if isinstance(x, dict)]
+
+
+def _pick_rules(items, keys) -> list:
+    # DeviceHub v0.4（power-saving §11、D-25）：unsupported＝舊的虛擬機規則，已停用、只能刪除。
+    # 只認 DeviceHub 明確給的 true；舊版 DeviceHub 沒有這個欄位＝false。
+    rules = _pick(items, keys)
+    for r in rules:
+        r["unsupported"] = r.get("unsupported") is True
+    return rules
 
 
 def _power_savings(s) -> dict | None:
@@ -209,7 +218,7 @@ def devicehub_power(user: dict = Depends(require_admin)):
         return _power_cache["data"]
     raw = _read_get("/api/v1/power/summary")
     if raw.get("ok"):
-        data = {"ok": True, "rules": _pick(raw.get("rules"), _POWER_RULE_KEYS),
+        data = {"ok": True, "rules": _pick_rules(raw.get("rules"), _POWER_RULE_KEYS),
                 "paused_until": raw.get("paused_until") if isinstance(raw.get("paused_until"), int) else 0,
                 "runs": _pick(raw.get("runs"), _POWER_RUN_KEYS), "savings": _power_savings(raw.get("savings"))}
     else:
@@ -317,7 +326,7 @@ def devicehub_account_delete(device_id: str, body: PowerBody | None = None, user
 _RULE_ID = re.compile(r"^r-[0-9a-f]{4,32}$")
 _RULE_KEYS = ("id", "name", "target", "target_name", "action", "days", "time", "window_min", "idle_min",
               "cpu_below", "notice_min", "enabled", "fail_count", "last_run_at", "last_result", "next_run_at",
-              "state", "notice_until")
+              "state", "notice_until", "unsupported")
 _TARGET_KEYS = ("target", "name", "kind", "actions")
 _PAUSE_MAX_H = 168
 
@@ -342,7 +351,7 @@ class PauseBody(BaseModel):
 
 def _rule_written(data: dict) -> dict:
     _power_cache.update(ts=0.0, data=None)   # 省電卡片下一次重新抓
-    return {"ok": True, "rule": {k: data.get(k) for k in _RULE_KEYS}}
+    return {"ok": True, "rule": _pick_rules([data], _RULE_KEYS)[0]}
 
 
 @router.get("/api/devicehub/power/rules")
@@ -350,10 +359,12 @@ def devicehub_power_rules(user: dict = Depends(require_admin)):
     data, _ = _control_call("GET", "/api/v1/power/rules", user)
     if data.get("ok") is False:
         return data
-    targets = [{k: t.get(k) for k in _TARGET_KEYS} for t in data.get("targets") or [] if isinstance(t, dict)]
+    # D-25：虛擬機不是排程目標；即使 DeviceHub 還是舊版也不在 Axis 的編輯器出現
+    targets = [{k: t.get(k) for k in _TARGET_KEYS} for t in data.get("targets") or []
+               if isinstance(t, dict) and t.get("kind") != "pve"]
     for t in targets:
-        t["actions"] = [a for a in t["actions"] or [] if isinstance(a, str)]
-    return {"ok": True, "rules": _pick(data.get("rules"), _RULE_KEYS), "targets": targets,
+        t["actions"] = [a for a in t["actions"] or [] if isinstance(a, str) and not a.startswith("pve.")]
+    return {"ok": True, "rules": _pick_rules(data.get("rules"), _RULE_KEYS), "targets": targets,
             "paused_until": data.get("paused_until") if isinstance(data.get("paused_until"), int) else 0}
 
 
