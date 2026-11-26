@@ -9,7 +9,7 @@ from sqlalchemy import text
 from app.config import BASE_PATH, ALLOWED_ORIGINS
 from app.database import engine, Base
 from app.utils import init_db_user
-from app.routers import auth, admin, user, system, docker, nas, proxmox, minecraft, smart_home, vm_user, gigs, feedback, github_repos, devicehub
+from app.routers import auth, admin, user, system, docker, nas, proxmox, minecraft, smart_home, vm_user, gigs, feedback, github_repos, devicehub, goals
 
 app = FastAPI(title="Absolute Axis Server")
 
@@ -84,6 +84,7 @@ app.include_router(gigs.router)
 app.include_router(feedback.router)
 app.include_router(github_repos.router)
 app.include_router(devicehub.router)
+app.include_router(goals.router)
 
 
 # ----------------- 靜態與首頁路由 -----------------
@@ -108,6 +109,7 @@ import time as _time
 @app.get("/gigs")
 @app.get("/code-share")
 @app.get("/feedback-hub")
+@app.get("/goals")
 def home():
     index_path = os.path.join(BASE_PATH, "static", "index.html")
     if os.path.exists(index_path):

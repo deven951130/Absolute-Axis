@@ -4,7 +4,7 @@
  */
 const App = {
     components: {
-        views: ['dashboard', 'virtual', 'smart', 'cloud', 'nas-mgnt', 'metrics', 'admin', 'settings', 'placeholder', 'multiverse', 'gigs', 'opensource', 'feedback'],
+        views: ['dashboard', 'virtual', 'smart', 'cloud', 'nas-mgnt', 'metrics', 'admin', 'settings', 'placeholder', 'multiverse', 'gigs', 'opensource', 'feedback', 'goals'],
         modals: ['profile', 'avatar', 'share', 'preview', 'mkdir', 'deploy-vm', 'admin-edit', 'create-user'],
         overlays: ['popover', 'context-menu']
     },
@@ -91,7 +91,7 @@ const App = {
             
             // 權限防禦：限制普通成員存取 idmanage (admin) 視圖
             const role = localStorage.getItem('axis_role');
-            if (finalView === 'admin' && role !== 'Administrator') {
+            if ((finalView === 'admin' || finalView === 'goals') && role !== 'Administrator') {
                 finalView = 'dashboard';
             }
             
@@ -108,6 +108,8 @@ const App = {
             if (role === 'Administrator') {
                 const navA = document.getElementById('nav-admin');
                 if (navA) navA.style.display = 'block';
+                const navG = document.getElementById('nav-goals');
+                if (navG) navG.style.display = 'block';
             }
 
             // 更新介紹頁面/定價頁面/接案平台導覽列已登入狀態

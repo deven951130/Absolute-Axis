@@ -69,3 +69,8 @@ scratch/*.tar
 cloudflared.exe
 # 一次性除錯腳本與執行期資料（曾含明碼密碼，請勿再提交）
 scratch/
+# 專案目標資料與本機同步設定（含 token）
+app/project-goals.json
+app/project-goals.json.tmp
+scripts/goals_sync.local.json
+scripts/.goals_sync_out/
