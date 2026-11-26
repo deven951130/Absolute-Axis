@@ -32,6 +32,8 @@ services:
       - DEVICEHUB_URL=${DEVICEHUB_URL:-}
       - DEVICEHUB_TOKEN=${DEVICEHUB_TOKEN:-}
       - DEVICEHUB_CONTROL_TOKEN=${DEVICEHUB_CONTROL_TOKEN:-}
+      # 專案目標：本機 Claude 排程任務推送每日進度用的 token（留空＝不開放排程同步）
+      - AXIS_GOALS_TOKEN=${AXIS_GOALS_TOKEN:-}
       # 必填、不得有預設值：預設值寫在 repo 裡等於公開，任何人都能偽造管理員登入
       - AXIS_JWT_SECRET=${AXIS_JWT_SECRET:?請在 .env 設定 AXIS_JWT_SECRET，產生方式見 .env.example}
       # 資料庫裡還沒有任何管理員時，用這組帳密建立第一個管理員（帳號預設 admin）；密碼沒有預設值

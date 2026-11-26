@@ -34,7 +34,8 @@ const ROUTE_MAP = {
     '/login': 'login',
     '/gigs': 'gigs',
     '/code-share': 'opensource',
-    '/feedback-hub': 'feedback'
+    '/feedback-hub': 'feedback',
+    '/goals': 'goals'
 };
 
 const VIEW_TO_ROUTE = {
@@ -52,7 +53,8 @@ const VIEW_TO_ROUTE = {
     'login': '/login',
     'gigs': '/gigs',
     'opensource': '/code-share',
-    'feedback': '/feedback-hub'
+    'feedback': '/feedback-hub',
+    'goals': '/goals'
 };
 
 // 暴露至全域供外部存取
@@ -163,7 +165,8 @@ function switchView(v, pushHistory = true) {
         'smart': '智慧宅控',
         'gigs': '接案中樞',
         'opensource': '開源代碼分享',
-        'feedback': '意見反饋'
+        'feedback': '意見反饋',
+        'goals': '專案目標'
     };
     
     document.getElementById('page-title-text').innerText = titles[v] || document.getElementById('ph-title').textContent.replace(' 尚未開放', '');
@@ -192,6 +195,7 @@ function switchView(v, pushHistory = true) {
     if (v === 'gigs') { if (typeof loadGigs === 'function') loadGigs(); }
     if (v === 'opensource') { if (typeof loadGitHubRepos === 'function') loadGitHubRepos(); }
     if (v === 'feedback') { if (typeof loadFeedbacks === 'function') loadFeedbacks(); }
+    if (v === 'goals') { if (typeof loadGoals === 'function') loadGoals(); }
 
     // 收合行動端側邊欄
     if (typeof closeSidebar === 'function') closeSidebar();

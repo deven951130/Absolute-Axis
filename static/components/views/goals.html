@@ -1,0 +1,53 @@
+<!-- Absolute Axis - 專案目標追蹤（goals.js 以 h()／textContent 產生卡片；目標文字、專案名稱不插入 HTML） -->
+<div id="view-goals" class="view-section">
+    <div class="page-wrap wide">
+        <div class="page-head">
+            <div>
+                <p class="w-muted page-sub page-lead">為每個開發中的專案設定每週與每日目標；Claude 排程任務每晚會整理當天進度寫回這裡。</p>
+            </div>
+            <div class="goals-head-actions">
+                <span id="goals-sync-status" class="w-muted goals-sync">尚未同步</span>
+                <button type="button" class="round-btn sm" aria-label="重新整理" onclick="loadGoals()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 5v6h-6"></path></svg></button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="goalsToggleAddProject(true)">新增專案</button>
+            </div>
+        </div>
+
+        <!-- 新增專案 -->
+        <section id="goals-add-project" class="form-card goals-add" hidden aria-labelledby="goals-add-title">
+            <h3 id="goals-add-title" class="card-h">新增追蹤專案</h3>
+            <div class="ios-group ios-form-rows">
+                <label><span>名稱</span><input type="text" id="goals-new-name" maxlength="80" placeholder="例如 DeviceHub"></label>
+                <label><span>路徑</span><input type="text" id="goals-new-path" maxlength="400" placeholder="本機路徑，例如 E:\github project\DeviceHub"></label>
+                <label><span>說明</span><input type="text" id="goals-new-desc" maxlength="500" placeholder="一句話描述（選填）"></label>
+            </div>
+            <p class="w-muted goals-hint">路徑是這台電腦上的資料夾，排程任務用它讀取 git 紀錄與檔案異動。</p>
+            <div class="goals-form-actions">
+                <button type="button" class="btn btn-outline btn-sm" onclick="goalsToggleAddProject(false)">取消</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="goalsCreateProject()">建立</button>
+            </div>
+        </section>
+
+        <!-- 週次切換 + 狀態篩選 -->
+        <div class="goals-toolbar">
+            <div class="goals-week">
+                <button type="button" class="round-btn sm" aria-label="上一週" onclick="goalsShiftWeek(-1)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+                <div class="goals-week-text">
+                    <strong id="goals-week-label">本週</strong>
+                    <span id="goals-week-range" class="w-muted">—</span>
+                </div>
+                <button type="button" class="round-btn sm" aria-label="下一週" onclick="goalsShiftWeek(1)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></button>
+            </div>
+            <div class="seg" role="group" aria-label="週次">
+                <button type="button" id="goals-wk-0" aria-pressed="true" onclick="goalsJumpWeek(0)">本週</button>
+                <button type="button" id="goals-wk-1" aria-pressed="false" onclick="goalsJumpWeek(1)">下週</button>
+            </div>
+            <div class="seg" role="group" aria-label="專案狀態">
+                <button type="button" id="goals-tab-active" aria-pressed="true" onclick="goalsSwitchTab('active')">開發中</button>
+                <button type="button" id="goals-tab-paused" aria-pressed="false" onclick="goalsSwitchTab('paused')">暫停</button>
+                <button type="button" id="goals-tab-done" aria-pressed="false" onclick="goalsSwitchTab('done')">已完成</button>
+            </div>
+        </div>
+
+        <div id="goals-projects" class="goals-grid"><p class="w-muted post-empty">載入中…</p></div>
+    </div>
+</div>
