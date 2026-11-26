@@ -1,4 +1,16 @@
+### [V60] - 2026-07-31 更新日誌
+
+#### Minecraft 伺服器核心損壞修復與漣漪模組移除（P0）
+- **[修復] Forge 核心依賴損壞問題**：
+  - **根本原因**：Minecraft 容器內的 `libraries/` 目錄不存在，導致 `run.sh` 啟動 Java 時找不到 `unix_args.txt` 設定檔進而反覆崩潰。
+  - **解決方案**：透過 SSH 連入 PVE 宿主機並進入 LXC 102 容器，重新手動執行 `java -jar forge-1.20.1-47.4.0-installer.jar --installServer` 安裝器，成功完整重建了 `libraries/` 依賴結構，使核心正常運作。
+- **[修復] 移除「漣漪 (Lazyyyyy)」模組**：
+  - **解決方案**：完全刪除 `mods/lazyyyyy-lexforge-core-0.14.19.jar` 模組以及殘留的設定資料夾 `/root/minecraft/.lazyyyyy`，回歸無漣漪模組之純淨伺服器環境。
+- **[驗證] 伺服器成功重啟**：
+  - 成功啟動 `minecraft.service` 系統服務，目前狀態為 `active (running)`，Java 處理序成功加載各項模組，且 `latest.log` 載入正常無崩潰跡象。
+
 ### [V59] - 2026-07-11 更新日誌
+
 
 #### Minecraft 伺服器 Watchdog 死鎖修復（P0）
 - **[修復] 停用 Minecraft 內建 Watchdog 監視器**：為徹底解決 DeceasedCraft 等大型模組包因啟動載入時間過長（超過 60 秒）觸發 Minecraft 內建 Watchdog 機制強制終止 JVM，導致 Linux 核心釋放 12 GB 記憶體時引發跨 CPU TLB shootdown 中斷（IPI）互鎖之 hard lockup 當機問題。我們在 PVE 宿主機開機時成功以自動腳本連入，將 `/root/minecraft/server.properties` 中的 `max-tick-time` 參數修改為 `-1` 並重新啟動 LXC 102 容器。此修改將完全停用內建 Watchdog，允許伺服器有充足時間完成重載與世界生成，並從源頭避免了系統記憶體回收造成的死鎖。

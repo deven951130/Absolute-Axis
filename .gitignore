@@ -69,3 +69,9 @@ scratch/*.tar
 cloudflared.exe
 # 一次性除錯腳本與執行期資料（曾含明碼密碼，請勿再提交）
 scratch/
+
+# ESP32 firmware secrets
+esp32/**/secrets.h
+
+# Wrangler local cache (Cloudflare account info)
+esp32/**/.wrangler/

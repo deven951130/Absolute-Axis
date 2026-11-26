@@ -1,0 +1,25 @@
+name = "axis-power"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# 只透過自訂網域（受 Cloudflare Access 保護）提供服務，關閉 workers.dev 與預覽網址以免繞過 Access
+workers_dev = false
+preview_urls = false
+
+# Durable Object 用來保存狀態與指令佇列
+[[durable_objects.bindings]]
+name = "POWER"
+class_name = "PowerState"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["PowerState"]
+
+# 綁定你的公開網域（請把 power.example.com 換成你的子網域）
+# 部署前請先確認該網域已在 Cloudflare 上託管
+[[routes]]
+pattern = "power.absoluteaxis.dpdns.org"
+custom_domain = true
+
+# DEVICE_TOKEN 不要寫在這裡，請用指令設定：
+#   npx wrangler secret put DEVICE_TOKEN
