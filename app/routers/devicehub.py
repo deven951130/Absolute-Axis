@@ -175,7 +175,7 @@ def _read_get(path: str, timeout: float = 8) -> dict:
 _POWER_CACHE_SECONDS = 30
 _power_cache = {"ts": 0.0, "data": None}
 _POWER_RULE_KEYS = ("id", "name", "target_name", "action", "days", "time", "enabled", "next_run_at",
-                    "last_result", "state", "unsupported")
+                    "last_result", "state", "notice_until", "unsupported")   # notice_until：D-21 遊戲內廣播
 _POWER_RUN_KEYS = ("rule_name", "started_at", "finished_at", "result", "detail")
 
 
@@ -228,6 +228,12 @@ def devicehub_power(user: dict = Depends(require_admin)):
     return data
 
 
+def power_rules_for_notice() -> list | None:
+    """D-21：給 Minecraft 關機廣播用的省電規則（read token；DeviceHub 沒設定或讀不到時回 None）。"""
+    raw = _read_get("/api/v1/power/summary")
+    return raw.get("rules") if raw.get("ok") and isinstance(raw.get("rules"), list) else None
+
+
 @router.get("/api/devicehub/history/{device_id}/fields")
 def devicehub_history_fields(device_id: str, user: dict = Depends(require_admin)):
     if not _DEVICE_ID.match(device_id):
@@ -276,6 +282,11 @@ def _control_call(method: str, path: str, user: dict, body: dict | None = None) 
         detail = data.get("detail")
         if isinstance(detail, str) and len(detail) <= 32:
             out["detail"] = detail
+        # power-saving §10.10 (22)：409 server_off 附上關機時段與受影響的規則名稱
+        if isinstance(data.get("off"), str):
+            out["off"] = data["off"][:120]
+        if isinstance(data.get("rules"), list):
+            out["rules"] = [n[:40] for n in data["rules"][:5] if isinstance(n, str)]
         return out, r.status_code
     return data, r.status_code
 
@@ -326,7 +337,7 @@ def devicehub_account_delete(device_id: str, body: PowerBody | None = None, user
 _RULE_ID = re.compile(r"^r-[0-9a-f]{4,32}$")
 _RULE_KEYS = ("id", "name", "target", "target_name", "action", "days", "time", "window_min", "idle_min",
               "cpu_below", "notice_min", "enabled", "fail_count", "last_run_at", "last_result", "next_run_at",
-              "state", "notice_until", "unsupported")
+              "state", "notice_until", "unsupported", "esp_days", "skipped_date")
 _TARGET_KEYS = ("target", "name", "kind", "actions")
 _PAUSE_MAX_H = 168
 
@@ -340,7 +351,7 @@ class RuleBody(BaseModel):
     window_min: int = 60
     idle_min: int | None = None
     cpu_below: int = 15
-    notice_min: int = 5
+    notice_min: int | None = None   # None＝該動作的預設（伺服器關機 10 分鐘，D-21；其他 5 分鐘）
     enabled: bool = True
     confirm: bool = False
 
@@ -365,7 +376,25 @@ def devicehub_power_rules(user: dict = Depends(require_admin)):
     for t in targets:
         t["actions"] = [a for a in t["actions"] or [] if isinstance(a, str) and not a.startswith("pve.")]
     return {"ok": True, "rules": _pick_rules(data.get("rules"), _RULE_KEYS), "targets": targets,
-            "paused_until": data.get("paused_until") if isinstance(data.get("paused_until"), int) else 0}
+            "paused_until": data.get("paused_until") if isinstance(data.get("paused_until"), int) else 0,
+            "server_off": _server_off(data.get("server_off"))}
+
+
+def _server_off(so) -> dict | None:
+    """power-saving §10.10 (24)：伺服器排程表下方的提示（關機時段、不會執行的規則、ESP32 同步狀態）。"""
+    if not isinstance(so, dict):
+        return None
+    ids = lambda v: [x for x in v if isinstance(x, str)][:32] if isinstance(v, list) else []  # noqa: E731
+    sync = []
+    for x in so.get("sync") or []:
+        if isinstance(x, dict):
+            sync.append({"device": x.get("device"), "online": x.get("online") is True,
+                         "time_ok": x.get("time_ok") if isinstance(x.get("time_ok"), bool) else None,
+                         "in_sync": x.get("in_sync") is True,
+                         "error": x.get("error")[:60] if isinstance(x.get("error"), str) else None})
+    return {"text": so.get("text")[:200] if isinstance(so.get("text"), str) else None,
+            "esp_wake": ids(so.get("esp_wake")), "not_run": ids(so.get("not_run")),
+            "no_on_rule": so.get("no_on_rule") is True, "sync": sync}
 
 
 @router.post("/api/devicehub/power/rules")

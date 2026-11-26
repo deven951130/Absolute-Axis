@@ -246,3 +246,95 @@ def test_compose_autopause_settings(tmp_path, extra, want_enabled, want_seconds)
     assert svc["environment"]["AUTOPAUSE_TIMEOUT_INIT"] == want_seconds
     assert svc["environment"]["MAX_TICK_TIME"] == "-1"
     assert "CAP_NET_RAW" in svc["cap_add"]
+
+
+# ---------- D-21：伺服器排程關機前的遊戲內廣播（DeviceHub power-saving §10.10 (30)） ----------
+NOW = 1795699400                       # 2026-11-26 21:23:20（台北）
+NOTICE = {"id": "r-0002", "name": "夜間關機", "action": "server.off", "state": "notice", "notice_until": NOW + 600}
+
+
+class PlayersContainer(FakeContainer):
+    def __init__(self, players):
+        super().__init__()
+        self.players = players
+
+    def exec_run(self, argv):
+        if argv == ["rcon-cli", "list"]:
+            self.calls.append(("exec", argv))
+            return SimpleNamespace(exit_code=0, output=f"There are {self.players} of a max of 20 players online:".encode())
+        return super().exec_run(argv)
+
+
+@pytest.fixture
+def notice_mc(mc, monkeypatch):
+    container, data = mc
+    players = PlayersContainer(2)
+    monkeypatch.setattr(minecraft, "_mc_container", lambda: players)
+    monkeypatch.setattr(minecraft, "_shutdown_announced", {})
+    return players, data
+
+
+def _says(c):
+    return [call[1] for call in c.calls if call[0] == "exec" and call[1][:2] == ["rcon-cli", "say"]]
+
+
+def test_broadcast_once_per_rule_and_day(notice_mc):
+    c, _ = notice_mc
+    assert minecraft.announce_server_shutdown([NOTICE], now=NOW) == "伺服器將於 21:33 關機"
+    assert _says(c) == [["rcon-cli", "say", "伺服器將於 21:33 關機"]]
+    assert minecraft.announce_server_shutdown([NOTICE], now=NOW + 30) is None     # 同一條、同一天只一次
+    assert len(_says(c)) == 1
+    tomorrow = NOTICE | {"notice_until": NOW + 86400 + 600}
+    assert minecraft.announce_server_shutdown([tomorrow], now=NOW + 86400) is not None
+
+
+def test_no_broadcast_without_players_until_someone_joins(notice_mc):
+    c, _ = notice_mc
+    c.players = 0
+    assert minecraft.announce_server_shutdown([NOTICE], now=NOW) is None
+    assert _says(c) == []
+    c.players = 1                                                               # 有人上線：下次就廣播
+    assert minecraft.announce_server_shutdown([NOTICE], now=NOW + 30) is not None
+
+
+def test_no_broadcast_while_paused_and_never_wakes_it(notice_mc):
+    c, data = notice_mc
+    _pause(data)
+    assert minecraft.announce_server_shutdown([NOTICE], now=NOW) is None
+    assert c.calls == []                                                        # 沒送 rcon、沒叫醒（R-09）
+
+
+@pytest.mark.parametrize("rule", [
+    NOTICE | {"state": None},                       # 不在預告中
+    NOTICE | {"action": "host.shutdown"},           # 不是伺服器關機
+    NOTICE | {"notice_until": NOW - 1},             # 已經過了
+    NOTICE | {"notice_until": None},
+    {k: v for k, v in NOTICE.items() if k != "id"},
+])
+def test_only_pending_server_off_notices(notice_mc, rule):
+    c, _ = notice_mc
+    assert minecraft.announce_server_shutdown([rule], now=NOW) is None
+    assert c.calls == []
+
+
+def test_no_broadcast_outside_container_mode(notice_mc, monkeypatch):
+    monkeypatch.setattr(minecraft, "MC_CONTAINER", "")
+    assert minecraft.announce_server_shutdown([NOTICE], now=NOW) is None
+
+
+def test_notifier_loop_survives_errors(notice_mc):
+    import threading
+    stop = threading.Event()
+    seen = []
+
+    def fetch():
+        seen.append(1)
+        if len(seen) == 1:
+            raise RuntimeError("DeviceHub down")
+        if len(seen) >= 3:
+            stop.set()
+        return None
+
+    t = minecraft.start_shutdown_notifier(fetch, interval=0.01, stop=stop)
+    t.join(2)
+    assert len(seen) >= 3

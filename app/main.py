@@ -54,6 +54,8 @@ init_db_user()
 # Minecraft 省電成效：容器模式時每分鐘記錄一次狀態（DeviceHub spec/power-saving.md §6.3）
 if minecraft.MC_CONTAINER:
     minecraft.start_power_logger()
+    # D-21：DeviceHub 的伺服器排程關機進入預告時，有玩家就在遊戲內廣播一次（power-saving §10.10 (30)）
+    minecraft.start_shutdown_notifier(devicehub.power_rules_for_notice)
 
 
 

@@ -11,7 +11,7 @@ import requests
 from typing import Tuple
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from app.models import MCCommandRequest
 from app.utils import get_current_user_obj, log_event
@@ -371,6 +371,67 @@ def run_ddns_updater():
         except Exception as e:
             print(f"[DDNS] Synchronization failed: {e}")
         time.sleep(300)
+
+# ---------- D-21：伺服器排程關機前的遊戲內廣播（DeviceHub power-saving §10.4、§10.10 (30)） ----------
+# DeviceHub 的 server.off 進入預告時，若 Minecraft 在運作（不是省電暫停）且有玩家，用 rcon 廣播一次。
+# 同一條規則同一天只廣播一次；沒有玩家就下次再看；暫停中不叫醒（R-09）；不自動延後（D-21）。
+_TAIPEI = timezone(timedelta(hours=8))
+_shutdown_announced: dict = {}   # 規則 id → 已廣播的日期（YYYY-MM-DD，台北時間）
+_PLAYERS = re.compile(r"There are (\d+)")
+
+
+def online_players(container) -> int:
+    """rcon `list` 的線上人數；看不懂就當 0（寧可不廣播也不要誤判）。"""
+    m = _PLAYERS.search(_container_exec(container, ["rcon-cli", "list"]))
+    return int(m.group(1)) if m else 0
+
+
+def announce_server_shutdown(rules, now: float | None = None) -> str | None:
+    """rules＝DeviceHub 省電摘要的規則。廣播了就回傳廣播的文字，否則 None。"""
+    if not MC_CONTAINER:
+        return None
+    now = time.time() if now is None else now
+    pending = [r for r in rules or [] if isinstance(r, dict) and r.get("action") == "server.off"
+               and r.get("state") == "notice" and isinstance(r.get("notice_until"), int)
+               and not isinstance(r.get("notice_until"), bool) and r["notice_until"] > now
+               and isinstance(r.get("id"), str)]
+    if not pending:
+        return None
+    rule = min(pending, key=lambda r: r["notice_until"])
+    at = datetime.fromtimestamp(rule["notice_until"], _TAIPEI)
+    day = at.strftime("%Y-%m-%d")
+    if _shutdown_announced.get(rule["id"]) == day:
+        return None
+    if mc_power_state(max_age=0) != "running":   # 暫停中＝沒有玩家，也不能把它叫醒
+        return None
+    container = _mc_container()
+    if online_players(container) <= 0:
+        return None
+    text = f"伺服器將於 {at:%H:%M} 關機"
+    _container_exec(container, ["rcon-cli", "say", text])
+    _shutdown_announced[rule["id"]] = day
+    log_event("system", f"MC_SHUTDOWN_NOTICE: {text}（DeviceHub 規則 {rule['id']}）")
+    return text
+
+
+def start_shutdown_notifier(fetch_rules, interval: float = 30.0, stop: threading.Event = None) -> threading.Thread:
+    """每 30 秒讀一次 DeviceHub 省電摘要（read token）並視需要廣播。fetch_rules() 回傳規則清單或 None。"""
+    stop = stop or threading.Event()
+
+    def loop():
+        while not stop.is_set():
+            try:
+                rules = fetch_rules()
+                if rules:
+                    announce_server_shutdown(rules)
+            except Exception as e:  # noqa: BLE001 - 廣播失敗不影響其他功能
+                print(f"[MC shutdown notice] 失敗：{e}")
+            stop.wait(interval)
+
+    t = threading.Thread(target=loop, name="mc-shutdown-notice", daemon=True)
+    t.start()
+    return t
+
 
 if os.getenv("DYNU_PASS") and os.getenv("DYNU_USER") and os.getenv("DYNU_HOSTNAME"):
     threading.Thread(target=run_ddns_updater, daemon=True).start()
